@@ -94,7 +94,7 @@ class ReddeningMaps(object):
                            distance=d * units.kpc,
                            frame='galactic') for d in distance_grid]
         bayestar = np.array([np.log(self.bayestar(c, mode='median'))
-                            for c in coords]).T
+                             for c in coords]).T
         marshall = np.array([np.log(self.marshall(c)) for c in coords]).T
         marshall -= np.log(self.get_reddening('K', RV=RV))
         drimmel = np.log(self.drimmel.evaluate_vector(lb[0], lb[1],
@@ -102,11 +102,11 @@ class ReddeningMaps(object):
         drimmel -= np.log(self.get_reddening('V', RV=RV))
         bayestar[bayestar != bayestar] = marshall[bayestar != bayestar]
         bayestar[bayestar != bayestar] = drimmel[bayestar != bayestar]
-        return bayestar
+        # return bayestar
         with open("config.json") as config:
             config = json.load(config)
         healpy.fitsfunc.write_map(
-            config["dir"]["extinction"]+"combined_nside%i.fits" % nside,
+            config["dir"]["extinction"] + "combined_nside%i.fits" % nside,
             bayestar.T, nest=False, overwrite=True)
 
     def get_bayestar_ebv(self, l, b, s):
@@ -285,6 +285,7 @@ class gridded_combo_extinction_map(ReddeningMaps):
 
 
 if __name__ == '__main__':
-    print integrate_toy_extinction_map(0.3, 0.3, np.array([1., 2.]), 1.)
+    # print integrate_toy_extinction_map(0.3, 0.3, np.array([1., 2.]), 1.)
     red = ReddeningMaps(with_extinction_maps=True)
-    print red.get_bayestar_ebv_along_los(0., 0.)
+    red.write_extinction_map()
+    # print red.get_bayestar_ebv_along_los(0., 0.)
