@@ -1,0 +1,61 @@
+{
+"fundamentals":{
+	"MinimumMass": 0.5,
+	"MaximumMass": 100.0,
+	"SolarRadius":8.3,
+	"GalaxyAge": 13.7,
+	"IMF": "Kroupa",
+	"SFR": "SB15",
+	"lifetimes": "Portinari1998",
+	"PresentSFR":2.4,
+	"StarScaleLength":2.5,
+	"InitialMetallicity":0.1,
+	"PresentGasDensitySun":13.0,
+	"Kennicutt-Schmidt_Coeff":1.4,
+	"TruncationRadius":35.0
+	},
+"grids":{
+	"MinimumRadius": 0.2,
+	"MaximumRadius": 20.0,
+	"RadialGridPoints":24,
+	"AgeGridPoints":150,
+	"LogAgeGrid":true
+},
+"yields":{
+	"typeIa":"Maeda",
+	"typeII":"Kobayashi",
+	"AGB":"Karakas",
+	"SuperAGB":"None"
+},
+"typeIa":{
+	"Form": "Matteucci2006",
+	"MinimumIaBinaryMass": 3.0,
+	"MaximumIaBinaryMass": 12.0,
+	"BinaryFraction": 0.0035
+},
+"typeII":{
+	"Min_typeII_SN_mass": 8.0
+},
+"migration":{
+	"Form":"None",
+	"sigmaR":4.0
+},
+"flows":{
+	"inflow":{
+		"Form":"Pezzulli"
+	},
+	"outflow":{
+		"Form":"SimpleGalacticFountain",
+		"Feject_in":0.5,
+		"Feject_out":0.5,
+		"TransitionRadius":3.5
+	},
+	"radialflow":{
+		"Form":"Pezzulli",
+		"PezzulliAlpha":0.1
+	}
+},
+"elements":["O","Ca","Mg","S","Si","Fe"],
+"data_folder":"/data/jls/chem_evo/"
+}
+

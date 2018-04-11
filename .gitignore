@@ -1,0 +1,15 @@
+*.pyc
+*.so
+*.dat
+*.txt
+*.tmp
+*.o
+*.exe
+*.log
+*.swp
+*.png
+*/.ipynb_checkpoints/*
+*.poly
+*.acts0
+!isochrone/extinction_files/*.dat
+!isochrone/extinction_files/*.txt

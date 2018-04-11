@@ -1,0 +1,32 @@
+{
+	"actions":{
+		"dir":"/data/jls/edf/RAVE_fits/PJM16_best.acts0",
+		"rmin":1.0,
+		"rmax":25.0,
+		"nrgrid":120,
+		"ngrid":240
+		},
+	"potential":"/home/jls/work/code/Torus/pot/PJM16_best.Tpot",
+	"edf_params":"/home/jls/work/code/edf/edf_results/fitoutput_060115.edf",
+	"selection_function_folder":"/data/jls/selection_functions/",
+	"with_halo":true,
+	"solar_motion":[8.2,0.014,11.1,12.24,7.25],
+	"isochrones":{
+		 "filters":["2MASS"],
+		 "type":"Padova"
+	},
+	"dir":{
+		"extinction":"/data/jls/extinction/",
+		"isochrones":"/data/jls/isochrones/",
+		"extinction_coeffs":"/home/jls/work/code/gaia_sprint/isochrone/extinction_files/",
+                "output_folder":"/data/jls/GaiaDR2/spectro/"
+	},
+	"MassFunction":{
+		"MinMass": 0.1,
+		"MaxMass": 50.0,
+		"IMF": "Kroupa",
+		"IMFflag": true,
+		"Lifetime": "Portinari1998",
+		"LifetimeFolder": "/data/jls/chem_evo/"
+	}
+}

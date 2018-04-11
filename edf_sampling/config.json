@@ -1,0 +1,10 @@
+{
+	"MassFunction":{
+		"MinMass": 0.1,
+		"MaxMass": 50.0,
+		"IMF": "Kroupa",
+		"IMFflag": false,
+		"Lifetime": "PadovaIsochrones",
+		"LifetimeFolder": "/data/jls/chem_evo/"
+	}
+}

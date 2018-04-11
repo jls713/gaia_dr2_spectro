@@ -1,0 +1,10 @@
+{
+	"dir":{
+		"isochrones":"/data/jls/isochrones/",
+		"extinction":"/data/jls/extinction/",
+                "extinction_coeffs":"extinction_files/"
+	},
+        "isochrones":{
+		"filters":["2MASS","Gaia"]
+	}
+}

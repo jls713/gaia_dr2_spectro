@@ -1,0 +1,988 @@
+g++ --std=c++11 --std=c++11 -O3 -fopenmp -fPIC  -c src//edf_sampling.cpp -o obj//edf_sampling.o -I../ -Iinc/ -I/data/jls/tact/tact/general/ -I/data/jls/tact/tact/general/coordtransforms/inc/ -I/data/jls/tact/tact/pot/inc/ -I/data/jls/tact/tact/aa/inc/ -I/home/jls/work/code/Torus_github/Torus/src/ -I/home/jls/work/code/Torus_github/Torus/src/pot/ -I/home/jls/work/code/Torus_github/Torus/src/utils/ -I/home/jls/work/code/Torus_github/Torus/WDlib/inc/ -I/data/jls/json/src/ -I/opt/ioa/software/gsl/2.1/include/ -I/data/jls/tact/tact/general/coordtransforms/inc/ -I-I/data/jls/Healpix_3.30/include/ -I/data/jls/Healpix_3.30/src/cxx/generic_gcc/include/ -I/data/jls/Healpix_3.30/src/cxx/cxxsupport/ -I../isochrone/inc/  -I../edf/inc/ -I/data/jls/hdf5-1.8.16/include/ -I/data/jls/easyloggingpp/src/ -I/data/jls/tact/tact/general/cuba -I../chemevo/inc/ -I/opt/ioa/software/python/2.7.8/include/python2.7 -I/opt/ioa/software/boost/1.55.0/include -DTORUS
+In file included from /data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:36:0,
+                 from /data/jls/tact/tact/pot/inc/potential.h:64,
+                 from /data/jls/tact/tact/aa/inc/aa.h:43,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from /data/jls/tact/tact/pot/inc/potential.h:64:0,
+                 from /data/jls/tact/tact/aa/inc/aa.h:43,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:57:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:63:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:83:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:89:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:95:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:101:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:107:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:113:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:144:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:150:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:156:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:162:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordsys.h:168:3: error: ‘VecDoub’ does not name a type
+In file included from /data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:35:0,
+                 from /data/jls/tact/tact/pot/inc/potential.h:65,
+                 from /data/jls/tact/tact/aa/inc/aa.h:43,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from /data/jls/tact/tact/pot/inc/potential.h:65:0,
+                 from /data/jls/tact/tact/aa/inc/aa.h:43,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:53:7: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:54:7: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:55:7: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:56:7: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:65:23: error: ‘PI’ was not declared in this scope
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:88:1: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:90:1: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:93:1: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:95:1: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:99:1: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:102:1: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:107:1: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:110:1: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:114:1: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:116:13: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:116:20: error: template argument 1 is invalid
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:116:20: error: template argument 2 is invalid
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:116:59: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:116:68: error: ISO C++ forbids declaration of ‘E’ with no type [-fpermissive]
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:116:76: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:116:85: error: ISO C++ forbids declaration of ‘EqE’ with no type [-fpermissive]
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:116:89: error: invalid type in declaration before ‘;’ token
+/data/jls/tact/tact/general/coordtransforms/inc/coordtransforms.h:118:1: error: ‘VecDoub’ does not name a type
+In file included from /data/jls/tact/tact/aa/inc/aa.h:43:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+/data/jls/tact/tact/pot/inc/potential.h:82:35: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:82:44: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:87:18: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:92:39: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:92:48: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:106:25: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:106:34: error: ISO C++ forbids declaration of ‘xv’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:112:25: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:112:34: error: ISO C++ forbids declaration of ‘xv’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:120:10: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:127:26: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:127:35: error: ISO C++ forbids declaration of ‘xv’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:132:18: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:138:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:142:27: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:142:36: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:155:26: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:155:35: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:157:26: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:157:35: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:158:26: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:158:35: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:159:27: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:159:36: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:161:9: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘double Potential_JS::Mass(double)’:
+/data/jls/tact/tact/pot/inc/potential.h:104:33: error: ‘Forces’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘double Potential_JS::H(const int&)’:
+/data/jls/tact/tact/pot/inc/potential.h:108:4: error: request for member ‘size’ in ‘xv’, which is of non-class type ‘const int’
+/data/jls/tact/tact/pot/inc/potential.h:109:4: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h:109:12: error: expected ‘;’ before ‘x’
+/data/jls/tact/tact/pot/inc/potential.h:110:20: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:110:26: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:110:32: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:110:38: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:110:44: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:110:50: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:110:57: error: ‘x’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘double Potential_JS::L(const int&)’:
+/data/jls/tact/tact/pot/inc/potential.h:114:4: error: request for member ‘size’ in ‘xv’, which is of non-class type ‘const int’
+/data/jls/tact/tact/pot/inc/potential.h:115:20: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:115:26: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:115:32: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:115:38: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:116:20: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:116:26: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:116:32: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:116:38: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:117:20: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:117:26: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:117:32: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:117:38: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘double Potential_JS::Lz(const int&)’:
+/data/jls/tact/tact/pot/inc/potential.h:128:4: error: request for member ‘size’ in ‘xv’, which is of non-class type ‘const int’
+/data/jls/tact/tact/pot/inc/potential.h:130:15: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:130:21: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:130:27: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:130:33: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘const double Potential_JS::Phi_max(double)’:
+/data/jls/tact/tact/pot/inc/potential.h:145:28: error: no matching function for call to ‘Potential_JS::Phi(<brace-enclosed initializer list>)’
+/data/jls/tact/tact/pot/inc/potential.h:145:28: note: candidate is:
+/data/jls/tact/tact/pot/inc/potential.h:82:25: note: virtual double Potential_JS::Phi(const int&)
+/data/jls/tact/tact/pot/inc/potential.h:82:25: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const int&’
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘double Potential_JS::E_circ(double)’:
+/data/jls/tact/tact/pot/inc/potential.h:148:37: error: ‘Forces’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h:148:60: error: no matching function for call to ‘Potential_JS::Phi(<brace-enclosed initializer list>)’
+/data/jls/tact/tact/pot/inc/potential.h:148:60: note: candidate is:
+/data/jls/tact/tact/pot/inc/potential.h:82:25: note: virtual double Potential_JS::Phi(const int&)
+/data/jls/tact/tact/pot/inc/potential.h:82:25: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const int&’
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘double Potential_JS::L_circ(double)’:
+/data/jls/tact/tact/pot/inc/potential.h:151:35: error: ‘Forces’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h: At global scope:
+/data/jls/tact/tact/pot/inc/potential.h:178:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:178:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:182:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘virtual double SphericalPotential::Phi(const int&)’:
+/data/jls/tact/tact/pot/inc/potential.h:179:18: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:179:23: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:179:28: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:179:33: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:179:38: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:179:43: error: invalid types ‘const int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘virtual double PlanarAxisymPotential::Phi_r(double)’:
+/data/jls/tact/tact/pot/inc/potential.h:195:28: error: no matching function for call to ‘Potential_JS::Phi(<brace-enclosed initializer list>)’
+/data/jls/tact/tact/pot/inc/potential.h:195:28: note: candidate is:
+/data/jls/tact/tact/pot/inc/potential.h:82:25: note: virtual double Potential_JS::Phi(const int&)
+/data/jls/tact/tact/pot/inc/potential.h:82:25: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const int&’
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘virtual double PlanarAxisymPotential::dPhi_r(double)’:
+/data/jls/tact/tact/pot/inc/potential.h:198:16: error: ‘class Potential_JS’ has no member named ‘Forces’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:43:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+/data/jls/tact/tact/pot/inc/potential.h: At global scope:
+/data/jls/tact/tact/pot/inc/potential.h:220:19: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:220:28: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:227:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:230:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:236:3: error: ‘VecDoub’ does not name a type
+In file included from /data/jls/tact/tact/aa/inc/aa.h:43:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+/data/jls/tact/tact/pot/inc/potential.h:272:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:273:10: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:274:10: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:275:10: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:276:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:276:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:277:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:278:24: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:278:33: error: ISO C++ forbids declaration of ‘tau’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:279:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h: In constructor ‘StackelOblate_PerfectEllipsoid::StackelOblate_PerfectEllipsoid(double, double)’:
+/data/jls/tact/tact/pot/inc/potential.h:262:14: error: ‘PI’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h: At global scope:
+/data/jls/tact/tact/pot/inc/potential.h:294:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:317:10: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:318:10: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:319:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:319:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:320:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:321:24: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:321:33: error: ISO C++ forbids declaration of ‘tau’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:322:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h: In constructor ‘StackelTriaxial::StackelTriaxial(double, double, double)’:
+/data/jls/tact/tact/pot/inc/potential.h:305:14: error: ‘PI’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h: At global scope:
+/data/jls/tact/tact/pot/inc/potential.h:347:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:347:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:348:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h: In constructor ‘Logarithmic::Logarithmic(double, double, double)’:
+/data/jls/tact/tact/pot/inc/potential.h:341:108: error: no matching function for call to ‘Logarithmic::Phi(<brace-enclosed initializer list>)’
+/data/jls/tact/tact/pot/inc/potential.h:341:108: note: candidate is:
+/data/jls/tact/tact/pot/inc/potential.h:347:10: note: virtual double Logarithmic::Phi(const int&)
+/data/jls/tact/tact/pot/inc/potential.h:347:10: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘const int&’
+/data/jls/tact/tact/pot/inc/potential.h: At global scope:
+/data/jls/tact/tact/pot/inc/potential.h:373:19: error: ‘VecDoub’ has not been declared
+/data/jls/tact/tact/pot/inc/potential.h:378:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:378:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:379:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘void PowerLaw::set(int)’:
+/data/jls/tact/tact/pot/inc/potential.h:374:13: error: invalid types ‘int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:375:12: error: request for member ‘size’ in ‘pars’, which is of non-class type ‘int’
+/data/jls/tact/tact/pot/inc/potential.h:375:30: error: invalid types ‘int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:376:12: error: request for member ‘size’ in ‘pars’, which is of non-class type ‘int’
+/data/jls/tact/tact/pot/inc/potential.h:376:32: error: invalid types ‘int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:376:43: error: invalid types ‘int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h: At global scope:
+/data/jls/tact/tact/pot/inc/potential.h:404:19: error: ‘VecDoub’ has not been declared
+/data/jls/tact/tact/pot/inc/potential.h:409:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:409:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:410:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘void Isochrone::set(int)’:
+/data/jls/tact/tact/pot/inc/potential.h:405:13: error: invalid types ‘int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:406:12: error: request for member ‘size’ in ‘pars’, which is of non-class type ‘int’
+/data/jls/tact/tact/pot/inc/potential.h:406:30: error: invalid types ‘int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:407:12: error: request for member ‘size’ in ‘pars’, which is of non-class type ‘int’
+/data/jls/tact/tact/pot/inc/potential.h:407:32: error: invalid types ‘int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h:407:43: error: invalid types ‘int[int]’ for array subscript
+/data/jls/tact/tact/pot/inc/potential.h: At global scope:
+/data/jls/tact/tact/pot/inc/potential.h:423:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:429:30: error: expected ‘)’ before ‘Om’
+/data/jls/tact/tact/pot/inc/potential.h:438:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:438:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:439:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘virtual std::string HarmonicOscillator::params() const’:
+/data/jls/tact/tact/pot/inc/potential.h:433:15: error: ‘Om’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h:433:15: error: unable to deduce ‘auto’ from ‘<expression error>’
+/data/jls/tact/tact/pot/inc/potential.h: In constructor ‘HarmonicOscillator::HarmonicOscillator(double, double, double)’:
+/data/jls/tact/tact/pot/inc/potential.h:437:5: error: class ‘HarmonicOscillator’ does not have any field named ‘Om’
+/data/jls/tact/tact/pot/inc/potential.h:437:29: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h: At global scope:
+/data/jls/tact/tact/pot/inc/potential.h:455:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:455:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:456:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:457:24: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:457:33: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:477:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:477:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:479:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:508:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:508:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:509:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:510:24: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:510:33: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:537:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:537:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:538:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:564:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:564:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:565:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:580:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:580:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:581:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:602:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:602:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:603:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:605:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:622:20: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:622:29: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:628:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h: In constructor ‘PowerLawSphericalExpCut::PowerLawSphericalExpCut(double, double, double)’:
+/data/jls/tact/tact/pot/inc/potential.h:773:9: error: ‘TPI’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h: In member function ‘void PowerLawSphericalExpCut::set_params(double, double, double)’:
+/data/jls/tact/tact/pot/inc/potential.h:784:9: error: ‘TPI’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h: At global scope:
+/data/jls/tact/tact/pot/inc/potential.h:815:19: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:815:28: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:816:2: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:840:19: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:840:28: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:841:2: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:842:2: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:843:2: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:844:2: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:887:19: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:887:28: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/potential.h:888:2: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:889:2: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:890:2: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h:891:2: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/potential.h: In constructor ‘MWPotential2014::MWPotential2014()’:
+/data/jls/tact/tact/pot/inc/potential.h:863:23: error: ‘class PowerLawSphericalExpCut’ has no member named ‘Forces’
+/data/jls/tact/tact/pot/inc/potential.h:864:22: error: ‘class MiyamotoNagai_JS’ has no member named ‘Forces’
+/data/jls/tact/tact/pot/inc/potential.h:865:22: error: ‘class NFWSpherical’ has no member named ‘Forces’
+/data/jls/tact/tact/pot/inc/potential.h:881:40: error: ‘Forces’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h:882:27: error: ‘BulgeForces’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h:883:26: error: ‘DiscForces’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h:884:25: error: ‘NFWForces’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h: At global scope:
+/data/jls/tact/tact/pot/inc/potential.h:895:16: error: variable or field ‘vec2torus’ declared void
+/data/jls/tact/tact/pot/inc/potential.h:895:16: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h:895:29: error: expected primary-expression before ‘&’ token
+/data/jls/tact/tact/pot/inc/potential.h:895:30: error: ‘C’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/potential.h:899:1: error: ‘VecDoub’ does not name a type
+In file included from /data/jls/tact/tact/aa/inc/aa.h:44:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+/data/jls/tact/tact/pot/inc/orbit.h:43:15: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/orbit.h:43:22: error: template argument 1 is invalid
+/data/jls/tact/tact/pot/inc/orbit.h:43:22: error: template argument 2 is invalid
+/data/jls/tact/tact/pot/inc/orbit.h:48:15: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/pot/inc/orbit.h:48:22: error: template argument 1 is invalid
+/data/jls/tact/tact/pot/inc/orbit.h:48:22: error: template argument 2 is invalid
+/data/jls/tact/tact/pot/inc/orbit.h:51:11: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/orbit.h:52:29: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/orbit.h:52:38: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/pot/inc/orbit.h:79:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/orbit.h:80:22: error: ‘VecDoub’ has not been declared
+/data/jls/tact/tact/pot/inc/orbit.h:106:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/pot/inc/orbit.h:107:13: error: ‘VecDoub’ has not been declared
+/data/jls/tact/tact/pot/inc/orbit.h:107:23: error: ‘VecDoub’ has not been declared
+In file included from /data/jls/tact/tact/aa/inc/uv_orb.h:33:0,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+/data/jls/tact/tact/aa/inc/aa.h:54:24: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/aa.h:59:9: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/aa.h:60:12: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/aa.h:61:24: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/aa.h:74:1: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/aa.h:75:1: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/aa.h:79:24: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/aa.h:79:33: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/aa/inc/aa.h:79:36: error: ‘VecDoub’ has not been declared
+/data/jls/tact/tact/aa/inc/aa.h:83:23: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/aa.h:83:32: error: ISO C++ forbids declaration of ‘x’ with no type [-fpermissive]
+/data/jls/tact/tact/aa/inc/aa.h:83:35: error: ‘VecDoub’ has not been declared
+/data/jls/tact/tact/aa/inc/aa.h:94:1: error: ‘VecDoub’ does not name a type
+In file included from /data/jls/tact/tact/aa/inc/tables_aa.h:33:0,
+                 from src//edf_sampling.cpp:2:
+/data/jls/tact/tact/aa/inc/uv_orb.h:44:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/uv_orb.h:45:15: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/aa/inc/uv_orb.h:45:22: error: template argument 1 is invalid
+/data/jls/tact/tact/aa/inc/uv_orb.h:45:22: error: template argument 2 is invalid
+/data/jls/tact/tact/aa/inc/uv_orb.h:46:15: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/aa/inc/uv_orb.h:46:22: error: template argument 1 is invalid
+/data/jls/tact/tact/aa/inc/uv_orb.h:46:22: error: template argument 2 is invalid
+/data/jls/tact/tact/aa/inc/uv_orb.h:109:3: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/uv_orb.h:118:3: error: ‘VecDoub’ does not name a type
+In file included from /data/jls/tact/tact/aa/inc/tables_aa.h:36:0,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from src//edf_sampling.cpp:2:0:
+/data/jls/tact/tact/aa/inc/tables_aa.h:55:5: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/tables_aa.h:56:5: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/tables_aa.h:57:5: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/tables_aa.h:58:5: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/tables_aa.h:59:5: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/tables_aa.h:60:5: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/tables_aa.h:64:17: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/aa/inc/tables_aa.h:64:24: error: template argument 1 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:64:24: error: template argument 2 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:65:17: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/aa/inc/tables_aa.h:65:24: error: template argument 1 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:65:24: error: template argument 2 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:66:29: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/aa/inc/tables_aa.h:66:29: error: template argument 1 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:66:29: error: template argument 2 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:66:36: error: template argument 1 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:66:36: error: template argument 2 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:67:29: error: ‘VecDoub’ was not declared in this scope
+/data/jls/tact/tact/aa/inc/tables_aa.h:67:29: error: template argument 1 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:67:29: error: template argument 2 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:67:36: error: template argument 1 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:67:36: error: template argument 2 is invalid
+/data/jls/tact/tact/aa/inc/tables_aa.h:69:24: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/tables_aa.h:69:33: error: ISO C++ forbids declaration of ‘uv’ with no type [-fpermissive]
+/data/jls/tact/tact/aa/inc/tables_aa.h:73:5: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/tables_aa.h:74:22: error: ‘VecDoub’ has not been declared
+In file included from src//edf_sampling.cpp:2:0:
+/data/jls/tact/tact/aa/inc/tables_aa.h:100:5: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/tables_aa.h:105:24: error: ‘VecDoub’ does not name a type
+/data/jls/tact/tact/aa/inc/tables_aa.h:105:33: error: ISO C++ forbids declaration of ‘uv’ with no type [-fpermissive]
+/data/jls/tact/tact/aa/inc/tables_aa.h:148:5: error: ‘VecDoub’ does not name a type
+In file included from src//edf_sampling.cpp:2:0:
+/data/jls/tact/tact/aa/inc/tables_aa.h:46:37: error: ‘SMALL’ was not declared in this scope
+In file included from src//edf_sampling.cpp:2:0:
+/data/jls/tact/tact/aa/inc/tables_aa.h:169:33: error: expected ‘)’ before ‘X’
+In file included from ../isochrone/inc/utils_iso.h:17:0,
+                 from ../isochrone/inc/iso_base.h:4,
+                 from ../isochrone/inc/iso_grid.h:5,
+                 from src//edf_sampling.cpp:4:
+../isochrone/inc/../../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from ../isochrone/inc/utils_iso.h:18:0,
+                 from ../isochrone/inc/iso_base.h:4,
+                 from ../isochrone/inc/iso_grid.h:5,
+                 from src//edf_sampling.cpp:4:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from ../isochrone/inc/iso_base.h:4:0,
+                 from ../isochrone/inc/iso_grid.h:5,
+                 from src//edf_sampling.cpp:4:
+../isochrone/inc/utils_iso.h:53:1: error: ‘VecDoub’ does not name a type
+../isochrone/inc/utils_iso.h:63:1: error: ‘VecDoub’ does not name a type
+../isochrone/inc/utils_iso.h:70:18: error: ‘VecDoub’ was not declared in this scope
+../isochrone/inc/utils_iso.h:89:30: error: ‘VecDoub’ does not name a type
+../isochrone/inc/utils_iso.h:89:39: error: ISO C++ forbids declaration of ‘a’ with no type [-fpermissive]
+../isochrone/inc/utils_iso.h:89:48: error: ‘VecDoub’ does not name a type
+../isochrone/inc/utils_iso.h:89:57: error: ISO C++ forbids declaration of ‘b’ with no type [-fpermissive]
+In file included from ../isochrone/inc/extinction.h:4:0,
+                 from ../isochrone/inc/iso_base.h:5,
+                 from ../isochrone/inc/iso_grid.h:5,
+                 from src//edf_sampling.cpp:4:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from ../isochrone/inc/iso_base.h:5:0,
+                 from ../isochrone/inc/iso_grid.h:5,
+                 from src//edf_sampling.cpp:4:
+../isochrone/inc/extinction.h:34:5: error: ‘VecDoub’ does not name a type
+../isochrone/inc/extinction.h:89:5: error: ‘VecDoub’ does not name a type
+../isochrone/inc/extinction.h:90:29: error: ‘VecDoub’ was not declared in this scope
+../isochrone/inc/extinction.h:90:29: error: template argument 1 is invalid
+../isochrone/inc/extinction.h:90:29: error: template argument 2 is invalid
+../isochrone/inc/extinction.h:90:36: error: template argument 1 is invalid
+../isochrone/inc/extinction.h:90:36: error: template argument 2 is invalid
+../isochrone/inc/extinction.h:104:5: error: ‘VecDoub’ does not name a type
+../isochrone/inc/extinction.h:126:44: error: ‘VecDoub’ has not been declared
+../isochrone/inc/extinction.h:126:56: error: ‘StandardSolarPAUL’ is not a member of ‘conv’
+../isochrone/inc/extinction.h:150:5: error: ‘VecDoub’ does not name a type
+In file included from ../isochrone/inc/iso_grid.h:5:0,
+                 from src//edf_sampling.cpp:4:
+../isochrone/inc/iso_base.h:20:31: error: ‘VecDoub’ was not declared in this scope
+../isochrone/inc/iso_base.h:20:38: error: template argument 2 is invalid
+../isochrone/inc/iso_base.h:20:38: error: template argument 4 is invalid
+../isochrone/inc/iso_base.h:20:47: error: invalid type in declaration before ‘;’ token
+../isochrone/inc/iso_base.h:32:9: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_base.h:33:9: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_base.h:36:9: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_base.h:38:9: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_base.h:58:9: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_base.h:79:9: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_base.h: In member function ‘double isochrone::initial_mass(int)’:
+../isochrone/inc/iso_base.h:56:17: error: ‘InitialMass’ was not declared in this scope
+../isochrone/inc/iso_base.h: In member function ‘double isochrone::mass(int)’:
+../isochrone/inc/iso_base.h:62:17: error: ‘Mass’ was not declared in this scope
+../isochrone/inc/iso_base.h: In member function ‘double isochrone::logTeff(int)’:
+../isochrone/inc/iso_base.h:65:17: error: ‘Teff’ was not declared in this scope
+../isochrone/inc/iso_base.h: In member function ‘double isochrone::logg(int)’:
+../isochrone/inc/iso_base.h:68:17: error: ‘Logg’ was not declared in this scope
+../isochrone/inc/iso_base.h: In member function ‘double isochrone::maxmass()’:
+../isochrone/inc/iso_base.h:74:17: error: ‘InitialMass’ was not declared in this scope
+../isochrone/inc/iso_base.h: In member function ‘double isochrone::minmass()’:
+../isochrone/inc/iso_base.h:77:17: error: ‘InitialMass’ was not declared in this scope
+../isochrone/inc/iso_base.h: In member function ‘double isochrone::age_fraction(int)’:
+../isochrone/inc/iso_base.h:83:20: error: ‘es’ was not declared in this scope
+../isochrone/inc/iso_base.h: In member function ‘void isochrone::set_maxage(unsigned int, double)’:
+../isochrone/inc/iso_base.h:86:13: error: ‘es’ was not declared in this scope
+../isochrone/inc/iso_base.h: In member function ‘double isochrone::delta_mass(int)’:
+../isochrone/inc/iso_base.h:98:33: error: ‘InitialMass’ was not declared in this scope
+../isochrone/inc/iso_base.h:99:42: error: ‘InitialMass’ was not declared in this scope
+../isochrone/inc/iso_base.h:100:25: error: ‘InitialMass’ was not declared in this scope
+../isochrone/inc/iso_base.h: In member function ‘double isochrone::mag(int, std::string)’:
+../isochrone/inc/iso_base.h:103:28: error: no match for ‘operator[]’ in ‘((isochrone*)this)->isochrone::mags[mag]’
+../isochrone/inc/iso_base.h: In member function ‘double isochrone::colour(int, std::vector<std::basic_string<char> >)’:
+../isochrone/inc/iso_base.h:106:34: error: no match for ‘operator[]’ in ‘((isochrone*)this)->isochrone::mags[colour.std::vector<_Tp, _Alloc>::operator[]<std::basic_string<char>, std::allocator<std::basic_string<char> > >(0ul)]’
+../isochrone/inc/iso_base.h:106:53: error: no match for ‘operator[]’ in ‘((isochrone*)this)->isochrone::mags[colour.std::vector<_Tp, _Alloc>::operator[]<std::basic_string<char>, std::allocator<std::basic_string<char> > >(1ul)]’
+../isochrone/inc/iso_base.h: In member function ‘double isochrone::distance(int, double, std::string)’:
+../isochrone/inc/iso_base.h:109:41: error: no match for ‘operator[]’ in ‘((isochrone*)this)->isochrone::mags[mag]’
+In file included from ../isochrone/inc/iso_grid.h:6:0,
+                 from src//edf_sampling.cpp:4:
+../isochrone/inc/iso_basti.h: At global scope:
+../isochrone/inc/iso_basti.h:8:11: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_basti.h:9:11: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_basti.h:10:11: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_basti.h:13:11: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_basti.h:14:11: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_basti.h:15:11: error: ‘VecDoub’ does not name a type
+In file included from ../isochrone/inc/iso_grid.h:7:0,
+                 from src//edf_sampling.cpp:4:
+../isochrone/inc/iso_dartmouth.h:8:11: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_dartmouth.h:9:11: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_dartmouth.h:10:11: error: ‘VecDoub’ does not name a type
+In file included from ../isochrone/inc/iso_grid.h:7:0,
+                 from src//edf_sampling.cpp:4:
+../isochrone/inc/iso_dartmouth.h:11:11: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_dartmouth.h:12:11: error: ‘VecDoub’ does not name a type
+In file included from src//edf_sampling.cpp:4:0:
+../isochrone/inc/iso_grid.h:23:9: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_grid.h:24:21: error: ‘VecDoub’ was not declared in this scope
+../isochrone/inc/iso_grid.h:24:28: error: template argument 1 is invalid
+../isochrone/inc/iso_grid.h:24:28: error: template argument 2 is invalid
+../isochrone/inc/iso_grid.h:83:9: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_grid.h:84:9: error: ‘VecDoub’ does not name a type
+../isochrone/inc/iso_grid.h: In member function ‘double isochrone_grid<isochrone_g>::delta_age(int)’:
+../isochrone/inc/iso_grid.h:41:39: error: ‘agegrid’ was not declared in this scope
+../isochrone/inc/iso_grid.h:42:42: error: ‘agegrid’ was not declared in this scope
+../isochrone/inc/iso_grid.h:43:31: error: ‘agegrid’ was not declared in this scope
+../isochrone/inc/iso_grid.h: In member function ‘double isochrone_grid<isochrone_g>::delta_Z(int)’:
+../isochrone/inc/iso_grid.h:52:39: error: ‘fehgrid’ was not declared in this scope
+../isochrone/inc/iso_grid.h:53:42: error: ‘fehgrid’ was not declared in this scope
+../isochrone/inc/iso_grid.h:54:31: error: ‘fehgrid’ was not declared in this scope
+In file included from ../isochrone/inc/distances.h:5:0,
+                 from src//edf_sampling.cpp:5:
+../isochrone/inc/prior.h: At global scope:
+../isochrone/inc/prior.h:8:30: error: ‘VecDoub’ has not been declared
+../isochrone/inc/prior.h:11:30: error: ‘VecDoub’ has not been declared
+../isochrone/inc/prior.h:14:36: error: ‘VecDoub’ has not been declared
+../isochrone/inc/prior.h:17:36: error: ‘VecDoub’ has not been declared
+../isochrone/inc/prior.h: In member function ‘virtual double galaxy_prior::prior_polar(int, double, double)’:
+../isochrone/inc/prior.h:15:32: error: invalid types ‘int[int]’ for array subscript
+../isochrone/inc/prior.h:15:43: error: invalid types ‘int[int]’ for array subscript
+../isochrone/inc/prior.h:15:51: error: invalid types ‘int[int]’ for array subscript
+../isochrone/inc/prior.h:15:62: error: invalid types ‘int[int]’ for array subscript
+../isochrone/inc/prior.h:15:70: error: invalid types ‘int[int]’ for array subscript
+../isochrone/inc/prior.h:15:78: error: no matching function for call to ‘galaxy_prior::prior(<brace-enclosed initializer list>, double&, double&)’
+../isochrone/inc/prior.h:15:78: note: candidates are:
+../isochrone/inc/prior.h:8:24: note: virtual double galaxy_prior::prior(int, double, double)
+../isochrone/inc/prior.h:8:24: note:   no known conversion for argument 1 from ‘<brace-enclosed initializer list>’ to ‘int’
+../isochrone/inc/prior.h:11:24: note: virtual double galaxy_prior::prior(int, double, double, double)
+../isochrone/inc/prior.h:11:24: note:   candidate expects 4 arguments, 3 provided
+../isochrone/inc/prior.h: At global scope:
+../isochrone/inc/prior.h:48:18: error: ‘VecDoub’ has not been declared
+../isochrone/inc/prior.h:76:18: error: ‘VecDoub’ has not been declared
+../isochrone/inc/prior.h:77:18: error: ‘VecDoub’ has not been declared
+../isochrone/inc/prior.h:130:24: error: ‘VecDoub’ has not been declared
+../isochrone/inc/prior.h:131:18: error: ‘VecDoub’ has not been declared
+../isochrone/inc/prior.h:116:36: error: ‘PI’ was not declared in this scope
+In file included from src//edf_sampling.cpp:5:0:
+../isochrone/inc/distances.h:7:28: error: ‘ND_GFunction’ declared as an ‘inline’ variable
+../isochrone/inc/distances.h:7:28: error: ‘VecDoub’ was not declared in this scope
+../isochrone/inc/distances.h:7:43: error: ‘MatDoub’ was not declared in this scope
+../isochrone/inc/distances.h:7:57: error: expected primary-expression before ‘double’
+../isochrone/inc/distances.h:7:67: error: expression list treated as compound expression in initializer [-fpermissive]
+../isochrone/inc/distances.h:7:68: error: expected ‘,’ or ‘;’ before ‘{’ token
+../isochrone/inc/distances.h: In function ‘double logGFunction(double, double)’:
+../isochrone/inc/distances.h:13:23: error: ‘PI’ was not declared in this scope
+../isochrone/inc/distances.h: At global scope:
+../isochrone/inc/distances.h:16:31: error: ‘logND_GFunction’ declared as an ‘inline’ variable
+../isochrone/inc/distances.h:16:31: error: ‘VecDoub’ was not declared in this scope
+../isochrone/inc/distances.h:16:46: error: ‘MatDoub’ was not declared in this scope
+../isochrone/inc/distances.h:16:60: error: expected primary-expression before ‘double’
+../isochrone/inc/distances.h:16:70: error: expression list treated as compound expression in initializer [-fpermissive]
+../isochrone/inc/distances.h:16:71: error: expected ‘,’ or ‘;’ before ‘{’ token
+../isochrone/inc/distances.h:42:46: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:42:59: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:42:75: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:42:88: error: ‘VecDoub’ has not been declared
+In file included from src//edf_sampling.cpp:5:0:
+../isochrone/inc/distances.h:56:37: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:56:50: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:56:70: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:56:83: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:73:25: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:73:38: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:73:51: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:73:65: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:73:91: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:73:104: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:75:28: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:75:41: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:75:54: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:75:68: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:75:94: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:75:107: error: ‘VecDoub’ has not been declared
+../isochrone/inc/distances.h:108:5: error: ‘VecDoub’ does not name a type
+In file included from src//edf_sampling.cpp:5:0:
+../isochrone/inc/distances.h:139:5: error: ‘VecDoub’ does not name a type
+../isochrone/inc/distances.h:168:5: error: ‘VecDoub’ does not name a type
+../isochrone/inc/distances.h:203:6: error: ‘VecDoub’ does not name a type
+In file included from ../edf/inc/edf.h:5:0,
+                 from src//edf_sampling.cpp:6:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from ../edf/inc/edf_base.h:4:0,
+                 from ../edf/inc/edf.h:11,
+                 from src//edf_sampling.cpp:6:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from ../edf/inc/edf.h:11:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/edf_base.h:20:12: error: ‘VecDoub’ does not name a type
+../edf/inc/edf_base.h:21:17: error: ‘VecDoub’ has not been declared
+../edf/inc/edf_base.h: In constructor ‘DF_st::DF_st(edf*, int)’:
+../edf/inc/edf_base.h:22:14: error: class ‘DF_st’ does not have any field named ‘acts’
+In file included from ../edf/inc/metal_relation.h:6:0,
+                 from ../edf/inc/edf.h:12,
+                 from src//edf_sampling.cpp:6:
+../utils.h: At global scope:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from ../edf/inc/metal_relation.h:9:0,
+                 from ../edf/inc/edf.h:12,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/rad_mig.h:19:13: error: ‘VecDoub’ has not been declared
+../edf/inc/rad_mig.h: In member function ‘void RadialMigration::reset(int, Potential_JS*, double, double, double)’:
+../edf/inc/rad_mig.h:20:21: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/rad_mig.h:20:40: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/rad_mig.h:21:18: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/rad_mig.h:21:33: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/rad_mig.h:22:13: error: request for member ‘size’ in ‘params’, which is of non-class type ‘int’
+../edf/inc/rad_mig.h:22:35: error: invalid types ‘int[int]’ for array subscript
+In file included from ../edf/inc/edf.h:12:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/metal_relation.h: At global scope:
+../edf/inc/metal_relation.h:17:13: error: ‘VecDoub’ has not been declared
+../edf/inc/metal_relation.h: In member function ‘void metal_relation::reset(int)’:
+../edf/inc/metal_relation.h:18:20: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/metal_relation.h:18:39: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/metal_relation.h:18:60: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/metal_relation.h:19:16: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/metal_relation.h:19:33: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/metal_relation.h: At global scope:
+../edf/inc/metal_relation.h:136:13: error: ‘VecDoub’ has not been declared
+../edf/inc/metal_relation.h: In member function ‘void alpha_relation::reset(int)’:
+../edf/inc/metal_relation.h:137:18: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/metal_relation.h:137:38: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/metal_relation.h:137:56: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/metal_relation.h:138:15: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/metal_relation.h:138:31: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/metal_relation.h:138:45: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/metal_relation.h: In member function ‘double alpha_relation::Alpha(double, double)’:
+../edf/inc/metal_relation.h:144:29: error: ‘StandardSolar’ is not a member of ‘conv’
+In file included from ../edf/inc/sfr.h:6:0,
+                 from ../edf/inc/edf.h:14,
+                 from src//edf_sampling.cpp:6:
+../utils.h: At global scope:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from ../edf/inc/edf.h:14:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/sfr.h:23:21: error: ‘VecDoub’ has not been declared
+../edf/inc/sfr.h:34:13: error: ‘VecDoub’ has not been declared
+../edf/inc/sfr.h:45:2: error: ‘VecDoub’ does not name a type
+../edf/inc/sfr.h:47:21: error: expected ‘)’ before ‘vals1’
+../edf/inc/sfr.h:62:13: error: ‘VecDoub’ has not been declared
+../edf/inc/sfr.h:65:13: error: ‘VecDoub’ has not been declared
+In file included from ../edf/inc/edf.h:15:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/thin_disc.h:20:2: error: ‘VecDoub’ does not name a type
+In file included from ../edf/inc/edf.h:15:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/thin_disc.h:28:133: error: ‘VecDoub’ has not been declared
+../edf/inc/thin_disc.h:43:17: error: ‘VecDoub’ has not been declared
+../edf/inc/thin_disc.h:64:30: error: ‘VecDoub’ does not name a type
+../edf/inc/thin_disc.h:64:39: error: ISO C++ forbids declaration of ‘Actions’ with no type [-fpermissive]
+../edf/inc/thin_disc.h:65:30: error: ‘VecDoub’ does not name a type
+../edf/inc/thin_disc.h:65:39: error: ISO C++ forbids declaration of ‘Actions’ with no type [-fpermissive]
+../edf/inc/thin_disc.h:66:27: error: ‘VecDoub’ does not name a type
+../edf/inc/thin_disc.h:66:36: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+../edf/inc/thin_disc.h:67:23: error: ‘VecDoub’ does not name a type
+../edf/inc/thin_disc.h:67:32: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+../edf/inc/thin_disc.h:68:25: error: ‘VecDoub’ does not name a type
+../edf/inc/thin_disc.h:68:34: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+../edf/inc/thin_disc.h:69:24: error: ‘VecDoub’ has not been declared
+../edf/inc/thin_disc.h: In constructor ‘thin_disc_edf::thin_disc_edf(Potential_JS*, Actions_AxisymmetricFudge_InterpTables*, metal_relation*, SFR_base*, RadialMigration*, int, int)’:
+../edf/inc/thin_disc.h:30:15: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:30:33: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:30:51: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:31:19: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:31:36: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:31:53: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:32:19: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:32:37: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:32:92: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:36:18: error: ‘PI’ was not declared in this scope
+../edf/inc/thin_disc.h: In member function ‘void thin_disc_edf::setParams(int)’:
+../edf/inc/thin_disc.h:44:16: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:44:37: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:45:18: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:45:37: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:46:13: error: request for member ‘size’ in ‘params’, which is of non-class type ‘int’
+../edf/inc/thin_disc.h:47:18: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:47:36: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:48:19: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:48:38: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:49:18: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:49:39: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:50:21: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h:50:47: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thin_disc.h: In member function ‘double thin_disc_edf::SigmaRthin(double, double)’:
+../edf/inc/thin_disc.h:59:64: error: ‘StandardSolar’ was not declared in this scope
+../edf/inc/thin_disc.h: In member function ‘double thin_disc_edf::SigmaZthin(double, double)’:
+../edf/inc/thin_disc.h:62:68: error: ‘StandardSolar’ was not declared in this scope
+../edf/inc/thin_disc.h: In member function ‘void thin_disc_edf::setStandardSolar(int)’:
+../edf/inc/thin_disc.h:69:36: error: ‘StandardSolar’ was not declared in this scope
+In file included from ../edf/inc/edf.h:16:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/thick_disc.h: At global scope:
+../edf/inc/thick_disc.h:19:2: error: ‘VecDoub’ does not name a type
+In file included from ../edf/inc/edf.h:16:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/thick_disc.h:27:134: error: ‘VecDoub’ has not been declared
+In file included from ../edf/inc/edf.h:16:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/thick_disc.h:41:17: error: ‘VecDoub’ has not been declared
+../edf/inc/thick_disc.h:60:30: error: ‘VecDoub’ does not name a type
+../edf/inc/thick_disc.h:60:39: error: ISO C++ forbids declaration of ‘Actions’ with no type [-fpermissive]
+../edf/inc/thick_disc.h:61:30: error: ‘VecDoub’ does not name a type
+../edf/inc/thick_disc.h:61:39: error: ISO C++ forbids declaration of ‘Actions’ with no type [-fpermissive]
+../edf/inc/thick_disc.h:62:27: error: ‘VecDoub’ does not name a type
+../edf/inc/thick_disc.h:62:36: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+../edf/inc/thick_disc.h:63:23: error: ‘VecDoub’ does not name a type
+../edf/inc/thick_disc.h:63:32: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+../edf/inc/thick_disc.h:64:25: error: ‘VecDoub’ does not name a type
+../edf/inc/thick_disc.h:64:34: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+../edf/inc/thick_disc.h:65:24: error: ‘VecDoub’ has not been declared
+In file included from ../edf/inc/edf.h:16:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/thick_disc.h: In constructor ‘thick_disc_edf::thick_disc_edf(Potential_JS*, Actions_AxisymmetricFudge_InterpTables*, metal_relation*, SFR_base*, RadialMigration*, int, int)’:
+../edf/inc/thick_disc.h:27:221: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:27:239: error: invalid types ‘int[int]’ for array subscript
+In file included from ../edf/inc/edf.h:16:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/thick_disc.h:27:257: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:27:275: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:27:292: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:27:309: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:34:18: error: ‘PI’ was not declared in this scope
+../edf/inc/thick_disc.h: In member function ‘void thick_disc_edf::setParams(int)’:
+../edf/inc/thick_disc.h:42:16: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:42:37: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:43:18: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:43:37: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:44:13: error: request for member ‘size’ in ‘params’, which is of non-class type ‘int’
+../edf/inc/thick_disc.h:45:18: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:45:35: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:46:20: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:46:37: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:47:20: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:47:39: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h:48:20: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/thick_disc.h: In member function ‘void thick_disc_edf::setStandardSolar(int)’:
+../edf/inc/thick_disc.h:65:36: error: ‘StandardSolar’ was not declared in this scope
+In file included from ../edf/inc/edf.h:17:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/halo.h: At global scope:
+../edf/inc/halo.h:15:74: error: ‘VecDoub’ has not been declared
+In file included from ../edf/inc/edf.h:17:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/halo.h:16:17: error: ‘VecDoub’ has not been declared
+../edf/inc/halo.h:27:30: error: ‘VecDoub’ does not name a type
+../edf/inc/halo.h:27:39: error: ISO C++ forbids declaration of ‘Actions’ with no type [-fpermissive]
+../edf/inc/halo.h:28:27: error: ‘VecDoub’ does not name a type
+../edf/inc/halo.h:28:36: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+../edf/inc/halo.h:30:28: error: ‘VecDoub’ does not name a type
+../edf/inc/halo.h:30:37: error: ISO C++ forbids declaration of ‘Actions’ with no type [-fpermissive]
+../edf/inc/halo.h:31:35: error: ‘VecDoub’ does not name a type
+../edf/inc/halo.h:31:44: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+In file included from ../edf/inc/edf.h:17:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/halo.h: In constructor ‘halo_edf::halo_edf(Potential_JS*, Actions_AxisymmetricFudge_InterpTables*, int)’:
+../edf/inc/halo.h:15:114: error: invalid types ‘int[int]’ for array subscript
+In file included from ../edf/inc/edf.h:17:0,
+                 from src//edf_sampling.cpp:6:
+../edf/inc/halo.h:15:131: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:15:151: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h: In member function ‘void halo_edf::setParams(int)’:
+../edf/inc/halo.h:17:16: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:17:36: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:18:20: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:19:13: error: request for member ‘size’ in ‘params’, which is of non-class type ‘int’
+../edf/inc/halo.h:20:15: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:20:33: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:21:15: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:21:39: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:22:15: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:22:37: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:23:15: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:23:41: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:24:15: error: invalid types ‘int[int]’ for array subscript
+../edf/inc/halo.h:24:43: error: invalid types ‘int[int]’ for array subscript
+In file included from src//edf_sampling.cpp:6:0:
+../edf/inc/edf.h: At global scope:
+../edf/inc/edf.h:27:2: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:39:75: error: ‘VecDoub’ has not been declared
+In file included from src//edf_sampling.cpp:6:0:
+../edf/inc/edf.h:39:160: error: ‘VecDoub’ has not been declared
+../edf/inc/edf.h:41:9: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:45:30: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:45:39: error: ISO C++ forbids declaration of ‘Actions’ with no type [-fpermissive]
+../edf/inc/edf.h:46:32: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:46:41: error: ISO C++ forbids declaration of ‘Actions’ with no type [-fpermissive]
+../edf/inc/edf.h:47:30: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:47:39: error: ISO C++ forbids declaration of ‘Actions’ with no type [-fpermissive]
+../edf/inc/edf.h:48:27: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:48:36: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+../edf/inc/edf.h:49:40: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:49:49: error: ISO C++ forbids declaration of ‘Actions’ with no type [-fpermissive]
+../edf/inc/edf.h:50:37: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:50:46: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+../edf/inc/edf.h:51:23: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:51:32: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+../edf/inc/edf.h:52:25: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:52:34: error: ISO C++ forbids declaration of ‘X’ with no type [-fpermissive]
+../edf/inc/edf.h:61:17: error: ‘VecDoub’ has not been declared
+../edf/inc/edf.h:65:2: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:97:48: error: ‘VecDoub’ has not been declared
+../edf/inc/edf.h:102:2: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:104:2: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:39:158: error: default argument for parameter of type ‘int’ has type ‘<brace-enclosed initializer list>’
+../edf/inc/edf.h:39:182: error: ‘StandardSolarPAUL’ is not a member of ‘conv’
+../edf/inc/edf.h:97:70: error: default argument for parameter of type ‘int’ has type ‘<brace-enclosed initializer list>’
+../edf/inc/edf.h:109:2: error: ‘VecDoub’ does not name a type
+../edf/inc/edf.h:111:33: error: ‘VecDoub’ has not been declared
+../edf/inc/edf.h:111:48: error: ‘VecDoub’ has not been declared
+../edf/inc/edf.h: In constructor ‘edf_norm_struct::edf_norm_struct(sb15_edf*, int, int, double)’:
+../edf/inc/edf.h:112:13: error: class ‘edf_norm_struct’ does not have any field named ‘x2min’
+../edf/inc/edf.h:112:26: error: class ‘edf_norm_struct’ does not have any field named ‘x2max’
+../edf/inc/edf.h: At global scope:
+../edf/inc/edf.h:117:56: error: ‘VecDoub’ has not been declared
+../edf/inc/edf.h:117:69: error: ‘VecDoub’ has not been declared
+../edf/inc/edf.h:123:64: error: ‘VecDoub’ has not been declared
+../edf/inc/edf.h:123:77: error: ‘VecDoub’ has not been declared
+../edf/inc/edf.h:129:80: error: ‘VecDoub’ has not been declared
+../edf/inc/edf.h:129:93: error: ‘VecDoub’ has not been declared
+../edf/inc/edf.h:133:167: error: ‘VecDoub’ was not declared in this scope
+../edf/inc/edf.h:133:174: error: template argument 1 is invalid
+../edf/inc/edf.h:133:174: error: template argument 2 is invalid
+../edf/inc/edf.h:134:1: error: ‘VecDoub’ does not name a type
+In file included from inc/sf.h:6:0,
+                 from src//edf_sampling.cpp:7:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from src//edf_sampling.cpp:7:0:
+inc/sf.h:27:5: error: ‘VecDoub’ does not name a type
+In file included from src//edf_sampling.cpp:7:0:
+inc/sf.h: In member function ‘virtual double Binned_selection_function::min_mag()’:
+inc/sf.h:38:41: error: ‘mag_edges’ was not declared in this scope
+inc/sf.h: In member function ‘virtual double Binned_selection_function::max_mag()’:
+inc/sf.h:39:41: error: ‘mag_edges’ was not declared in this scope
+inc/sf.h: At global scope:
+inc/sf.h:48:55: error: ‘VecInt’ has not been declared
+inc/sf.h:48:69: error: ‘VecDoub’ has not been declared
+inc/sf.h:48:85: error: ‘VecDoub’ has not been declared
+inc/sf.h:48:119: error: ‘VecInt’ has not been declared
+inc/sf.h: In constructor ‘Hybrid_Binned_selection_function::Hybrid_Binned_selection_function(double, int, int, int, std::string, int, std::vector<std::basic_string<char> >)’:
+inc/sf.h:50:46: error: invalid types ‘int[int]’ for array subscript
+inc/sf.h:50:56: error: invalid types ‘int[int]’ for array subscript
+inc/sf.h:50:66: error: invalid types ‘int[int]’ for array subscript
+inc/sf.h:50:80: error: invalid types ‘int[int]’ for array subscript
+inc/sf.h:51:47: error: invalid types ‘int[int]’ for array subscript
+inc/sf.h:51:57: error: invalid types ‘int[int]’ for array subscript
+inc/sf.h:51:67: error: invalid types ‘int[int]’ for array subscript
+inc/sf.h:51:81: error: invalid types ‘int[int]’ for array subscript
+In file included from src//edf_sampling.cpp:8:0:
+inc/sf_impl.h: In constructor ‘Tycho2_selection_function::Tycho2_selection_function()’:
+inc/sf_impl.h:42:178: error: no matching function for call to ‘Hybrid_Binned_selection_function::Hybrid_Binned_selection_function(double, <brace-enclosed initializer list>, <brace-enclosed initializer list>, <brace-enclosed initializer list>, const char [2], <brace-enclosed initializer list>, <brace-enclosed initializer list>)’
+inc/sf_impl.h:42:178: note: candidates are:
+In file included from src//edf_sampling.cpp:7:0:
+inc/sf.h:48:5: note: Hybrid_Binned_selection_function::Hybrid_Binned_selection_function(double, int, int, int, std::string, int, std::vector<std::basic_string<char> >)
+inc/sf.h:48:5: note:   no known conversion for argument 2 from ‘<brace-enclosed initializer list>’ to ‘int’
+inc/sf.h:42:7: note: Hybrid_Binned_selection_function::Hybrid_Binned_selection_function(Hybrid_Binned_selection_function&&)
+inc/sf.h:42:7: note:   candidate expects 1 argument, 7 provided
+In file included from src//edf_sampling.cpp:8:0:
+inc/sf_impl.h: In constructor ‘Tycho2RAVE_selection_function::Tycho2RAVE_selection_function()’:
+inc/sf_impl.h:57:194: error: no matching function for call to ‘Hybrid_Binned_selection_function::Hybrid_Binned_selection_function(double, <brace-enclosed initializer list>, <brace-enclosed initializer list>, <brace-enclosed initializer list>, const char [2], <brace-enclosed initializer list>, <brace-enclosed initializer list>)’
+inc/sf_impl.h:57:194: note: candidates are:
+In file included from src//edf_sampling.cpp:7:0:
+inc/sf.h:48:5: note: Hybrid_Binned_selection_function::Hybrid_Binned_selection_function(double, int, int, int, std::string, int, std::vector<std::basic_string<char> >)
+inc/sf.h:48:5: note:   no known conversion for argument 2 from ‘<brace-enclosed initializer list>’ to ‘int’
+inc/sf.h:42:7: note: Hybrid_Binned_selection_function::Hybrid_Binned_selection_function(Hybrid_Binned_selection_function&&)
+inc/sf.h:42:7: note:   candidate expects 1 argument, 7 provided
+In file included from src//edf_sampling.cpp:8:0:
+inc/sf_impl.h: In constructor ‘Tycho2RAVE_selection_function_I::Tycho2RAVE_selection_function_I()’:
+inc/sf_impl.h:72:200: error: no matching function for call to ‘Hybrid_Binned_selection_function::Hybrid_Binned_selection_function(double, <brace-enclosed initializer list>, <brace-enclosed initializer list>, <brace-enclosed initializer list>, const char [2], <brace-enclosed initializer list>, <brace-enclosed initializer list>)’
+inc/sf_impl.h:72:200: note: candidates are:
+In file included from src//edf_sampling.cpp:7:0:
+inc/sf.h:48:5: note: Hybrid_Binned_selection_function::Hybrid_Binned_selection_function(double, int, int, int, std::string, int, std::vector<std::basic_string<char> >)
+inc/sf.h:48:5: note:   no known conversion for argument 2 from ‘<brace-enclosed initializer list>’ to ‘int’
+inc/sf.h:42:7: note: Hybrid_Binned_selection_function::Hybrid_Binned_selection_function(Hybrid_Binned_selection_function&&)
+inc/sf.h:42:7: note:   candidate expects 1 argument, 7 provided
+In file included from ../chemevo/inc/utils_ch.h:9:0,
+                 from ../chemevo/inc/params.h:11,
+                 from ../chemevo/inc/imf.h:9,
+                 from inc/mass_function.h:22,
+                 from src//edf_sampling.cpp:9:
+../chemevo/inc/../../utils.h: At global scope:
+../chemevo/inc/../../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from ../chemevo/inc/utils_ch.h:10:0,
+                 from ../chemevo/inc/params.h:11,
+                 from ../chemevo/inc/imf.h:9,
+                 from inc/mass_function.h:22,
+                 from src//edf_sampling.cpp:9:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from ../chemevo/inc/ages.h:11:0,
+                 from inc/mass_function.h:23,
+                 from src//edf_sampling.cpp:9:
+../utils.h:11:20: error: redefinition of ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’
+In file included from /data/jls/tact/tact/aa/inc/aa.h:41:0,
+                 from /data/jls/tact/tact/aa/inc/uv_orb.h:33,
+                 from /data/jls/tact/tact/aa/inc/tables_aa.h:33,
+                 from src//edf_sampling.cpp:2:
+../utils.h:11:20: error: ‘template<class T, class ... Args> std::unique_ptr<T> make_unique(Args&& ...)’ previously declared here
+In file included from inc/mass_function.h:23:0,
+                 from src//edf_sampling.cpp:9:
+../chemevo/inc/ages.h:83:8: error: ‘VecDoub’ does not name a type
+../chemevo/inc/ages.h:85:2: error: ‘VecDoub’ does not name a type
+../chemevo/inc/ages.h:86:14: error: ‘VecDoub’ was not declared in this scope
+../chemevo/inc/ages.h:86:21: error: template argument 1 is invalid
+../chemevo/inc/ages.h:86:21: error: template argument 2 is invalid
+../chemevo/inc/ages.h:87:18: error: ‘interpolator2D’ was not declared in this scope
+../chemevo/inc/ages.h:87:32: error: template argument 1 is invalid
+In file included from src//edf_sampling.cpp:9:0:
+inc/mass_function.h:31:2: error: ‘VecDoub’ does not name a type
+src//edf_sampling.cpp:14:19: error: ‘VecDoub’ does not name a type
+src//edf_sampling.cpp:14:28: error: ISO C++ forbids declaration of ‘v’ with no type [-fpermissive]
+src//edf_sampling.cpp: In function ‘double dfsf(const int&, double*, double)’:
+src//edf_sampling.cpp:15:28: error: invalid types ‘const int[int]’ for array subscript
+src//edf_sampling.cpp:15:50: error: invalid types ‘const int[int]’ for array subscript
+src//edf_sampling.cpp:15:75: error: invalid types ‘const int[int]’ for array subscript
+src//edf_sampling.cpp: At global scope:
+src//edf_sampling.cpp:51:5: error: ‘VecDoub’ does not name a type
+src//edf_sampling.cpp: In function ‘void edf_sampling::setup(bool, bool)’:
+src//edf_sampling.cpp:97:9: error: ‘VecDoub’ was not declared in this scope
+src//edf_sampling.cpp:97:17: error: expected ‘;’ before ‘solar_motion’
+src//edf_sampling.cpp:116:44: error: ‘solar_motion’ was not declared in this scope
+src//edf_sampling.cpp: At global scope:
+src//edf_sampling.cpp:146:5: error: ‘VecDoub’ does not name a type
+src//edf_sampling.cpp:147:24: error: variable or field ‘set_params’ declared void
+src//edf_sampling.cpp:147:24: error: ‘VecDoub’ was not declared in this scope
+src//edf_sampling.cpp: In function ‘void edf_sampling::load_emap()’:
+src//edf_sampling.cpp:152:49: error: ‘StandardSolarPAUL’ is not a member of ‘conv’
+src//edf_sampling.cpp: At global scope:
+src//edf_sampling.cpp:155:5: error: ‘VecDoub’ does not name a type
+src//edf_sampling.cpp:155:177: error: expected unqualified-id before ‘,’ token
+src//edf_sampling.cpp:155:187: error: expected constructor, destructor, or type conversion before ‘Teffcut’
+src//edf_sampling.cpp:155:207: error: expected unqualified-id before ‘,’ token
+src//edf_sampling.cpp:155:217: error: expected constructor, destructor, or type conversion before ‘loggcut’
+src//edf_sampling.cpp:155:237: error: expected unqualified-id before ‘,’ token
+src//edf_sampling.cpp:155:246: error: expected constructor, destructor, or type conversion before ‘FeHcut’
+src//edf_sampling.cpp:155:263: error: expected unqualified-id before ‘)’ token
+src//edf_sampling.cpp:1289:1: error: expected ‘}’ at end of input
+make: *** [obj//edf_sampling.o] Error 1

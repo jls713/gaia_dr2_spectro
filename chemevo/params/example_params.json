@@ -1,0 +1,64 @@
+{
+"fundamentals":{
+	"MinimumMass": 0.5,
+	"MaximumMass": 100.0,
+	"SolarRadius":8.3,
+	"GalaxyAge": 12.0,
+	"IMF": "Kroupa",
+	"SFR": "SB15",
+	"lifetimes": "Portinari1998",
+	"PresentSFR":2.4,
+	"PresentInfallRate":10.0,
+	"StarScaleLength":3.2,
+	"GasScaleLength":4.5,
+	"InitialMetallicity":0.01,
+	"InitialGasDensitySun":70.0,
+	"PresentGasDensitySun":13.0,
+	"Kennicutt-Schmidt_Coeff":1.4
+	},
+"grids":{
+	"MinimumRadius": 0.5,
+	"MaximumRadius": 20.0,
+	"RadialGridPoints":10,
+	"AgeGridPoints":120
+},
+"yields":{
+	"typeIa":"Maeda",
+	"typeII":"Kobayashi",
+	"AGB":"Karakas",
+	"SuperAGB":"None"
+},
+"typeIa":{
+	"Form": "Matteucci2006",
+	"MinimumIaBinaryMass": 3.0,
+	"MaximumIaBinaryMass": 12.0,
+	"BinaryFraction": 0.0035
+},
+"typeII":{
+	"Min_typeII_SN_mass": 8.0
+},
+"migration":{
+	"Form":"None",
+	"sigmaR":5.0
+},
+"flows":{
+	"inflow":{
+		"Form":"Double",
+		"FastTimeScale":0.5,
+		"SlowTimeScale":8.0,
+		"Weight":0.5
+	},
+	"outflow":{
+		"Form":"SimpleGalacticFountain",
+		"Feject_in":0.15,
+		"Feject_out":0.0,
+		"TransitionRadius":3.5
+	},
+	"radialflow":{
+		"Form":"Linear",
+		"Gradient":-0.0
+	}
+},
+"elements":["O","Ca","Fe"],
+"data_folder":"/data/jls/chem_evo/"
+}

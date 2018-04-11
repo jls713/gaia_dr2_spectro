@@ -1,0 +1,1 @@
+R(i)/R(V) gradients computed for Teff=4500K, logg=2.5 Castelli & Kurucz model
