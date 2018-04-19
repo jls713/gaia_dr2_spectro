@@ -70,8 +70,9 @@ def load_spectrum(planid, lmjd, spid, fiberid):
 
     local_norm_location = '/data/jls/lamost/dr3_spectra/'
     if os.path.exists((local_norm_location + fldr + spectrum)[:-7] + 'hdf5'):
-        return pd.read_hdf(
-            (local_norm_location + fldr + spectrum)[:-7] + 'hdf5')
+	return
+#        return pd.read_hdf(
+#            (local_norm_location + fldr + spectrum)[:-7] + 'hdf5')
 
     hdr = fits.open(local_location + fldr + spectrum)[0].header
     data = fits.open(local_location + fldr + spectrum)[0].data.T
@@ -137,7 +138,7 @@ def generate_parent_sample():
     lamost_cm = lamost.iloc[c][d2 < 2. * u.arcsec].reset_index(drop=True)
     lamost_flds = ['obsid', 'planid', 'lmjd', 'fiberid', 'spid']
     apogee_flds = ['APOGEE_ID', 'TEFF', 'LOGG',
-                   'M_H', 'ALPHA_M', 'C_M', 'N_M', 'snr']
+                   'M_H', 'ALPHA_M', 'C_M', 'N_M', 'snr', 'AK']
     data = pd.concat((apogee_cm[apogee_flds], lamost_cm[lamost_flds]), axis=1)
     fltr = True
     for i in apogee_flds:
@@ -175,7 +176,7 @@ def run_cannon_model():
     flux[fltr] = 1.
     ivar[fltr] = 0.
 
-    labels = ['TEFF', 'LOGG', 'M_H', 'ALPHA_M', 'C_M', 'N_M']
+    labels = ['TEFF', 'LOGG', 'M_H', 'ALPHA_M', 'C_M', 'N_M', 'AK']
     test, cov, meta = \
         run_model(labelled_set, labels,
                   flux, ivar,
