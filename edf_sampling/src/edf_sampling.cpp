@@ -129,15 +129,15 @@ namespace edf_sampling{
     	// Load prior
     	auto prior_type = params["prior"];
         if(prior_type=="Binney"){
-            prior = make_unique<binney_prior>();
+            prior = make_unique<binney_prior>(solar_motion);
             std::cout<<"Binney 2014 prior loaded for EDF fitting\n";
         }
         if(prior_type=="2018"){
-            prior = make_unique<new_prior_2018>();
+            prior = make_unique<new_prior_2018>(solar_motion);
             std::cout<<"New 2018 prior loaded for EDF fitting\n";
         }
         else{
-            prior = make_unique<galaxy_prior>();
+            prior = make_unique<galaxy_prior>(solar_motion);
             std::cout<<"Flat prior loaded for EDF fitting\n";
         }
 

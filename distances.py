@@ -14,11 +14,12 @@ import isodist_js as isodist
 import edf_sampling as edf_sampling
 
 
-def init(types="All", wemap=False, mean_feh_err=1e-5):
+def init(types="All", wemap=False, mean_feh_err=1e-5,
+         solar_motion=np.array([8.2, 0.015, 11.1, 245., 7.25])):
     isodist.init_isochrone(types, 1, mean_feh_err)
     if(wemap):
         isodist.load_emap()
-    isodist.load_prior("2018")
+    isodist.load_prior("2018", solar_motion)
     edf_sampling.setup(False, False)
 
 
@@ -113,7 +114,10 @@ def process_single_distance(input_data, w, prior, with_parallax, with_mass, i):
             distances[3:] = np.nan
             X[-1] = 1
         else:
-            X = edf_sampling.process_data(
+            if input_data['pmra'][i]!=input_data['pmra'][i]:
+                X = np.ones(16)*np.nan
+            else:
+                X = edf_sampling.process_data(
                 np.array([np.deg2rad(input_data['ra'][i]),
                           np.deg2rad(input_data['dec'][i]),
                           input_data['s'][i],
@@ -314,9 +318,12 @@ def mfe(data):
 
 def run_distance_pipeline(data, out, id_col, name, npool=-1):
     print mfe(data)
-    isochrones = "Padova"
+    with open('config.json') as data_file:
+        config = json.load(data_file)
+    isochrones = str(config['isochrones']['type'])
     init(types=isochrones,
-         wemap=False, mean_feh_err=np.float64(mfe(data)))
+         wemap=False, mean_feh_err=np.float64(mfe(data)),
+         solar_motion=np.array(config['solar_motion']))
     process_distances(data, out, id_col, name,
                       which=isochrones, prior=True,
                       npool=npool,

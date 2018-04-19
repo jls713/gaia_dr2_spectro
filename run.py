@@ -7,9 +7,9 @@ from spectro_data.rave import load_and_match as load_rave
 from distances import *
 
 DR1 = True
-TEST = True
+TEST = False # True
 TESTNUMBER = 100
-npool = 8
+npool = 10
 random_seed = 52
 
 with open('config.json') as config:
@@ -88,7 +88,7 @@ def run_galah():
                              random_state=random_seed).reset_index(drop=True)
     run_distance_pipeline(galah,
                           output_folder + 'GALAH_distances.hdf5',
-                          'GALAH_ID', 'GALAH',
+                          'sobject_id', 'GALAH',
                           npool=npool)
 
 # APOGEE TGAS TEST
@@ -110,7 +110,7 @@ def run_apogeetgas_test():
 
 def run_apogeetgas_test_withGaia():
     apogee = load_apogeetgas()
-    apogee['eG'] = 0.25
+    apogee['eG'] = 0.025
     apogee['mag_use'] = \
         apogee.applymap(
             lambda x: np.array(['J', 'H', 'K', 'G']))['mag_use']
@@ -130,6 +130,6 @@ if __name__ == '__main__':
     # run_ges()
     # run_apogee()
     # run_lamost()
-    # run_galah()
+    run_galah()
     # run_apogeetgas_test()
-    run_apogeetgas_test_withGaia()
+    # run_apogeetgas_test_withGaia()

@@ -12,7 +12,7 @@
 	"with_halo":true,
 	"solar_motion":[8.2,0.014,11.1,12.24,7.25],
 	"isochrones":{
-		 "filters":["2MASS"],
+		 "filters":["2MASS","Gaia"],
 		 "type":"Padova"
 	},
 	"dir":{

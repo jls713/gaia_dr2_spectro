@@ -57,7 +57,7 @@ double new_prior_2018::bulge_prior(VecDoub X, double Z, double tau){
            GFunction(tau-bulge_age_mean,bulge_age_disp)*
  	       sech2(pow(pow(fabs(xrot/xb0),cperp)+
                      pow(fabs(yrot/yb0),cperp),cpar/cperp)+
-                 pow(fabs((X[2]-z0)/zb0),cpar))*
+                 pow(fabs(X[2]/zb0),cpar))*
            core_function(X[0],X[1],bulge_r_core);
 }
 double new_prior_2018::thin_prior(double R, double z, double Z, double tau){

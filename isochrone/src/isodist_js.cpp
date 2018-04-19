@@ -67,17 +67,18 @@ namespace distance_compute{
                                                   conv::StandardSolarPAUL);
     }
 
-    void load_prior(std::string prior_type="2018"){
+    void load_prior(std::string prior_type="2018",
+                    VecDoub SolarPosition=conv::StandardSolarPAUL){
         if(prior_type=="Binney"){
-            prior = make_unique<binney_prior>();
+            prior = make_unique<binney_prior>(SolarPosition);
             std::cout<<"Binney 2014 prior loaded for isochrone fitting\n";
         }
         if(prior_type=="2018"){
-            prior = make_unique<new_prior_2018>();
+            prior = make_unique<new_prior_2018>(SolarPosition);
             std::cout<<"New 2018 prior loaded for isochrone fitting\n";
         }
         else{
-            prior = make_unique<galaxy_prior>();
+            prior = make_unique<galaxy_prior>(SolarPosition);
             std::cout<<"Flat prior loaded for isochrone fitting\n";
         }
     }

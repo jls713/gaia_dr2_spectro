@@ -59,6 +59,8 @@ def load_data(calibrated=True, use_dr12=False):
     for i, f in zip(params_indx, params):
         apogee[f] = apogeeR[param_fld].T[i]
         apogee[f + '_ERR'] = np.sqrt(apogeeR[param_fld + '_COV'][:, i, i])
+        apogee[f + '_FLAG'] = apogeeR['PARAMFLAG'].T[i]
+    apogee['ASPCAPFLAG'] = apogeeR['ASPCAPFLAG']
     apogee['rho_TZ'] = apogeeR[param_fld + '_COV'][:, 0, 3] / \
         (apogee['M_H_ERR'] * apogee['TEFF_ERR'])
     apogee['rho_gZ'] = apogeeR[param_fld + '_COV'][:, 1, 3] / \

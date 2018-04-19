@@ -4,8 +4,8 @@
 include ../Makefile.inc
 # #------------------------------------------------------
 # # Set include and library paths
-ISOPATH=/home/jls/work/code/gaia_sprint/isochrone/
-EDFPATH=/home/jls/work/code/gaia_sprint/edf/
+ISOPATH=/home/jls/work/data/gaia_dr2_prep/isochrone/
+EDFPATH=/home/jls/work/data/gaia_dr2_prep/edf/
 INC = -I../ -Iinc/ -I$(GENERALPATH) -I$(CTPATH)inc/ \
 	  -I$(POTPATH)inc/ -I$(AAPATH)inc/ $(TORUSINCPATH) -I$(JSONINC) \
 	  -I$(GSLPATH)include/ -I$(CTPATH)inc/ -I$(HEALPIX_INC) \

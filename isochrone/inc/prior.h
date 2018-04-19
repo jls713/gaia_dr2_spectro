@@ -3,8 +3,11 @@
 class galaxy_prior{
     protected:
         bool eval_prior;
+        VecDoub SolarPosition;
+        double R0, z0;
     public:
-        galaxy_prior(void){eval_prior=false;}
+        galaxy_prior(VecDoub SolarPosition):eval_prior(false),SolarPosition(SolarPosition){R0=SolarPosition[0];z0=SolarPosition[1];}
+        VecDoub solar(void){return SolarPosition;}
         virtual double prior(VecDoub x, double Z, double tau){
             return 1.;
         }
@@ -27,8 +30,7 @@ inline double double_exponential(double R, double z, double Rd, double zd){
 }
 
 class binney_prior: public galaxy_prior{
-    const double R0 = 8.33;
-    const double z0 = 0.015;
+
     const double thin_norm = 0.0520313; // integral of p(tau) from 0 to 10
     const double thick_norm = 0.15/(13.-8.); // n2/n1 * 1/Delta_tau
     const double halo_factor = pow(R0*R0+z0*z0,3.39/2.);
@@ -44,13 +46,12 @@ class binney_prior: public galaxy_prior{
     const double halo_metal_mean = -1.6;
     const double halo_metal_disp = 0.5;
 public:
-    binney_prior(void){eval_prior=true;}
+    binney_prior(VecDoub SP):galaxy_prior(SP){}
     double prior(VecDoub x, double Z, double tau);
 };
 
 class binney_prior_alpha: public galaxy_prior{
-    const double R0 = 8.33;
-    const double z0 = 0.015;
+
     const double thin_norm = 0.0520313; // integral of p(tau) from 0 to 10
     const double thick_norm = 0.15/(13.-8.); // n2/n1 * 1/Delta_tau
     const double halo_factor = pow(R0*R0+z0*z0,3.39/2.);
@@ -72,22 +73,24 @@ class binney_prior_alpha: public galaxy_prior{
     const double halo_alpha_mean = 0.25;
     const double halo_alpha_disp = 0.25;
 public:
-    binney_prior_alpha(void){eval_prior=true;}
+    binney_prior_alpha(VecDoub SP):galaxy_prior(SP){}
     double prior(VecDoub x, double Z, double tau, double alpha);
     double prior(VecDoub x, double Z, double tau){return prior(x,Z,tau,0.);}
 };
 
 class new_prior_2018: public galaxy_prior{
-    const double R0 = 8.2;
-    const double z0 = 0.015;
+
     // From Bland-Hawthorn & Gerhard (2016) (as well as scalelengths below)
     const double local_thick_thin = 0.04;
     const double local_halo_thin = 0.005;
 
+    // Need to normalize age distributions over [0, 12.586 Gyr]
     const double thin_norm = 0.054838; // 1/integral of p(tau)
-    const double thick_norm = local_thick_thin*1.072; // n2/n1 * 1/integral of gaussian in age over [0,13]
-    const double halo_factor = pow(R0*R0+z0*z0,3.39/2.)*1.446; // n3/n1 * 1/integral of gaussian in age over [0.,13.]
-    const double halo_norm = local_halo_thin * halo_factor/(13.-10.); // n3/n1 * (R0^2+z0^2)^(3.39/2.) * 1/Delta_tau
+    const double thick_norm = local_thick_thin*1.108; // n2/n1 * 1/integral of gaussian in age over [0,13]
+    const double halo_factor = pow(R0*R0+z0*z0,3.39/2.)*1.624*1.13; // n3/n1 * 1/integral of gaussian in age over [0.,13.]
+    // Times 1/integral of p(metal) from -2.2 to 0.6 dex
+    const double halo_norm = local_halo_thin * halo_factor;
+
     const double thin_metal_mean = -0.1;
     const double thin_metal_disp = 0.3;
     const double thin_age_mean = 8.;
@@ -117,13 +120,15 @@ class new_prior_2018: public galaxy_prior{
     const double xb0 = 1.47;
     const double yb0 = 0.63;
     const double zb0 = 0.47;
-    const double bulge_norm = 35.45/0.04; // central/local thin Msun/pc^3
+    const double bulge_norm = 35.45/0.04*1.2414*1.135; // central/local thin Msun/pc^3
     // Bovy (2018) total mid-plane stellar density of 0.04 Msun/pc^3
+    // Times 1/integral of p(tau) from 0 to 12.586 Gyr
+    // Times 1/integral of p(metal) from -2.2 to 0.6 dex
     const double cperp = 1.88;
     const double cpar = 3.04;
     const double bulge_r_core = 2.54;
 public:
-    new_prior_2018(void){eval_prior=true;}
+    new_prior_2018(VecDoub SP):galaxy_prior(SP){}
     double thin_prior(double R, double z, double Z, double tau);
     double thick_prior(double R, double z, double Z, double tau);
     double halo_prior(double R, double z, double Z, double tau);

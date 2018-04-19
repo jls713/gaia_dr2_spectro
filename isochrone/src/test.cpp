@@ -15,7 +15,7 @@ namespace {
 TEST(prior,prior){
     double l = 20.*PI/180.;
     double b = 8.*PI/180.;
-    new_prior_2018 GP;
+    new_prior_2018 GP(conv::StandardSolarPAUL);
     for(auto r=0.1;r<20.;r+=0.1)
     std::cout<<r<<" "
              <<GP.prior({8.2-r*cos(l)*cos(b),-r*sin(l)*cos(b),r*sin(b)},0.,10.)
@@ -87,21 +87,21 @@ void test_distance(DistanceCalculator<isochrone_g> *D,
 TEST(BaSTI,johnson){
     isochrone_grid<isochrone_johnson> iso("BaSTI",1,0.5);
     DistanceCalculator<isochrone_johnson> D(&iso);
-    new_prior_2018 GP;
+    new_prior_2018 GP(conv::StandardSolarPAUL);
     schlafly2017_extinction_law EL;
     test_distance(&D,&iso,&GP,&EL);
 }
 TEST(Padova,all){
     isochrone_grid<isochrone_padova> iso("Padova",1,0.5);
     DistanceCalculator<isochrone_padova> D(&iso);
-    new_prior_2018 GP;
+    new_prior_2018 GP(conv::StandardSolarPAUL);
     schlafly2017_extinction_law EL;
     test_distance(&D,&iso,&GP,&EL,{30,6,145});
 }
 TEST(Dartmouth,Dartmouth){
     isochrone_grid<isochrone_dartmouth> iso("Dartmouth");
     DistanceCalculator<isochrone_dartmouth> D(&iso);
-    new_prior_2018 GP;
+    new_prior_2018 GP(conv::StandardSolarPAUL);
     schlafly2017_extinction_law EL;
     test_distance(&D,&iso,&GP,&EL,{5,4,15});
 }
@@ -211,6 +211,10 @@ TEST(ExtMapCombo,ExtMapGrid){
 
 TEST(Params,Params){
     std::string p = parameters()["dir"]["extinction_coeffs"];
+}
+
+TEST(Prior, Prior){
+    new_prior_2018 GP(conv::StandardSolarPAUL);
 }
 
 }

@@ -18,7 +18,7 @@ TORUSPATH = /home/jls/work/code/Torus_github/Torus/
 JSONPATH=/data/jls/json/
 
 ##  5. cfitsio, healpix
-HEALPIXPATH = /data/jls/Healpix_3.30/
+HEALPIXPATH = /opt/ioa/software/healpix/Healpix_3.30/
 
 ##  6. logging
 LOGGPATH = /data/jls/easyloggingpp/
@@ -67,11 +67,11 @@ TORUSINCPATH = -I$(TORUSPATH)src/ -I$(TORUSPATH)src/pot/ -I$(TORUSPATH)src/utils
 TORUSLIBPATH = -L$(TORUSPATH)obj/ -L$(TORUSPATH)WDlib/obj/ \
                -L/data/jls/libebf_c_cpp-0.0.3/lib/
 HEALPIX_INC = -I$(HEALPIXPATH)include/ \
-			  -I$(HEALPIXPATH)src/cxx/generic_gcc/include/ \
+			  -I$(HEALPIXPATH)src/cxx/optimized_gcc/include/ \
 			  -I$(HEALPIXPATH)src/cxx/cxxsupport/
 HEALPIX_LIB = -L$(HEALPIXPATH)lib/ \
-			  -L$(HEALPIXPATH)src/cxx/generic_gcc/lib/ \
-			  -Wl,-rpath=$(HEALPIXPATH)src/cxx/generic_gcc/lib/ \
+			  -L$(HEALPIXPATH)src/cxx/optimized_gcc/lib/ \
+			  -Wl,-rpath=$(HEALPIXPATH)src/cxx/optimized_gcc/lib/ \
 			  -lhealpix_cxx -lchealpix -lcxxsupport -lcfitsio
 
 HDF5PATH=/data/jls/hdf5-1.8.16/

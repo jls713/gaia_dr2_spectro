@@ -27,7 +27,7 @@ double DistanceCalculator<isochrone_g>::photometric_distance_zero_age_pdf(VecDou
     if(iso_r[0]<0.)
         return -std::numeric_limits<double>::infinity();
     if(prior->bprior()){
-        VecDoub X = conv::GalacticToCartesian(lbs);
+        VecDoub X = conv::GalacticToCartesian(lbs,prior->solar());
         result+=log(prior->prior(X,
                            metal,
                            0.0001));
@@ -72,7 +72,7 @@ double DistanceCalculator<isochrone_g>::photometric_distance_pdf(VecDoub lbs, Ve
     if(iso_r[0]<0.)
         return -std::numeric_limits<double>::infinity();
     if(prior->bprior()){
-        VecDoub X = conv::GalacticToCartesian(lbs);
+        VecDoub X = conv::GalacticToCartesian(lbs,prior->solar());
         result+=log(prior->prior(X,
                            metal,
                            Z_age_mass[1]));
@@ -142,7 +142,7 @@ double DistanceCalculator<isochrone_g>::distance_pdf(VecDoub ZTG, VecDoub lbs, V
     if(iso_r[0]<0.)
         return -std::numeric_limits<double>::infinity();
     if(prior->bprior()){
-        VecDoub X = conv::GalacticToCartesian(lbs);
+        VecDoub X = conv::GalacticToCartesian(lbs,prior->solar());
         if(alpha)
     		result+=log(prior->prior(X,
                                Z_age_mass_alpha[0],
@@ -268,7 +268,8 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance(
                     }
                     if(tmp4==0.) continue;
                     if(prior->bprior()){
-                        VecDoub X = conv::GalacticToCartesian({l,b,s});
+                        VecDoub X = conv::GalacticToCartesian({l,b,s},
+                                                              prior->solar());
                         tmp4*=prior->prior(X,
                                            iso_grid->fehgrid[i],
                                            agemodel);
@@ -439,7 +440,8 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_alpha(
                         }
                         if(tmp4==0.) continue;
                         if(prior->bprior()){
-                            VecDoub X = conv::GalacticToCartesian({l,b,s});
+                            VecDoub X = conv::GalacticToCartesian({l,b,s},
+                                                            prior->solar());
                             tmp4*=prior->prior(X,
                                                iso_grid->fehgrid[i],
                                                agemodel);
@@ -586,7 +588,8 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinct(
                         }
                         if(tmp4==0.) continue;
                         if(prior->bprior()){
-                            VecDoub X = conv::GalacticToCartesian({l,b,s});
+                            VecDoub X = conv::GalacticToCartesian({l,b,s},
+                                                            prior->solar());
                             tmp4*=prior->prior(X,
                                                iso_grid->fehgrid[i],
                                                agemodel);
@@ -813,7 +816,8 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
                         }
                         if(tmp4==0.) continue;
                         if(prior->bprior()){
-                            VecDoub X = conv::GalacticToCartesian({l,b,s});
+                            VecDoub X = conv::GalacticToCartesian({l,b,s},
+                                                                  prior->solar());
                             tmp4*=prior->prior(X,
                                                iso_grid->fehgrid[i],
                                                agemodel);
