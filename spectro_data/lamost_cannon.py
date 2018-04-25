@@ -70,9 +70,11 @@ def load_spectrum(planid, lmjd, spid, fiberid):
 
     local_norm_location = '/data/jls/lamost/dr3_spectra/'
     if os.path.exists((local_norm_location + fldr + spectrum)[:-7] + 'hdf5'):
-	return
-#        return pd.read_hdf(
-#            (local_norm_location + fldr + spectrum)[:-7] + 'hdf5')
+        return pd.read_hdf(
+            (local_norm_location + fldr + spectrum)[:-7] + 'hdf5')
+    else:
+        return None
+
 
     hdr = fits.open(local_location + fldr + spectrum)[0].header
     data = fits.open(local_location + fldr + spectrum)[0].data.T
@@ -107,10 +109,12 @@ def load_spectrum_row(row):
 
 # Form dataset
 
+
 def normalize_spectra_loop(lb):
     for i in range(len(lb)):
         print i
         load_spectrum_row(lb.loc[i])
+
 
 def normalize(lb, i):
     print i
@@ -130,33 +134,41 @@ def generate_parent_sample():
     # flds = ['TEFF', 'LOGG', 'M_H', 'ALPHA_M', 'C_M', 'N_M']
     fltr &= apogee['C_M_FLAG'] == 0
     fltr &= apogee['N_M_FLAG'] == 0
+    fltr &= (apogee['AK'] == apogee['AK']) & (apogee['AK'] > -1.)
     apogee = apogee[fltr].reset_index(drop=True)
     ap_c = SkyCoord(ra=apogee.RA.values * u.deg, dec=apogee.DEC.values * u.deg)
     la_c = SkyCoord(ra=lamost.ra.values * u.deg, dec=lamost.dec.values * u.deg)
     c, d2, d3 = ap_c.match_to_catalog_sky(la_c)
     apogee_cm = apogee[d2 < 2. * u.arcsec].reset_index(drop=True)
     lamost_cm = lamost.iloc[c][d2 < 2. * u.arcsec].reset_index(drop=True)
-    lamost_flds = ['obsid', 'planid', 'lmjd', 'fiberid', 'spid']
+    lamost_flds = ['obsid', 'planid', 'lmjd', 'fiberid', 'spid', 'logg']
     apogee_flds = ['APOGEE_ID', 'TEFF', 'LOGG',
                    'M_H', 'ALPHA_M', 'C_M', 'N_M', 'snr', 'AK']
     data = pd.concat((apogee_cm[apogee_flds], lamost_cm[lamost_flds]), axis=1)
     fltr = True
     for i in apogee_flds:
         fltr &= (data[i] == data[i])
+    fltr &= (data['logg'] < 3.9)
+    fltr &= (data['LOGG'] < 3.9)
     return data[fltr].reset_index(drop=True)
 
 
 def load_spectra():
     labelled = generate_parent_sample()
+    labelled.to_hdf('/data/jls/GaiaDR2/spectro/LAMOST_cannon_sample.hdf5',
+                    'data')
+    # return
+    labelled = pd.read_hdf(
+        '/data/jls/GaiaDR2/spectro/LAMOST_cannon_sample.hdf5')
     grid = np.load('lamost_wavelengths.npy')
     flux = np.zeros((len(labelled), len(grid)))
     ivar = np.zeros_like(flux)
     for i in range(len(labelled)):
         print i
-        s = load_spectrum_row(labelled.loc[i])
+        s = load_spectrum_row(labelled.iloc[i])
         flux[i, :], ivar[i, :] = s['flux'], s['ivar']
     fldr = '/data/jls/GaiaDR2/spectro/lamost_cannon/'
-    labelled.to_hdf(fldr + 'training_data.hdf5')
+    labelled.to_hdf(fldr + 'training_data.hdf5', 'data')
     np.save(fldr + 'training_flux.npy', flux)
     np.save(fldr + 'training_ivar.npy', ivar)
     np.save(fldr + 'wavelengths.npy', grid)
@@ -167,6 +179,7 @@ def run_cannon_model():
 
     fldr = '/data/jls/GaiaDR2/spectro/lamost_cannon/'
     labelled_set = pd.read_hdf(fldr + 'training_data.hdf5')
+    #labelled_set = Table.from_pandas(labelled_set)
     flux = np.load(fldr + 'training_flux.npy')
     ivar = np.load(fldr + 'training_ivar.npy')
     wavelengths = np.load(fldr + 'wavelengths.npy')
@@ -175,8 +188,16 @@ def run_cannon_model():
     fltr = (flux != flux) | (ivar != ivar) | (ivar < 0.)
     flux[fltr] = 1.
     ivar[fltr] = 0.
-
+    
     labels = ['TEFF', 'LOGG', 'M_H', 'ALPHA_M', 'C_M', 'N_M', 'AK']
+    
+    labelled_set, flux, ivar = pruner(labelled_set, labels, flux,
+                                      ivar, wavelengths, factor=3.,
+                                      threads=88)
+    labelled_set.to_hdf(fldr + 'training_data_pruned.hdf5', 'data')
+    np.save(fldr + 'training_flux_pruned.npy', flux)
+    np.save(fldr + 'training_ivar_pruned.npy', ivar)
+
     test, cov, meta = \
         run_model(labelled_set, labels,
                   flux, ivar,
@@ -185,7 +206,7 @@ def run_cannon_model():
                   order=2,
                   regularization=0.,
                   photometry=None,
-                  use_censors=True, threads=8,
+                  use_censors=False, threads=88,
                   generate_plots=False)
     np.save(fldr + 'test.npy', test)
     np.save(fldr + 'test_cov.npy', cov)

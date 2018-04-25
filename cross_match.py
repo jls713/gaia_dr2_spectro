@@ -3,21 +3,27 @@ import sys
 import sqlutil
 from login import wsdbpassword
 
+
 def crossmatch_gaia(data, dr1=False, epoch=2000, dist_max=5.):
     """
         Cross match list of ra,dec of stars with Gaia catalogues.
         (ra,dec) vectors of RA and Dec in deg
-        epoch epoch of observation
+        epoch epoch of observation -- if epoch='ref_epoch' use m.ref_epoch
         dist_max maximum angular separation to consider (in arcsec)
-        max_epoch_diff = 15 years
-        <-- Not totally sure what this means, ask Sergey!
+        max_epoch_diff = 20 years -- each star can have separate epoch.
     """
     ra, dec = data.ra.values, data.dec.values
     gaia_catalogue = 'gaia_dr2.gaia_source'
-    join_strng = 'q3c_join_pm(s.ra,s.dec,s.pmra,s.pmdec,s.ref_epoch,' +\
-        'm.ra,m.dec,%0.2f,15.,%0.8f)' % (epoch, dist_max / 3600.)
-    dist_strng = 'q3c_dist_pm(s.ra,s.dec,s.pmra,s.pmdec,s.ref_epoch,' +\
-        'm.ra,m.dec,%0.2f)' % (epoch)
+    if isinstance(epoch, basestring):
+        join_strng = 'q3c_join_pm(s.ra,s.dec,s.pmra,s.pmdec,s.ref_epoch,' +\
+            'm.ra,m.dec,%s,20.,%0.8f)' % (epoch, dist_max / 3600.)
+        dist_strng = 'q3c_dist_pm(s.ra,s.dec,s.pmra,s.pmdec,s.ref_epoch,' +\
+            'm.ra,m.dec,%s)' % (epoch)
+    else:
+        join_strng = 'q3c_join_pm(s.ra,s.dec,s.pmra,s.pmdec,s.ref_epoch,' +\
+            'm.ra,m.dec,%0.2f,20.,%0.8f)' % (epoch, dist_max / 3600.)
+        dist_strng = 'q3c_dist_pm(s.ra,s.dec,s.pmra,s.pmdec,s.ref_epoch,' +\
+            'm.ra,m.dec,%0.2f)' % (epoch)
     if dr1:
         gaia_catalogue = 'gaia_dr1.gaia_source'
         join_strng = 'q3c_join(m.ra,m.dec,s.ra,s.dec,%0.8f)' % (
@@ -61,15 +67,10 @@ def crossmatch_gaia(data, dr1=False, epoch=2000, dist_max=5.):
     if dr1:
         phot_keys = ['g']
 
-    sys_error_floor = 0.02  # Approximate systematic errors of 20mmag in G
-    # Also reflects the degree to which the isochrones are good.
-
     for c in phot_keys:
         flx_err = data['phot_%s_mean_flux_error' % c]
         flx_err /= data['phot_%s_mean_flux' % c]
         data['ephot_%s_mean_mag' % c] = 2.5 / np.log(10.) * flx_err
-        data['ephot_%s_mean_mag' % c] = np.sqrt(
-            data['ephot_%s_mean_mag' % c]**2 + sys_error_floor**2)
         data = data.drop(['phot_%s_mean_flux' % c,
                           'phot_%s_mean_flux_error' % c], axis=1)
 
@@ -87,6 +88,12 @@ def crossmatch_gaia(data, dr1=False, epoch=2000, dist_max=5.):
 
 def crossmatch_gaia_spectro(data, dr1=False, epoch=2000, dist_max=5.):
     df = crossmatch_gaia(data, dr1=dr1, epoch=epoch, dist_max=dist_max)
+
+    sys_error_floor = 0.02  # Approximate systematic errors of 20mmag in G
+    # Also reflects the degree to which the isochrones are good.
+    for c in ['g', 'rp', 'bp']:
+        df['ephot_%s_mean_mag' % c] = np.sqrt(
+            df['ephot_%s_mean_mag' % c]**2 + sys_error_floor**2)
     fltr = (df.parallax != df.parallax)
     df.loc[fltr, 'parallax'] = 0.
     df.loc[fltr, 'parallax_error'] = -1.

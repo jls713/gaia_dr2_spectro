@@ -10,14 +10,49 @@ def download_passbands():
         Landolt B&V, WISE, 2MASS
         and theoretical Gaia G, G_RP, G_BP, G_RVS
     '''
-    filters = ['SDSSu', 'SDSSg', 'SDSSr', 'SDSSi', 'SDSSz',
+    #filters = ['SDSSu', 'SDSSg', 'SDSSr', 'SDSSi', 'SDSSz',
                # 'LandoltB', 'LandoltV',
-               'WISEW1', 'WISEW2',
-               '2MASSJ', '2MASSH', '2MASSKs']
-    for f in filters:
-        call(['rm', f])
+    #           'WISEW1', 'WISEW2',
+    #           '2MASSJ', '2MASSH', '2MASSKs']
+    #for f in filters:
+    #    call(['rm', f])
+    #    call(['wget', '-nH', '-nd', '-np',
+    #          'http://www.mso.anu.edu.au/~brad/Filters/' + f])
+
+    for f in ['u','g','r','i','z']:
+        call(['rm', 'SDSS'+f])
         call(['wget', '-nH', '-nd', '-np',
-              'http://www.mso.anu.edu.au/~brad/Filters/' + f])
+	      'http://classic.sdss.org/dr3/instruments/imager/filters/%s.dat'%f,
+	       '-O', 'SDSS%s'%f])
+        sdss_bands = pd.read_csv('SDSS%s'%f, sep=r'\s+',skiprows=6,
+				names=['Angstrom','pass','extended','exxtended0','airmass1'])
+        sdss_bands[['Angstrom', 'pass']].to_csv('SDSS%s' % f, sep=' ',
+                                           header=['0.', ''], index=False)
+    for f in ['W1', 'W2']:
+        call(['rm', 'WISE'+f])
+        call(['wget', '-nH', '-nd', '-np',
+	      'http://wise2.ipac.caltech.edu/docs/release/prelim/expsup/figures/RSR-%s.txt'%f,
+	       '-O', 'WISE%s'%f])
+        wise_bands = pd.read_csv('WISE%s'%f, sep=r'\s+',skiprows=2,
+				names=['Angstrom','pass','uncertainty'])
+        wise_bands['Angstrom']*=10000.
+        wise_bands[['Angstrom', 'pass']].to_csv('WISE%s' % f, sep=' ',
+                                           header=['0.', ''], index=False)
+
+    for i,f in enumerate(['J', 'H', 'Ks']):
+        call(['rm', '2MASS'+f])
+        call(['wget', '-nH', '-nd', '-np',
+              'http://www.ipac.caltech.edu/2mass/releases/second/doc/sec3_1b1.tbl%i.html'%(i+12),
+	       '-O', '2MASS%s'%f])
+        tmass_bands = pd.read_csv('2MASS%s'%f, sep=r'\s+',skiprows=11, skipfooter=7,
+				names=['count','Angstrom','pass'])
+	## Need to transform to photon counting
+        tmass_bands['pass']/=tmass_bands['Angstrom']
+        tmass_bands['pass']/=np.max(tmass_bands['pass'])
+        tmass_bands['Angstrom']*=10000.
+        tmass_bands[['Angstrom', 'pass']].to_csv('2MASS%s' % f, sep=' ',
+                                           header=['0.', ''], index=False)
+    return
 
     ubv = Vizier.get_catalogs('J/AJ/131/1184/table3')[0]
     for fltr in ['U', 'B', 'V']:

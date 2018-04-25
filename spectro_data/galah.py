@@ -45,12 +45,13 @@ def load_data():
         data.fe_h, data.alpha_fe, data.e_fe_h, data.e_alpha_fe)
 
     col_dict = {'raj2000': 'ra', 'dej2000': 'dec',
-		'rv_obst': 'hrv',
+                'rv_obst': 'hrv', 'e_rv_obst': 'e_hrv',
                 'jmag': 'J', 'hmag': 'H', 'kmag': 'K',
                 'e_jmag': 'eJ', 'e_hmag': 'eH', 'e_kmag': 'eK'}
     data = data.rename(index=str, columns=col_dict)
 
-    data['mag_use'] = [np.array(['J', 'H', 'K']) for i in range(len(data))]
+    data['mag_use'] = [np.array(['J', 'H', 'K', 'G'])
+                        for i in range(len(data))]
     data['mass'] = 0.
     data['mass_error'] = -1.
     data['rho_Tg'] = 0.

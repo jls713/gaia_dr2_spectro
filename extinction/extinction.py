@@ -277,9 +277,9 @@ def write_extinction_table_latex(teff=4500, logg=4.5, RV=R_V,
     results = extinction_coeff_fn(load_ck_model(teff=teff, logg=logg),
                                   RV=R_V)
 
-    s = r'\begin{tabular}{lccc}\\'
-    s += r'Band&$\lambda_\mathrm{eff}$&$R(\lambda_\mathrm{eff})$&'
-    s += r'$R(\lambda)$\\\hline '
+    s = r'\begin{tabular}{lcccc}\\'
+    s += r'Band&$\lambda_\mathrm{eff}/\,\AA$&$R(\lambda_\mathrm{eff})$&'
+    s += r'$R(\lambda)$&$A_\lambda/A_V$&\\\hline '
 
     if BSversion == 2017:
         Data = {i: schlafly_apogee_green_calibrated(RV)(l_eff[i])
@@ -294,8 +294,8 @@ def write_extinction_table_latex(teff=4500, logg=4.5, RV=R_V,
         i = i[0]
         if i == 'G':
             pass
-        s += r'%s&$%0.1f$&$%0.3f$&$%0.3f$\\' % (
-            i, l_eff[i], Data[i], results[i])
+        s += r'%s&$%0.1f$&$%0.3f$&$%0.3f$&$%0.3f$\\' % (
+            i, l_eff[i], Data[i], results[i], results[i]/results['V'])
     s += r'\hline\end{tabular}'
     with open(ext_file, 'w') as f:
         f.write(s)
@@ -480,6 +480,7 @@ def polynomial_fit_G_extinction(fltr_set='2MASS', version=2017, RV=3.1,
                            rvrange[-1] + 0.5 * (rvrange[1] - rvrange[0])),
                        cmap=plt.cm.plasma)
     plt.clf()
+    plt.figure(figsize=[3.32,2.5])
 
     iso_fl = {'2MASS': '2mass_wise_solar.dat',
               'SDSS': 'sdss_solar.dat',
@@ -507,6 +508,10 @@ def polynomial_fit_G_extinction(fltr_set='2MASS', version=2017, RV=3.1,
         x = tmass_next.T[iso_in[fltr_set][0]] - \
             tmass_next.T[iso_in[fltr_set][1]]
         y = tmass_next.T[5]
+
+        fltr = True#(tmass_next.T[6]<4.5)
+        print 'WITH LOGG CUTS'
+        x, y = x[fltr], y[fltr]
     elif fltr_set is 'Teff':
         x = logTeffgrid - 4.
         y = logTeffgrid - 4.
@@ -524,8 +529,10 @@ def polynomial_fit_G_extinction(fltr_set='2MASS', version=2017, RV=3.1,
         poly_f = np.poly1d(z)
         x = x[(y < 5.) & (y > 3.47)]
 
+    # print logTeffgrid, np.power(10.,logTeffgrid)
+
     plt.xlim(np.min(x), np.max(x))
-    plt.ylim(1., 4.)
+    plt.ylim(1.5, 3.5)
     for rv in rvrange:
         plt.plot(poly_f(logTeffgrid), interp_G_maps(
             rv, logTeffgrid),
@@ -534,13 +541,14 @@ def polynomial_fit_G_extinction(fltr_set='2MASS', version=2017, RV=3.1,
     plt.colorbar(CS3, label=r'$R_V$')
     plt.xlabel(iso_lbl[fltr_set])
     plt.ylabel(r'$R(G)$')
-    plt.axhline(2.733, color='k', ls='dashed')
-    plt.axhline(2.307, color='k', ls='dashed')
-    plt.annotate(r'$R(r)$', xy=(0.4, 2.34), fontsize=20)
-    plt.annotate(r'$R(V)$', xy=(0.4, 2.77), fontsize=20)
+    plt.axhline(2.977, color='k', ls='dashed')
+    plt.axhline(2.508, color='k', ls='dashed')
+    plt.annotate(r'$R(r)$', xy=(1., 2.6), fontsize=14)
+    plt.annotate(r'$R(V)$', xy=(1., 3.1), fontsize=14)
 
-    X, Y = np.meshgrid(rvrange - RV, poly_f(logTeffgrid))
+    X, Y = np.meshgrid(poly_f(logTeffgrid), rvrange - RV, indexing='ij')
     Z = R_G
+
     X = X.flatten()
     Y = Y.flatten()
     A = np.array([X * 0 + 1, X, Y, X**2, X**2 * Y, Y **
@@ -551,11 +559,12 @@ def polynomial_fit_G_extinction(fltr_set='2MASS', version=2017, RV=3.1,
     z = np.array([poly2d(coeff, 0., yy) for xx, yy in zip(X, Y)])
     # plt.plot(Y,z,'.',ms=8,color='k',label='Polynomial fit, $R_V=3.1$')
 
-    poly1d = np.polyfit(poly_f(logTeffgrid), interp_G_maps(
-        RV, logTeffgrid), 3).flatten()
-    plt.plot(Y, np.poly1d(poly1d)(Y), '.', ms=8,
+    poly1d = np.polyfit(poly_f(logTeffgrid),
+                        interp_G_maps(RV, logTeffgrid), 3).flatten()
+    plt.plot(poly_f(logTeffgrid)[::-1],
+             np.poly1d(poly1d)(poly_f(logTeffgrid)[::-1]), '.-', ms=4,
              color='k', label='Polynomial fit, $R_V=%0.1f$' % RV)
-    plt.legend(loc='lower center', bbox_to_anchor=(0.5, 0.95))
+    plt.legend(loc='lower center', bbox_to_anchor=(0.5, 0.9))
     print fltr_set, ','.join('%0.4f' % f for f in coeff)
     print fltr_set, ','.join('%0.4f' % f for f in poly1d[::-1])
 
@@ -564,43 +573,44 @@ def polynomial_fit_G_extinction(fltr_set='2MASS', version=2017, RV=3.1,
         fll.write(','.join('%0.4f' % f for f in coeff) + '\n')
         fll.write(','.join('%0.4f' % f for f in poly1d[::-1]) + '\n')
     plt.show(block=block)
-    # plt.savefig('../TGAS/extinction/extinction_Gaia.pdf', bbox_inches='tight')
+    #plt.savefig('extinction_Gaia_JK.pdf', bbox_inches='tight')
 
 
 if __name__ == '__main__':
 
     # Bayestar 2017
     RV = 3.3
-    # write_extinction_table_latex(RV=RV)
-    # compute_extinction_table_lambdaeff()
-    # compute_extinction_table()
-    # compute_Gaia_extinction_grid()
-    # polynomial_fit_G_extinction(fltr_set='Teff', RV=RV)
-    polynomial_fit_G_extinction(fltr_set='2MASS', RV=RV, block=True)
-    # polynomial_fit_G_extinction(fltr_set='SDSS', RV=RV)
-    # polynomial_fit_G_extinction(fltr_set='Landolt', RV=RV, block=True)
-    # polynomial_fit_G_extinction(fltr_set='Pan-STARRS', RV=RV)
-    # polynomial_fit_G_extinction(fltr_set='G_GRP', RV=RV)
-    # polynomial_fit_G_extinction(fltr_set='GBP_G', RV=RV)
-    polynomial_fit_G_extinction(fltr_set='GBP_GRP', RV=RV, block=True)
-    # model = load_ck_model(teff=4500)
-    # t4500 = [find_aiav_gradient(model, 'G', BSversion=2017, RV=RV),
+    #write_extinction_table_latex(RV=RV)
+    #compute_extinction_table_lambdaeff()
+    #compute_extinction_table()
+    #exit()
+    #compute_Gaia_extinction_grid()
+    #polynomial_fit_G_extinction(fltr_set='Teff', RV=RV)
+    #polynomial_fit_G_extinction(fltr_set='2MASS', RV=RV, )
+    #polynomial_fit_G_extinction(fltr_set='SDSS', RV=RV)
+    #polynomial_fit_G_extinction(fltr_set='Landolt', RV=RV)
+    #polynomial_fit_G_extinction(fltr_set='Pan-STARRS', RV=RV)
+    #polynomial_fit_G_extinction(fltr_set='G_GRP', RV=RV)
+    #polynomial_fit_G_extinction(fltr_set='GBP_G', RV=RV)
+    #polynomial_fit_G_extinction(fltr_set='GBP_GRP', RV=RV)
+    #model = load_ck_model(teff=4500)
+    #t4500 = [find_aiav_gradient(model, 'G', BSversion=2017, RV=RV),
+    #         find_aiav_gradient(model, 'GBP', BSversion=2017, RV=RV),
+    #         find_aiav_gradient(model, 'GRP', BSversion=2017, RV=RV)]
+    #model = load_ck_model(teff=10000)
+    #t10000 = [find_aiav_gradient(model, 'G', BSversion=2017, RV=RV),
     #          find_aiav_gradient(model, 'GBP', BSversion=2017, RV=RV),
     #          find_aiav_gradient(model, 'GRP', BSversion=2017, RV=RV)]
-    # model = load_ck_model(teff=10000)
-    # t10000 = [find_aiav_gradient(model, 'G', BSversion=2017, RV=RV),
-    #           find_aiav_gradient(model, 'GBP', BSversion=2017, RV=RV),
-    #           find_aiav_gradient(model, 'GRP', BSversion=2017, RV=RV)]
-    # np.savetxt('BS2017_nonlinearity.dat', np.vstack((t4500, t10000)))
+    #np.savetxt('BS2017_nonlinearity.dat', np.vstack((t4500, t10000)))
 
     # # Bayestar 2015
     RV = 3.1
-    # write_extinction_table_latex(BSversion=2015, RV=RV)
-    # compute_extinction_table_lambdaeff(BSversion=2015)
-    # compute_extinction_table(BSversion=2015)
+    write_extinction_table_latex(BSversion=2015, RV=RV)
+    compute_extinction_table_lambdaeff(BSversion=2015)
+    compute_extinction_table(BSversion=2015)
     # compute_Gaia_extinction_grid(BSversion=2015)
     # polynomial_fit_G_extinction(fltr_set='Teff', RV=RV, version=2015)
-    polynomial_fit_G_extinction(fltr_set='2MASS', RV=RV, version=2015, block=True)
+    # polynomial_fit_G_extinction(fltr_set='2MASS', RV=RV, version=2015)
     # polynomial_fit_G_extinction(fltr_set='SDSS', RV=RV, version=2015)
     # polynomial_fit_G_extinction(fltr_set='Landolt', RV=RV, version=2015)
     # polynomial_fit_G_extinction(fltr_set='Pan-STARRS', RV=RV, version=2015)

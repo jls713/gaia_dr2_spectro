@@ -8,7 +8,8 @@ def format_columns(data):
                 'logg_err': 'e_logg',
                 'feh_err': 'e_fe_h',
                 'feh': 'fe_h',
-                'rv': 'hrv'}
+                'rv': 'hrv',
+                'rverr': 'e_hrv'}
     data = data.rename(index=str, columns=col_dict)
     return data
 
@@ -35,22 +36,30 @@ def load_data():
     for k in cmSDSS.keys():
         df[k] = cmSDSS[k]
 
-    df['mag_use'] = [np.array(['J', 'H', 'K']) for i in range(len(df))]
-
-    df['mass'] = 0.
-    df['mass_error'] = -1.
+    df['mag_use'] = [np.array(['J', 'H', 'K', 'G']) for i in range(len(df))]
 
     df['rho_Tg'] = 0.
     df['rho_TZ'] = 0.
     df['rho_gZ'] = 0.
-    
+
+    output_file = '/data/jls/GaiaDR2/spectro/lamost_cannon/LAMOST_results.fits'
+    t = pd.read_hdf(output_file)
+    fltr = (t.r_chi_sq < 3.) #& (t.in_convex_hull == True)
+    t = t[fltr].reset_index(drop=True)
+    df = df.merge(t[['obsid','mass','mass_error']], how='left')
+    fltr = df.mass!=df.mass
+
+    df.loc[fltr,'mass'] = 0.
+    df.loc[fltr,'mass_error'] = -1.
+
     return df
 
 
 def load_and_match(output_file='/data/jls/GaiaDR2/spectro/LAMOST_input.hdf5',
                    use_dr1=False):
 
-    loaded, data = check_and_load(output_file, 'LAMOST DR3 A, F, G, K catalogue')
+    loaded, data = check_and_load(
+        output_file, 'LAMOST DR3 A, F, G, K catalogue')
     if loaded:
         return data
 

@@ -13,6 +13,8 @@ from astropy.io import fits
 from utils import *
 sys.path.append('../')
 import cross_match
+sys.path.append('/data/jls/cyanide/comparisons/')
+from neural_network import *
 # =============================================================================
 
 APOGEE_FOLDER = '/data/jls/apogee/apogee_data/'
@@ -112,10 +114,29 @@ def load_data(calibrated=True, use_dr12=False):
 
     apogee = apogee.replace(-9999., np.nan)
 
-    apogee['mag_use'] = [np.array(['J', 'H', 'K']) for i in range(len(apogee))]
+    apogee['mag_use'] = [np.array(['J', 'H', 'K', 'G'])
+                            for i in range(len(apogee))]
+
+    # Dwarfs -- assign broad logg = 4.5 \pm 1.5
+    fltr = (apogee.TEFF == apogee.TEFF) & (
+        apogee.M_H == apogee.M_H) & (apogee.LOGG != apogee.LOGG)
+    apogee.loc[fltr, 'LOGG'] = 4.5
+    apogee.loc[fltr, 'LOGG_ERR'] = 2.
 
     apogee['mass'] = 0.
     apogee['mass_error'] = -1.
+
+    # Add masses
+    with open('/data/jls/cyanide/comparisons/neural_network.pkl', 'r') as f:
+        nn = pickle.load(f)
+    flds = ['C_M', 'N_M', 'ALPHA_M', 'TEFF', 'LOGG', 'M_H']
+    inputData = apogee[flds].values
+    inputErrData = apogee[[fld + '_ERR' for fld in flds]].values
+    results = nn.label(inputData, inputErrData, samples=50)
+    fltr = True
+    for f in flds:
+        fltr &= (apogee[f] == apogee[f])
+    apogee.loc[fltr, 'mass'], apogee.loc[fltr, 'mass_error'] = results[0][fltr], results[1][fltr]
 
     return apogee
 
@@ -126,6 +147,7 @@ def format_columns(data):
                 'TEFF_ERR': 'e_teff', 'TEFF': 'teff',
                 'LOGG_ERR': 'e_logg', 'LOGG': 'logg',
                 'VHELIO_AVG': 'hrv',
+                'VSCATTER': 'e_hrv',
                 'RA': 'ra', 'DEC': 'dec'}
     data = data.rename(index=str, columns=col_dict)
     return data

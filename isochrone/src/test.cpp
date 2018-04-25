@@ -184,6 +184,11 @@ TEST(ES,Padova){
         std::cout<<ff[0]<<" "<<ff[1]<<std::endl;
     }
 }
+TEST(ExtCurve,GExtCurve){
+    schlafly2017_extinction_law EL;
+    for(auto t: create_range(3.2,5.,10))   
+        std::cout<<t<<" "<<EL.extinct_const("G",t)<<std::endl;
+}
 TEST(ExtCurve,ExtCurve){
     schlafly2017_extinction_law EL;
     std::vector<std::string> maglist = {"B","V","G","J","K","I","zP","Jv"};

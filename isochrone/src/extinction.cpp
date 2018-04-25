@@ -83,10 +83,14 @@ schlafly2017_extinction_law::schlafly2017_extinction_law(double RV){
 	for(double t: G_lTeff)
 		G_extinct.push_back(linterp_2d(t,RV,G_lTeff,rvrange,Ggrid,"Gext"));
 	inFile2.close();
-
-	// Normalize relative to A_V
+	
+        // Remove the last few elements of G_extinct as cause bad extrapolation
+        G_extinct.pop_back();//G_extinct.pop_back();
+        G_lTeff.pop_back();//G_lTeff.pop_back();
+        // Normalize relative to A_V
 	double VV = coeff_list["V"];
-	for (auto const& x : coeff_list){
+	std::cout<<VV<<std::endl;
+        for (auto const& x : coeff_list){
 		coeff_list[x.first]/=VV;
 	}
 	for (unsigned i=0; i<G_extinct.size(); ++i)

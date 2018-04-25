@@ -14,7 +14,8 @@ def format_columns(data):
                 'TEFF': 'teff', 'E_TEFF': 'e_teff',
                 'LOGG': 'logg', 'E_LOGG': 'e_logg',
                 'FEH': 'fe_h', 'E_FEH': 'e_fe_h',
-                'VRAD': 'hrv'}
+                'VRAD': 'hrv',
+                'E_VRAD': 'e_hrv'}
     data = data.rename(index=str, columns=col_dict)
     fltr = (data['fe_h'] != data['fe_h'])
     data.loc[fltr, 'fe_h'] = data['MH'][fltr]
@@ -38,11 +39,12 @@ def load_data():
     vista_fltr = (ges.Jv == ges.Jv)
     vista_h = (ges.Hv == ges.Hv)  # For VHS GPS
 
-    ges['mag_use'] = [np.array(['Jv', 'Hv', 'Kv']) for i in range(len(ges))]
+    ges['mag_use'] = [np.array(['Jv', 'Hv', 'Kv', 'G'])
+                      for i in range(len(ges))]
     ges.loc[~vista_h, 'mag_use'] = \
-        ges.loc[~vista_h].applymap(lambda x: np.array(['Jv', 'Kv']))
+        ges.loc[~vista_h].applymap(lambda x: np.array(['Jv', 'Kv', 'G']))
     ges.loc[~vista_fltr, 'mag_use'] = \
-        ges.loc[~vista_fltr].applymap(lambda x: np.array(['J', 'H', 'K']))
+        ges.loc[~vista_fltr].applymap(lambda x: np.array(['J', 'H', 'K', 'G']))
 
     ges['rho_TZ'] = 0.
     ges['rho_gZ'] = 0.

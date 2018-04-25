@@ -23,19 +23,32 @@ def init(types="All", wemap=False, mean_feh_err=1e-5,
     edf_sampling.setup(False, False)
 
 
-def process_single_distance(input_data, w, prior, with_parallax, with_mass, i):
+in_data_dict = {}
+
+with_errors = True
+
+
+def init_array(input_data):
+    in_data_dict['data'] = input_data
+
+
+def process_single_distance(
+        # in_data,
+        w, prior, with_parallax, with_mass, i):
     ''' Computes a single distance to the star in entry i in the table
-        input_data. w is a string which gives the isochrone set to use,
+        in_data. w is a string which gives the isochrone set to use,
         if prior we use the prior, if with_parallax we use the parallax,
         if with_mass we use the mass'''
 
-    #  First photometric inputs
-    mag_str = input_data['mag_use'][i]
-    mags = np.array([np.float64(input_data[k][i]) for k in mag_str])
-    errmags = np.array([np.float64(input_data['e' + k][i]) for k in mag_str])
+    in_data = in_data_dict['data']
 
-    c_icrs = SkyCoord(ra=input_data.ra[i] * u.degree,
-                      dec=input_data.dec[i] * u.degree, frame='icrs')
+    #  First photometric inputs
+    mag_str = in_data['mag_use'][i]
+    mags = np.array([np.float64(in_data[k][i]) for k in mag_str])
+    errmags = np.array([np.float64(in_data['e' + k][i]) for k in mag_str])
+
+    c_icrs = SkyCoord(ra=in_data.ra[i] * u.degree,
+                      dec=in_data.dec[i] * u.degree, frame='icrs')
     ll = c_icrs.galactic.l.radian
     b = c_icrs.galactic.b.radian
     ldeg = c_icrs.galactic.l.degree
@@ -43,20 +56,20 @@ def process_single_distance(input_data, w, prior, with_parallax, with_mass, i):
 
     #  Now spectroscopic inputs
     teff, logg, Z = \
-        np.log10(input_data.teff[i]), input_data.logg[i], input_data.fe_h[i]
+        np.log10(in_data.teff[i]), in_data.logg[i], in_data.fe_h[i]
 
     data = np.array([np.float64(Z), np.float64(teff), np.float64(logg),
                      np.float64(ll), np.float64(b)])
 
     median_log_av, std_log_av, dist_ebv = redd.get_log_av_along_los(ldeg, bdeg)
 
-    ERRZ = input_data.e_fe_h[i]
-    ERRteff = input_data.e_teff[i] / input_data.teff[i] / np.log(10.)
-    ERRlogg = input_data.e_logg[i]
+    ERRZ = in_data.e_fe_h[i]
+    ERRteff = in_data.e_teff[i] / in_data.teff[i] / np.log(10.)
+    ERRlogg = in_data.e_logg[i]
 
-    CZT = input_data.rho_TZ[i] * ERRteff * ERRZ
-    CGZ = input_data.rho_gZ[i] * ERRlogg * ERRZ
-    CTG = input_data.rho_Tg[i] * ERRteff * ERRlogg
+    CZT = in_data.rho_TZ[i] * ERRteff * ERRZ
+    CGZ = in_data.rho_gZ[i] * ERRlogg * ERRZ
+    CTG = in_data.rho_Tg[i] * ERRteff * ERRlogg
 
     data_errs = np.array([np.float64(ERRZ)**2,
                           np.float64(CZT), np.float64(CGZ),
@@ -64,15 +77,15 @@ def process_single_distance(input_data, w, prior, with_parallax, with_mass, i):
                           np.float64(CTG), np.float64(ERRlogg)**2])
 
     if(with_parallax):
-        parallax = np.float64(input_data.parallax[i])
-        parallax_error = np.float64(input_data.parallax_error[i])
+        parallax = np.float64(in_data.parallax[i])
+        parallax_error = np.float64(in_data.parallax_error[i])
     else:
         parallax = 0.
         parallax_error = -1.
 
     if(with_mass):
-        mass = np.float64(input_data.mass[i])
-        mass_error = np.float64(input_data.mass_error[i])
+        mass = np.float64(in_data.mass[i])
+        mass_error = np.float64(in_data.mass_error[i])
     else:
         mass = 0.
         mass_error = -1.
@@ -94,7 +107,7 @@ def process_single_distance(input_data, w, prior, with_parallax, with_mass, i):
                     (mass_error < 0. and mass > 0.))
 
     if(not spec_problem and not ir_problem and not astrom_problem):
-        print i, mags, data, errmags, data_errs, mag_str
+        print i, mags, data, errmags, data_errs, mag_str, parallax, mass
         func = isodist.prob_distance_extinctprior
         distances = func(mags, data,
                          errmags, data_errs, prior,
@@ -106,29 +119,68 @@ def process_single_distance(input_data, w, prior, with_parallax, with_mass, i):
         # Convert log() to log10()
         distances[7:9] /= np.log(10.)
         distances[13:15] /= np.log(10.)
+        distances[19:21] /= np.log(10.)
+        # Covariance to correlation
+        distances[19] /= distances[7] * distances[1]
+        distances[20] /= distances[7] * distances[11]
+        distances[21] /= distances[1] * distances[11]
         print i, distances
-        input_data.loc[i, 's'] = 10**(0.2 * distances[1] - 2.)
+        in_data.loc[i, 's'] = 10**(0.2 * distances[1] - 2.)
         if(distances[2] < 0.):
-            X = np.ones(17) * np.nan
+            X = np.ones(19) * np.nan
             distances[:2] = np.nan
             distances[3:] = np.nan
             X[-1] = 1
         else:
-            if input_data['pmra'][i]!=input_data['pmra'][i]:
-                X = np.ones(16)*np.nan
+            if in_data['pmra'][i] != in_data['pmra'][i]:
+                X = np.ones(16 + 14 * with_errors) * np.nan
             else:
-                X = edf_sampling.process_data(
-                np.array([np.deg2rad(input_data['ra'][i]),
-                          np.deg2rad(input_data['dec'][i]),
-                          input_data['s'][i],
-                          input_data['hrv'][i],
-                          input_data['pmra'][i],
-                          input_data['pmdec'][i]]))
-            X = np.append(X, [0])
-            # X = np.delete(X, 3)  # remove radial velocity from output
+                if(with_errors):
+                    Nsamples = 30
+                    covar = np.zeros((4, 4))
+                    covar[0][0] = distances[2]**2
+                    covar[1][1] = in_data['pmra_error'][i]**2
+                    covar[2][2] = in_data['pmdec_error'][i]**2
+                    covar[0][1] = covar[1][0] = in_data['parallax_pmra_corr'][i] * \
+                        in_data['pmra_error'][i] * distances[2]
+                    covar[0][2] = covar[2][0] = in_data['parallax_pmdec_corr'][i] * \
+                        in_data['pmdec_error'][i] * distances[2]
+                    covar[1][2] = covar[2][1] = in_data['pmra_pmdec_corr'][i] * \
+                        in_data['pmra_error'][i] * in_data['pmdec_error'][i]
+                    covar[3][3] = in_data['e_hrv'][i]
+                    mean = np.array([distances[1],
+                                     in_data['pmra'][i],
+                                     in_data['pmdec'][i],
+                                     in_data['hrv'][i]])
+                    samples = np.random.multivariate_normal(
+                        mean, covar, size=Nsamples)
+                    samples[:, 0] = np.power(10., 0.2 * samples[:, 0] - 2.)
+                    Xs = np.array([
+                                  edf_sampling.process_data(
+                                      np.array([np.deg2rad(in_data['ra'][i]),
+                                                np.deg2rad(in_data['dec'][i]),
+                                                samples[ns][0],
+                                                samples[ns][3],
+                                                samples[ns][1],
+                                                samples[ns][2]]))
+                                  for ns in range(Nsamples)
+                                  ])
+                    X = np.concatenate((np.nanmean(Xs, axis=0),
+                                        np.nanstd(Xs, axis=0)[2:]))
+                    # Drop l and b errors
+                else:
+                    X = edf_sampling.process_data(
+                        np.array([np.deg2rad(in_data['ra'][i]),
+                                  np.deg2rad(in_data['dec'][i]),
+                                  in_data['s'][i],
+                                  in_data['hrv'][i],
+                                  in_data['pmra'][i],
+                                  in_data['pmdec'][i]]))
+
+            X = np.append(X, [0])  # flag set to zero
         return np.append(distances[1:], X)
     else:
-        XX = np.ones(36) * np.nan
+        XX = np.ones(38 + 14 * with_errors) * np.nan
         if spec_problem:
             XX[-1] = 2
         if ir_problem:
@@ -145,7 +197,10 @@ additional_output = ['l', 'b', 's',
                      'R', 'phi', 'z',
                      'vR', 'vphi', 'vz',
                      'JR', 'Lz', 'Jz',
-                     'Rc', 'flag']
+                     'Rc']
+additional_output_errors = [a + '_err' for a in additional_output][2:]
+flag_output = ['flag']
+
 pos_unit = u.kpc
 vel_unit = u.km / u.s
 action_unit = u.kpc * u.km / u.s
@@ -156,9 +211,10 @@ additional_output_units = [u.rad, u.rad, u.kpc,
                            pos_unit, pos_unit, pos_unit,
                            vel_unit, vel_unit, vel_unit,
                            action_unit, action_unit, action_unit,
-                           pos_unit,
-                           u.dimensionless_unscaled
+                           pos_unit
                            ]
+
+flag_units = [u.dimensionless_unscaled]
 
 distance_output = ['dm', 'dm_err',
                    'dist', 'dist_err',
@@ -169,7 +225,9 @@ distance_output = ['dm', 'dm_err',
                    'log10_av', 'log10_av_err',
                    'log10_teff', 'log10_teff_err',
                    'logg', 'logg_err',
-                   'covar_dm_logage']
+                   'dm_log10age_corr',
+                   'log10age_Z_corr',
+                   'dm_Z_corr']
 
 distance_units = [u.mag, u.mag,
                   pos_unit, pos_unit,
@@ -180,11 +238,19 @@ distance_units = [u.mag, u.mag,
                   log10_mag_unit, log10_mag_unit,
                   u.dex(u.K), u.dex(u.K),
                   u.dex(u.cm / u.s**2), u.dex(u.cm / u.s**2),
+                  u.dimensionless_unscaled,
+                  u.dimensionless_unscaled,
                   u.dimensionless_unscaled]
 
 
 def new_add_columns(data):
     for i, unit in zip(additional_output, additional_output_units):
+        data[i] = np.nan * unit
+    if(with_errors):
+        for i, unit in zip(additional_output_errors,
+                           additional_output_units[2:]):
+            data[i] = np.nan * unit
+    for i, unit in zip(flag_output, flag_units):
         data[i] = np.nan * unit
     data['flag'] = data['flag'].astype(int)
     return data
@@ -229,6 +295,22 @@ def column_descr(name, id_col, which, prior, with_parallax, with_mass):
              'Isochrone set(s) used = ' + which_string,
              'Adopted prior: %s' % prior_string,
              '%s is the unique identifier for the %s survey' % (id_col, name),
+             'source_id is the Gaia DR2 cross-matched source',
+             'dm and dm_err give the distance modulus with associated error',
+             'dist and dist_err give the distance (kpc) with associated error',
+             'par and par_err give the parallax (mas) output from the code '
+             '(not directly from Gaia) with associated error',
+             'mass and mass_err give the mass (Msun) with associated error',
+             'Z and Z_err give the metallicity estimates',
+             'log10_av and log10_av_err give log10 V-band extinction'
+             ' This is the one column without units as ',
+             ' astropy cannot handle'
+             ' log10(mag)',
+             'log10_teff and log10_teff_err give the log10 effective temp (K)',
+             'logg and logg_err give the log surface gravity (cm/s^2)',
+             'dm_log10age_corr gives the correlation between DM and log10 age',
+             'log10age_Z_corr gives the correlation between log10 age and Z',
+             'dm_Z_corr gives the correlation between DM and Z',
              '(l,b) are Galactic coordinates (in rad)',
              's is distance (kpc) used for the Galactocentric velocity and '
              'action calculations = 10**(0.2*dm-2)',
@@ -249,18 +331,7 @@ def column_descr(name, id_col, which, prior, with_parallax, with_mass):
              ' from Binney (2012) (in units kpc km/s).',
              'Rc is the radius of a circular orbit with angular momentum Lz '
              '(in kpc).',
-             'dm and dm_err give the distance modulus with associated error',
-             'dist and dist_err give the distance (kpc) with associated error',
-             'par and par_err give the parallax (mas) with associated error',
-             'mass and mass_err give the mass (Msun) with associated error',
-             'Z and Z_err give the metallicity estimates',
-             'log10_av and log10_av_err give log10 V-band extinction'
-             ' This is the one column without units as ',
-             ' astropy cannot handle'
-             ' log10(mag)',
-             'log10_teff and log10_teff_err give the log10 effective temp (K)',
-             'logg and logg_err give the log surface gravity (cm/s^2)',
-             'covar_dm_logage gives the covariance between DM and log10 age',
+             '*_err are the associated errors in these quantities.'
              'flag is an integer where 0 denotes all columns contain values',
              'if flag!=0 then many other columns will be nan',
              'if flag=1 the pipeline failed (could not find overlap with any'
@@ -280,7 +351,7 @@ def process_distances(input_data, output, id_col, name, which="Padova",
         input_data. which is an array of strings which give the isochrone
         sets to use, if prior we use the Binney prior'''
 
-    output_data = Table.from_pandas(input_data[[id_col]])
+    output_data = Table.from_pandas(input_data[[id_col, 'source_id']])
     output_data.meta['COMMENT'] = column_descr(name, id_col, which,
                                                prior, with_parallax, with_mass)
 
@@ -289,19 +360,32 @@ def process_distances(input_data, output, id_col, name, which="Padova",
 
     num_tasks = len(input_data)
     nindex = range(num_tasks)
-    for Nindx in np.array_split(nindex, 100):
+    nsplit = 10
+    init_array(input_data)
+    for Nindx in np.array_split(nindex, nsplit):
         if(npool > 1):
             p = Pool(npool)
-            r = p.map(partial(process_single_distance, input_data, which,
+            r = p.map(partial(process_single_distance,
+                              # input_data,
+                              which,
                               prior, with_parallax, with_mass),
-                      Nindx, chunksize=30)
+                      Nindx,
+                      # chunksize=30
+                      )
             p.close()
             p.join()
         else:
             r = map(lambda i: process_single_distance(
-                input_data, which, prior, with_parallax, with_mass, i), Nindx)
+                # input_data,
+                which, prior, with_parallax, with_mass, i), Nindx)
         for nindx, X in zip(Nindx, r):
-            for K, n in enumerate(distance_output + additional_output):
+            output_cols = distance_output + additional_output + \
+                flag_output
+            if with_errors:
+                output_cols = distance_output + additional_output + \
+                    additional_output_errors + \
+                    flag_output
+            for K, n in enumerate(output_cols):
                 output_data[n][nindx] = X[K]
         output_data.write(output, path='data', format='hdf5',
                           compression=True,
@@ -316,7 +400,7 @@ def mfe(data):
     return np.nanmedian(data.e_fe_h)
 
 
-def run_distance_pipeline(data, out, id_col, name, npool=-1):
+def run_distance_pipeline(data, out, id_col, name, npool=-1, with_parallax=True):
     print mfe(data)
     with open('config.json') as data_file:
         config = json.load(data_file)
@@ -327,7 +411,7 @@ def run_distance_pipeline(data, out, id_col, name, npool=-1):
     process_distances(data, out, id_col, name,
                       which=isochrones, prior=True,
                       npool=npool,
-                      with_parallax=True,
+                      with_parallax=with_parallax,
                       with_mass=True)
 
 

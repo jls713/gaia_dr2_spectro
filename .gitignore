@@ -13,3 +13,5 @@
 *.acts0
 !isochrone/extinction_files/*.dat
 !isochrone/extinction_files/*.txt
+*.pdf
+*.npy

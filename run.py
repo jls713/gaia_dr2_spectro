@@ -6,11 +6,16 @@ from spectro_data.lamost import load_and_match as load_lamost
 from spectro_data.rave import load_and_match as load_rave
 from distances import *
 
-DR1 = True
-TEST = False # True
-TESTNUMBER = 100
-npool = 10
+DR1 = False
+TEST = True
+TESTNUMBER = 10  # 100
+npool = 88
 random_seed = 52
+with_parallax = True
+name_str = ''
+if not with_parallax:
+    name_str = '_preG'
+
 
 with open('config.json') as config:
     output_folder = json.load(config)['dir']['output_folder']
@@ -24,9 +29,10 @@ def run_rave_on():
         rave = rave.sample(n=TESTNUMBER,
                            random_state=random_seed).reset_index(drop=True)
     run_distance_pipeline(rave,
-                          output_folder + 'RAVE_DR5_distances.hdf5',
+                          output_folder + 'RAVE_DR5_distances%s.hdf5' % name_str,
                           'raveid', 'RAVE DR5',
-                          npool=npool)
+                          npool=npool,
+                          with_parallax=with_parallax)
 
 
 def run_rave_dr5():
@@ -35,9 +41,10 @@ def run_rave_dr5():
         rave = rave.sample(n=TESTNUMBER,
                            random_state=random_seed).reset_index(drop=True)
     run_distance_pipeline(rave,
-                          output_folder + 'RAVE_Cannon_distances.hdf5',
+                          output_folder + 'RAVE_Cannon_distances%s.hdf5' % name_str,
                           'raveid', 'RAVEon',
-                          npool=npool)
+                          npool=npool,
+                          with_parallax=with_parallax)
 
 # Gaia-ESO
 
@@ -48,9 +55,10 @@ def run_ges():
         ges = ges.sample(n=TESTNUMBER,
                          random_state=random_seed).reset_index(drop=True)
     run_distance_pipeline(ges,
-                          output_folder + 'GES_distances.hdf5',
+                          output_folder + 'GES_distances%s.hdf5' % name_str,
                           'CNAME', 'GES',
-                          npool=npool)
+                          npool=npool,
+                          with_parallax=with_parallax)
 
 # APOGEE
 
@@ -61,9 +69,10 @@ def run_apogee():
         apogee = apogee.sample(n=TESTNUMBER,
                                random_state=random_seed).reset_index(drop=True)
     run_distance_pipeline(apogee,
-                          output_folder + 'APOGEE_distances.hdf5',
+                          output_folder + 'APOGEE_distances%s.hdf5' % name_str,
                           'APOGEE_ID', 'APOGEE',
-                          npool=npool)
+                          npool=npool,
+                          with_parallax=with_parallax)
 
 # LAMOST
 
@@ -74,9 +83,10 @@ def run_lamost():
         lamost = lamost.sample(n=TESTNUMBER,
                                random_state=random_seed).reset_index(drop=True)
     run_distance_pipeline(lamost,
-                          output_folder + 'LAMOST_distances.hdf5',
+                          output_folder + 'LAMOST_distances%s.hdf5' % name_str,
                           'obsid', 'LAMOST',
-                          npool=npool)
+                          npool=npool,
+                          with_parallax=with_parallax)
 
 # GALAH
 
@@ -87,9 +97,10 @@ def run_galah():
         galah = galah.sample(n=TESTNUMBER,
                              random_state=random_seed).reset_index(drop=True)
     run_distance_pipeline(galah,
-                          output_folder + 'GALAH_distances.hdf5',
+                          output_folder + 'GALAH_distances%s.hdf5' % name_str,
                           'sobject_id', 'GALAH',
-                          npool=npool)
+                          npool=npool,
+                          with_parallax=with_parallax)
 
 # APOGEE TGAS TEST
 
@@ -105,12 +116,14 @@ def run_apogeetgas_test():
                           output_folder +
                           'APOGEETGAS_TEST_distances_random100.hdf5',
                           'location_id', 'APOGEE TGAS',
-                          npool=npool)
+                          npool=npool,
+                          with_parallax=with_parallax)
 
 
 def run_apogeetgas_test_withGaia():
     apogee = load_apogeetgas()
     apogee['eG'] = 0.025
+    apogee['e_hrv'] = apogee['evlos']
     apogee['mag_use'] = \
         apogee.applymap(
             lambda x: np.array(['J', 'H', 'K', 'G']))['mag_use']
@@ -130,6 +143,6 @@ if __name__ == '__main__':
     # run_ges()
     # run_apogee()
     # run_lamost()
-    run_galah()
+    # run_galah()
     # run_apogeetgas_test()
-    # run_apogeetgas_test_withGaia()
+    run_apogeetgas_test_withGaia()

@@ -2,12 +2,14 @@ import tabulate
 import numpy as np
 import glob
 
+tablefmt = "simple"
+
 iso_lbl = {'2MASS': r'$(J-K_s)$', 'SDSS': r'$(g-r)$',
            'Landolt': r'$(B-V)$',
-           'Pan-STARRS': r'$(g_P-r_P)$',
-           'GBP_GRP': r'$(G_{BP}-G_{RP})$',
-           'G_GRP': r'$(G-G_{RP})$',
-           'GBP_G': r'$(G_{BP}-G)$',
+           'Pan-STARRS': r'$(g_\mathrm{P}-r_\mathrm{P})$',
+           'GBP_GRP': r'$(G_\mathrm{BP}-G_\mathrm{RP})$',
+           'G_GRP': r'$(G-G_\mathrm{RP})$',
+           'GBP_G': r'$(G_\mathrm{BP}-G)$',
            'Teff': r'$\log_{10}(T_\mathrm{eff})-4$'}
 
 
@@ -18,8 +20,8 @@ names = np.array([iso_lbl[f.split('_2')[0]] for f in glob.glob('*2015.poly')])
 poly1 = np.vstack((names,fl.T)).T
 poly2 = np.vstack((names,fl2.T)).T
 
-print tabulate.tabulate(poly1, headers=['Colour']+['p_%i'%i for i in range(10)])
-print tabulate.tabulate(poly2, headers=['Colour']+['p_%i'%i for i in range(4)])
+print tabulate.tabulate(poly1, headers=['Colour']+['p_%i'%i for i in range(10)], tablefmt=tablefmt)
+print tabulate.tabulate(poly2, headers=['Colour']+['p_%i'%i for i in range(4)], tablefmt=tablefmt)
 
 fl = np.array([np.float64(open(f).readlines()[1].split(',')) for f in glob.glob('*2017.poly')])
 fl2 = np.array([np.float64(open(f).readlines()[2].split(',')) for f in glob.glob('*2017.poly')])
@@ -28,8 +30,8 @@ names = np.array([iso_lbl[f.split('_2')[0]] for f in glob.glob('*2017.poly')])
 poly1 = np.vstack((names,fl.T)).T
 poly2 = np.vstack((names,fl2.T)).T
 
-print tabulate.tabulate(poly1, headers=['Colour']+['p_%i'%i for i in range(10)])
-print tabulate.tabulate(poly2, headers=['Colour']+['p_%i'%i for i in range(4)])
+print tabulate.tabulate(poly1, headers=['Colour']+['p_%i'%i for i in range(10)], tablefmt=tablefmt)
+print tabulate.tabulate(poly2, headers=['Colour']+['p_%i'%i for i in range(4)], tablefmt=tablefmt)
 
 import pandas as pd
 g = pd.read_csv('extinction_coeffs_2017.dat', skiprows=1, sep=r'\s+', header=None).values

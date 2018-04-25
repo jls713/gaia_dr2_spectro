@@ -41,11 +41,12 @@ def load_data(use_dr5=False, **args):
     data = Rsort[~data_radecmag.duplicated()].sort_index()
     data = data.reset_index(drop=True)
 
-    rave_dr4 = pd.read_csv('/data/jls/RAVEdata/RAVE_DR4.csv.gz',
-                           na_values='\N')
-    dr4_cols = ['RAVE_OBS_ID', 'Teff_SPARV']
-    data = data.merge(rave_dr4[dr4_cols], left_on='rave_obs_id',
-                      right_on='RAVE_OBS_ID', how='inner')
+    # RAVE DR4 Teff_SPARV not necessary here
+    #rave_dr4 = pd.read_csv('/data/jls/RAVEdata/RAVE_DR4.csv.gz',
+    #                       na_values='\N')
+    #dr4_cols = ['RAVE_OBS_ID', 'Teff_SPARV']
+    #data = data.merge(rave_dr4[dr4_cols], left_on='rave_obs_id',
+    #                  right_on='RAVE_OBS_ID', how='inner')
 
     rave_dr5 = pd.read_csv('/data/jls/RAVEdata/RAVE_DR5.csv.gz')
 
@@ -57,7 +58,8 @@ def load_data(use_dr5=False, **args):
                 'Hmag_2MASS', 'eHmag_2MASS',
                 'Kmag_2MASS', 'eKmag_2MASS']
 
-    data = data.merge(rave_dr5[dr5_cols], on='RAVE_OBS_ID', how='inner')
+    data = data.merge(rave_dr5[dr5_cols], left_on='rave_obs_id',
+			right_on='RAVE_OBS_ID', how='inner')
 
     col_dict = {'Jmag_2MASS': 'J', 'eJmag_2MASS': 'eJ',
                 'Hmag_2MASS': 'H', 'eHmag_2MASS': 'eH',
@@ -92,7 +94,8 @@ def load_data(use_dr5=False, **args):
         data['rho_TZ'] = 0.
         data['rho_gZ'] = 0.
 
-    data['mag_use'] = [np.array(['J', 'H', 'K']) for i in range(len(data))]
+    data['mag_use'] = [np.array(['J', 'H', 'K', 'G'])
+                        for i in range(len(data))]
 
     data['mass'] = 0.
     data['mass_error'] = -1.

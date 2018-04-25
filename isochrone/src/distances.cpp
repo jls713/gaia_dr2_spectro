@@ -183,9 +183,11 @@ double DistanceCalculator<isochrone_g>::distance_pdf_es(VecDoub ZTG, VecDoub lbs
     return distance_pdf(ZTG, lbs, icov, Z_age_mass_alpha, mag, err_mag, mag_bands, prior, EM)-log(desdM);
 }
 
-VecDoub compute_mean_std_from_total(VecDoub total){
+VecDoub compute_mean_std_from_total(VecDoub total, int upper_lim=-1){
+    if(upper_lim<0)
+        upper_lim=total.size();
     for(auto i=1;i<total.size();++i) total[i]/=total[0];
-    for(auto i=2;i<total.size();i+=2)
+    for(auto i=2;i<upper_lim;i+=2)
         total[i]=sqrt(total[i]-total[i-1]*total[i-1]);
     return total;
 }
@@ -208,8 +210,10 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance(
     std::vector<std::string> mag_list,
     double parallax, double parallax_error,
     double mass, double mass_error){
+    // No extinction
+    // See prob_distance_extinctprior for more detailed commenting
 
-    double dmu=err_mag[0]/5.,s,Teffmodel,loggmodel,agemodel,mmodel;
+    double dmu=err_mag[0]/2.,s,Teffmodel,loggmodel,agemodel,mmodel;
     MatDoub icov(3,VecDoub(3,0.)),cov(3,VecDoub(3,0.));
     cov[0][0]=covar_ZTL[0];
     cov[0][1]=covar_ZTL[1]; cov[1][0]=covar_ZTL[1];
@@ -699,14 +703,19 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
     double parallax, double parallax_error,
     double mass, double mass_error){
 
-    double Aprior = 0., sigAprior = 0., lp;
+    double lp;
 
     // Only use IR bands to estimate distance
     VecDoub mags_use, err_mags_use; std::vector<std::string> mag_str_use;
     for(unsigned i=0;i<mag_list.size();++i){
-        if(mag_list[i]=="H" or mag_list[i]=="J" or mag_list[i]=="K"
-           or mag_list[i]=="r" or mag_list[i]=="i"
-           or mag_list[i]=="Jv" or mag_list[i]=="Hv" or mag_list[i]=="Kv"){
+        if(mag_list[i]=="H" or
+           mag_list[i]=="J" or
+           mag_list[i]=="K" or
+           mag_list[i]=="r" or
+           mag_list[i]=="i" or
+           mag_list[i]=="Jv" or
+           mag_list[i]=="Hv" or
+           mag_list[i]=="Kv"){
             mags_use.push_back(mag[i]);
             err_mags_use.push_back(err_mag[i]);
             mag_str_use.push_back(mag_list[i]);
@@ -718,16 +727,31 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
         lp=0.;
     }
     else{
-        VecDoub first_guess=prob_distance(mags_use,Z,Teff,logg,l,b,err_mags_use,covar_ZTL,prior,return_pdf,NSTD,mag_str_use,parallax,parallax_error);
+        VecDoub first_guess=prob_distance(mags_use,Z,Teff,logg,
+                                          l,b,err_mags_use,covar_ZTL,
+                                          prior,return_pdf,NSTD,
+                                          mag_str_use,
+                                          parallax,parallax_error);
 
         lp = log(first_guess[3]);
     }
-    Aprior= linterp(log_dist_AV,Aprior_VEC,lp,"linear");
-    sigAprior = linterp(log_dist_AV,sigAprior_VEC,lp,"linear");
 
-    VecDoub total(20,0.);
+    // Aprior and sigAprior used to define integration range of Av
+    double Aprior= linterp(log_dist_AV,Aprior_VEC,lp,"linear");
+    double sigAprior = linterp(log_dist_AV,sigAprior_VEC,lp,"linear");
+    double av = 0.;
+    double AVmin=Aprior-3.*sigAprior;
+    double AVmax=Aprior+3.*sigAprior;
+    if(AVmax>Aprior_VEC.back()) AVmax=Aprior_VEC.back();
+    if(AVmax>3.4) AVmax=3.4;
+
+    VecDoub total(22,0.);
     double dmu=err_mag[0]/2.,s,Teffmodel,loggmodel,agemodel,mmodel;
     MatDoub icov(3,VecDoub(3,0.)),cov(3,VecDoub(3,0.));
+    double Mag_extN;
+    double nstd=NSTD;
+
+    // Covariance matrix
     cov[0][0]=covar_ZTL[0];
     cov[0][1]=covar_ZTL[1]; cov[1][0]=covar_ZTL[1];
     cov[0][2]=covar_ZTL[2]; cov[2][0]=covar_ZTL[2];
@@ -739,11 +763,10 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
     double fac = det;
     for(unsigned i=0;i<3;++i) fac*=TPI;
     fac = 1./sqrt(fac);
+
     double err_Z = sqrt(cov[0][0]);
     double err_Teff = sqrt(cov[1][1]);
     double err_logg = sqrt(cov[2][2]);
-    double Mag_extN;
-    double nstd=NSTD;
 
     double EF;
     VecDoub mag_ext_const(mag_list.size(),0.);
@@ -756,65 +779,81 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
 
     double tmp1, tmp2, tmp3, tmp4, s2, Mag, Mag_ext, med_ext, std_ext, DM;
 
-    double av = 0.;
-    // double lAprior = log(Aprior);
-    // double sigA = (Aprior>0.?0.4/Aprior:0.2);
-    double AVmin=Aprior-3.*sigAprior;
-    double AVmax=Aprior+3.*sigAprior;
-    if(AVmax>Aprior_VEC.back()) AVmax=Aprior_VEC.back();
-    if(AVmax>3.4) AVmax=3.4;
-
+    // For gridding p(mu) -- only used if return_pdf=True
     VecDoub prob_mu,mu_grid;
     double grid_space=0.2;
+
+
     for(int i=0;i<iso_grid->NF;i++){
-        if(fabs(iso_grid->iso(i,0)->feh()-Z)>nstd*err_Z) continue;
+        // Check outside metallicity range
+        if(fabs(iso_grid->iso(i,0)->feh()-Z)>nstd*err_Z)
+            continue;
+        // Integration volume metallicitiy
         tmp1 = iso_grid->delta_Z(i);
+
         for(int j=0;j<iso_grid->NA;j++){
             agemodel=iso_grid->iso(i,j)->tau();
+            // Integration volume age
             tmp2 = tmp1*iso_grid->delta_age(j);
+
             for(int k=0;k<iso_grid->iso(i,j)->N();k++){
+                // Check outside Teff range
                 Teffmodel = iso_grid->iso(i,j)->logTeff(k);
+                if(fabs(Teffmodel-Teff)>nstd*err_Teff) continue;
+                // Check outside logg range
+                loggmodel = iso_grid->iso(i,j)->logg(k);
+                if(fabs(loggmodel-logg)>nstd*err_logg) continue;
 
                 for(unsigned i=0;i<mag.size();++i)
                     mag_ext_const[i]=EL->extinct_const(mag_list[i],
                                                        Teffmodel);
 
-                if(fabs(Teffmodel-Teff)>nstd*err_Teff) continue;
-                loggmodel = iso_grid->iso(i,j)->logg(k);
-                if(fabs(loggmodel-logg)>nstd*err_logg) continue;
-
                 mmodel=iso_grid->iso(i,j)->initial_mass(k);
+                // Integration volume mass, times IMF, times likelihood
+                // for spectroscopic parameters (covariance matrix)
                 tmp3=tmp2*iso_grid->iso(i,j)->delta_mass(k)
-                    *KroupaIMF_default(mmodel)*ND_GFunction({Z-iso_grid->fehgrid[i],Teff-Teffmodel,logg-loggmodel},icov,fac);
+                    *KroupaIMF_default(mmodel)
+                    *ND_GFunction({Z-iso_grid->fehgrid[i],
+                                   Teff-Teffmodel,
+                                   logg-loggmodel},icov,fac);
 
+                // If using mass estimate -- multiply by Gaussian
                 if(mass_error>0.)
                     tmp3 *= GFunction(mass-iso_grid->iso(i,j)->mass(k),
                                       mass_error);
-
+                // Initial magnitude -- used to define integration range
+                // and also to compute central extinction from prior
                 Mag=iso_grid->iso(i,j)->mag(k,mag_list[0]);
                 for(double lav=AVmin;lav<AVmax;lav+=sigAprior/2.){
+
+                    // Find extinction prior
                     av  = exp(lav);
                     Mag_extN = Mag+av*mag_ext_const[0]*(1-av*avgradient[0]);
                     DM = mag[0]-Mag_extN;
-                    s = pow(10.,0.2*DM-2.);s2=s*s;lp=log(s);
+                    s = pow(10.,0.2*DM-2.);lp=log(s);
                     med_ext= linterp(log_dist_AV,Aprior_VEC,lp,"linear");
                     std_ext = linterp(log_dist_AV,sigAprior_VEC,lp,"linear");
                     EF = GFunction(lav-med_ext,std_ext);
+
                     for(double mu=mag[0]-Mag_extN-nstd*err_mag[0];
                                mu<mag[0]-Mag_extN+nstd*err_mag[0];
                                mu+=dmu){
                         s = pow(10.,0.2*mu-2.);s2=s*s;lp=log(s);
-                        // med_ext= linterp(log_dist_AV,Aprior_VEC,lp,"linear");
-                        // std_ext = linterp(log_dist_AV,sigAprior_VEC,lp,"linear");
-                        // EF = GFunction(lav-med_ext,std_ext);
+                        // Jacobian times integration volume in dm times
+                        // prior on extinction
                         tmp4=s2*s*tmp3*dmu*EF;
+                        // Parallax if required
                         if(parallax_error>0.)
                             tmp4*=GFunction(parallax-1./s,parallax_error);
+                        // Now magnitudes
                         for(unsigned c=0;c<mag.size();++c){
-                            Mag_ext=iso_grid->iso(i,j)->mag(k,mag_list[c])+av*mag_ext_const[c]*(1-av*avgradient[c]);
+                            Mag_ext=iso_grid->iso(i,j)->mag(k,mag_list[c])+
+                                    av*mag_ext_const[c]*(1-av*avgradient[c]);
                             tmp4*=GFunction(mag[c]-(mu+Mag_ext),err_mag[c]);
                         }
+
                         if(tmp4==0.) continue;
+                        // Finally, multiply by Galaxy prior
                         if(prior->bprior()){
                             VecDoub X = conv::GalacticToCartesian({l,b,s},
                                                                   prior->solar());
@@ -822,6 +861,13 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
                                                iso_grid->fehgrid[i],
                                                agemodel);
                         }
+                        // Now store results
+                        // total[0]=int p(mu)
+                        // others are first and second moments
+                        // then covariances at the end
+                        // mu, s, parallax, log(age), mass, Z, log(av)
+                        // log10teff, logg,
+                        // covariances: log(age)-dm, log(age)-Z, dm-Z
                         total[0]+=tmp4;total[1]+=mu*tmp4;total[2]+=mu*mu*tmp4;
                         total[3]+=s*tmp4;total[4]+=s2*tmp4;
                         total[5]+=tmp4/s;total[6]+=tmp4/s2;
@@ -836,8 +882,14 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
                         // logg
                         total[17]+=tmp4*loggmodel;
                         total[18]+=tmp4*loggmodel*loggmodel;
-                        // Distane-Modulue-Age covariance
+                        // Distance-Modulus-Age covariance
                         total[19]+=tmp4*log(agemodel)*mu;
+                        //Age-Z covariance
+                        total[20]+=tmp4*log(agemodel)*iso_grid->fehgrid[i];
+                        // Distance-Modulus-Z covariance
+                        total[21]+=tmp4*mu*iso_grid->fehgrid[i];
+
+                        // For storing pdf
                         if(return_pdf){
                             if(prob_mu.size()==0){
                                 prob_mu.push_back(tmp4);
@@ -871,12 +923,13 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
             }
         }
     }
+    // If not found valid overlap, expand range
     if(total[0]<=0.){
         if(NSTD>=20.){
             total[0]=std::numeric_limits<double>::infinity();
             total[1]=std::numeric_limits<double>::infinity();
             total[2]=-1.;
-            for(int i=3;i<20;++i)
+            for(int i=3;i<22;++i)
                 total[i]=std::numeric_limits<double>::infinity();
             return total;
         }
@@ -887,8 +940,13 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
                                                EL, parallax,parallax_error);
     }
 
-    total=compute_mean_std_from_total(total);
+    total=compute_mean_std_from_total(total, 19);
+    // Covariances
     total[19]-=total[1]*total[7];
+    total[20]-=total[11]*total[7];
+    total[21]-=total[1]*total[11];
+
+    // Storing pdf
     if(return_pdf){
         double sum=0.;
         for(auto i:prob_mu)
