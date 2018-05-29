@@ -713,6 +713,9 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
            mag_list[i]=="K" or
            mag_list[i]=="r" or
            mag_list[i]=="i" or
+           mag_list[i]=="rP" or
+           mag_list[i]=="iP" or
+           mag_list[i]=="GRP" or
            mag_list[i]=="Jv" or
            mag_list[i]=="Hv" or
            mag_list[i]=="Kv"){
@@ -855,7 +858,7 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
                         if(tmp4==0.) continue;
                         // Finally, multiply by Galaxy prior
                         if(prior->bprior()){
-                            VecDoub X = conv::GalacticToCartesian({l,b,s},
+			    VecDoub X = conv::GalacticToCartesian({l,b,s},
                                                                   prior->solar());
                             tmp4*=prior->prior(X,
                                                iso_grid->fehgrid[i],

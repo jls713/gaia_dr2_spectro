@@ -99,7 +99,7 @@ def crossmatch_SDSS(ra, dec, dist_max=5.):
     data = sqlutil.local_join("""
         select psfMag_g as g,psfMagErr_g as eg,
         psfMag_r as r,psfMagErr_r as er,
-        psfMag_i as i,psfMagErr_i as i from mytable as m
+        psfMag_i as i,psfMagErr_i as ei from mytable as m
         left join lateral (select * from sdssdr12.specphotoall as s
         where s.type=6 and mode=1 and
         q3c_join(m.ra, m.dec,s.ra,s.dec,%0.5f/3600)
@@ -115,6 +115,27 @@ def crossmatch_SDSS(ra, dec, dist_max=5.):
                               asDict=True, strLength=30)
     return data
 
+def crossmatch_PS1(ra, dec, dist_max=5.):
+    """
+        Cross match list of ra,dec of stars with Pan-STARRS.
+    """
+    data = sqlutil.local_join("""
+        select * from mytable as m
+        left join lateral (select * from panstarrs_dr1.stackobjectthin as s where
+        q3c_join(m.ra, m.dec,s.ra,s.dec,%0.5f/3600)
+        and s.ipsfmag - s.ikronmag < 0.05
+        and (s.ginfoflag3&panstarrs_dr1.detectionflags3('STACK_PRIMARY'))>0
+        order by q3c_dist(m.ra,m.dec,s.ra,s.dec) asc limit 1)
+        as tt on  true  order by xid """ % dist_max,
+                              'mytable', (ra, dec, np.arange(
+                                  len(dec))), ('ra', 'dec', 'xid'),
+                              host='cappc127', user='jason_sanders',
+                              password=wsdbpassword,
+                              preamb='set enable_seqscan to off; ' +
+                              'set enable_mergejoin to off; ' +
+                              'set enable_hashjoin to off;',
+                              asDict=True, strLength=30)
+    return data
 
 def quality_2MASS_phot(tmass_data):
 

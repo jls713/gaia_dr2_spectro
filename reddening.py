@@ -10,7 +10,8 @@ from scipy.integrate import quad
 from scipy.interpolate import RegularGridInterpolator
 import mwdust
 import healpy
-
+import os 
+dir_path = os.path.dirname(os.path.realpath(__file__))+'/'
 # with open('setup.json') as data_file:
 #     data = json.load(data_file)
 #     isochrone_folder=data['isochrone_folder']
@@ -20,12 +21,11 @@ import healpy
 AVconst_BS2015 = 2.742
 AVconst_BS2018 = 2.9492252258418326
 
-
 class ReddeningMaps(object):
     def __init__(self, with_extinction_maps=False):
 
         self.redd_maps = {}
-        with open('extinction/extinction_coeffs_2017.dat') as f:
+        with open(dir_path+'extinction/extinction_coeffs_2017.dat') as f:
             self.R_V_grid = np.fromstring(
                 f.readline(), dtype=np.float64, sep=' ')
             for l in f.readlines():
@@ -37,7 +37,7 @@ class ReddeningMaps(object):
             self.R_V_grid, self.redd_maps[n]) for n in self.redd_maps}
 
         self.R_G = np.zeros((75, len(self.R_V_grid)))
-        with open('extinction/extinction_coeffs_G_2017.dat') as f:
+        with open(dir_path+'extinction/extinction_coeffs_G_2017.dat') as f:
             self.logTeffgrid = np.fromstring(
                 f.readline(), dtype=np.float64, sep=' ')
             for n, l in enumerate(f.readlines()):

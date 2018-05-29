@@ -22,6 +22,16 @@ APOGEE_FOLDER = '/data/jls/apogee/apogee_data/'
 DR12_file = 'allStar-v603-nodups.fits'
 DR14_file = 'allStar-l31c.2.fits'
 
+def format_columns(data):
+    col_dict = {'J_ERR': 'eJ', 'H_ERR': 'eH', 'K_ERR': 'eK',
+                'M_H_ERR': 'e_fe_h', 'M_H': 'fe_h',
+                'TEFF_ERR': 'e_teff', 'TEFF': 'teff',
+                'LOGG_ERR': 'e_logg', 'LOGG': 'logg',
+                'VHELIO_AVG': 'hrv',
+                'VSCATTER': 'e_hrv',
+                'RA': 'ra', 'DEC': 'dec'}
+    data = data.rename(index=str, columns=col_dict)
+    return data
 
 def load_data(calibrated=True, use_dr12=False):
     if use_dr12:
@@ -113,6 +123,10 @@ def load_data(calibrated=True, use_dr12=False):
                 apogee[name] = apogee[name].values.byteswap().newbyteorder()
 
     apogee = apogee.replace(-9999., np.nan)
+    for i in ['J','H','K']:
+        fltr = (apogee[i]<-9990.)|(apogee['%s_ERR'%i]<-9990.)
+        apogee.loc[fltr,i]=np.nan
+        apogee.loc[fltr,'%s_ERR'%i]=np.nan
 
     apogee['mag_use'] = [np.array(['J', 'H', 'K', 'G'])
                             for i in range(len(apogee))]
@@ -122,6 +136,8 @@ def load_data(calibrated=True, use_dr12=False):
         apogee.M_H == apogee.M_H) & (apogee.LOGG != apogee.LOGG)
     apogee.loc[fltr, 'LOGG'] = 4.5
     apogee.loc[fltr, 'LOGG_ERR'] = 2.
+    apogee.loc[fltr, 'rho_gZ'] = 0.
+    apogee.loc[fltr, 'rho_Tg'] = 0.
 
     apogee['mass'] = 0.
     apogee['mass_error'] = -1.
@@ -136,21 +152,11 @@ def load_data(calibrated=True, use_dr12=False):
     fltr = True
     for f in flds:
         fltr &= (apogee[f] == apogee[f])
+    fltr &= (apogee.TEFF>4000.)&(apogee.TEFF<5250.)&(apogee.LOGG>1.)&(apogee.LOGG<3.3)&(apogee.M_H>-1.5)&(apogee.M_H<0.5)
     apogee.loc[fltr, 'mass'], apogee.loc[fltr, 'mass_error'] = results[0][fltr], results[1][fltr]
 
+    apogee = format_columns(apogee)
     return apogee
-
-
-def format_columns(data):
-    col_dict = {'J_ERR': 'eJ', 'H_ERR': 'eH', 'K_ERR': 'eK',
-                'M_H_ERR': 'e_fe_h', 'M_H': 'fe_h',
-                'TEFF_ERR': 'e_teff', 'TEFF': 'teff',
-                'LOGG_ERR': 'e_logg', 'LOGG': 'logg',
-                'VHELIO_AVG': 'hrv',
-                'VSCATTER': 'e_hrv',
-                'RA': 'ra', 'DEC': 'dec'}
-    data = data.rename(index=str, columns=col_dict)
-    return data
 
 
 def load_and_match(output_file='/data/jls/GaiaDR2/spectro/APOGEE_input.hdf5',
@@ -161,7 +167,6 @@ def load_and_match(output_file='/data/jls/GaiaDR2/spectro/APOGEE_input.hdf5',
         return data
 
     data = load_data(calibrated=calibrated, use_dr12=use_dr12)
-    data = format_columns(data)
     data = cross_match.crossmatch_gaia_spectro(data, dr1=use_dr1, epoch=2000.)
 
     write_input_file(data, output_file, 'APOGEE DR14')

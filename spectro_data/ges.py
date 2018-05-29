@@ -10,20 +10,26 @@ def format_columns(data):
                 'kapercormag4': 'Kv',
                 'japercormag4_err': 'eJv', 'hapercormag4_err': 'eHv',
                 'kapercormag4_err': 'eKv',
+                'J_VISTA': 'Jv', 'H_VISTA': 'Hv',
+                'K_VISTA': 'Kv',
+                'J_VISTA_ERR': 'eJv', 'H_VISTA_ERR': 'eHv',
+                'K_VISTA_ERR': 'eKv',
+                'J_2MASS': 'J', 'H_2MASS': 'H',
+                'K_2MASS': 'K',
+                'J_2MASS_ERR': 'eJ', 'H_2MASS_ERR': 'eH',
+                'K_2MASS_ERR': 'eK',
                 'RA': 'ra', 'DEC': 'dec',
+                'DECLINATION': 'dec',
                 'TEFF': 'teff', 'E_TEFF': 'e_teff',
                 'LOGG': 'logg', 'E_LOGG': 'e_logg',
                 'FEH': 'fe_h', 'E_FEH': 'e_fe_h',
                 'VRAD': 'hrv',
                 'E_VRAD': 'e_hrv'}
     data = data.rename(index=str, columns=col_dict)
-    fltr = (data['fe_h'] != data['fe_h'])
-    data.loc[fltr, 'fe_h'] = data['MH'][fltr]
-    data.loc[fltr, 'e_fe_h'] = data['E_MH'][fltr]
     return data
 
 
-def load_data():
+def load_data_iDR4():
     ges = read_fits_to_pandas(
         '/data/jls/ges/GES_iDR4_WG15_Recommended_v2.fits')
     ges = ges[ges.RA == ges.RA].reset_index(drop=True)
@@ -33,6 +39,40 @@ def load_data():
     cv = crossmatch_vista(ges.RA.values, ges.DEC.values)
     for i in cv.keys():
         ges[i] = cv[i]
+
+    ges = format_columns(ges)
+    fltr = (data['fe_h'] != data['fe_h'])
+    data.loc[fltr, 'fe_h'] = data['MH'][fltr]
+    data.loc[fltr, 'e_fe_h'] = data['E_MH'][fltr]
+
+    vista_fltr = (ges.Jv == ges.Jv)
+    vista_h = (ges.Hv == ges.Hv)  # For VHS GPS
+
+    ges['mag_use'] = [np.array(['Jv', 'Hv', 'Kv', 'G'])
+                      for i in range(len(ges))]
+    ges.loc[~vista_h, 'mag_use'] = \
+        ges.loc[~vista_h].applymap(lambda x: np.array(['Jv', 'Kv', 'G']))
+    ges.loc[~vista_fltr, 'mag_use'] = \
+        ges.loc[~vista_fltr].applymap(lambda x: np.array(['J', 'H', 'K', 'G']))
+
+    ges['rho_TZ'] = 0.
+    ges['rho_gZ'] = 0.
+    ges['rho_Tg'] = 0.
+
+    ges['parallax'] = 0.
+    ges['parallax_error'] = -1.
+    ges['pmra'] = 0.
+    ges['pmdec'] = 0.
+
+    ges['mass'] = 0.
+    ges['mass_error'] = -1.
+
+    return ges
+
+
+def load_data():
+    ges = pd.read_csv('/data/jls/ges/gaiaeso_dr3.csv')
+    ges = ges[ges.RA == ges.RA].reset_index(drop=True)
 
     ges = format_columns(ges)
 

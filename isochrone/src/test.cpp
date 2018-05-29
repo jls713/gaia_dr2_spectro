@@ -56,7 +56,7 @@ void test_distance(DistanceCalculator<isochrone_g> *D,
     printVector(maglist);
     printVector(mag);
     std::cout<<Z<<" "<<Teff<<" "<<logg<<std::endl;
-
+    std::cout<<GP->bprior()<<std::endl;
     printVector(D->prob_distance(mag,
                                 Z,Teff,logg,
                                 lb[0],lb[1],
@@ -88,6 +88,7 @@ TEST(BaSTI,johnson){
     isochrone_grid<isochrone_johnson> iso("BaSTI",1,0.5);
     DistanceCalculator<isochrone_johnson> D(&iso);
     new_prior_2018 GP(conv::StandardSolarPAUL);
+    GP.set_prior(false);
     schlafly2017_extinction_law EL;
     test_distance(&D,&iso,&GP,&EL);
 }

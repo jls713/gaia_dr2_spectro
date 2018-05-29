@@ -141,7 +141,7 @@ def generate_parent_sample():
     c, d2, d3 = ap_c.match_to_catalog_sky(la_c)
     apogee_cm = apogee[d2 < 2. * u.arcsec].reset_index(drop=True)
     lamost_cm = lamost.iloc[c][d2 < 2. * u.arcsec].reset_index(drop=True)
-    lamost_flds = ['obsid', 'planid', 'lmjd', 'fiberid', 'spid', 'logg']
+    lamost_flds = ['obsid', 'planid', 'lmjd', 'fiberid', 'spid', 'logg', 'teff']
     apogee_flds = ['APOGEE_ID', 'TEFF', 'LOGG',
                    'M_H', 'ALPHA_M', 'C_M', 'N_M', 'snr', 'AK']
     data = pd.concat((apogee_cm[apogee_flds], lamost_cm[lamost_flds]), axis=1)
@@ -215,7 +215,7 @@ def run_cannon_model():
 def full_sample():
     # But need to cut out bad fits -- upper MS
     data = pd.read_hdf('/data/jls/GaiaDR2/spectro/LAMOST_input.hdf5')
-    return data[data.logg < 3.9].reset_index(drop=True)
+    return data[(data.teff<6000.)&(data.logg < 3.9)].reset_index(drop=True)
 
 
 if __name__ == '__main__':

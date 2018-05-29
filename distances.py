@@ -12,7 +12,7 @@ sys.path.append('isochrone')
 sys.path.append('edf_sampling/py')
 import isodist_js as isodist
 import edf_sampling as edf_sampling
-
+import aa_py
 
 def init(types="All", wemap=False, mean_feh_err=1e-5,
          solar_motion=np.array([8.2, 0.015, 11.1, 245., 7.25])):
@@ -34,7 +34,7 @@ def init_array(input_data):
 
 def process_single_distance(
         # in_data,
-        w, prior, with_parallax, with_mass, i):
+        w, prior, with_parallax, with_mass, return_pdf, i):
     ''' Computes a single distance to the star in entry i in the table
         in_data. w is a string which gives the isochrone set to use,
         if prior we use the prior, if with_parallax we use the parallax,
@@ -96,9 +96,9 @@ def process_single_distance(
     spec_problem = (logg < -5000. or logg != logg or
                     teff < -5000. or teff != teff or
                     Z <= -5000. or Z != Z or
-                    ERRteff != ERRteff or
-                    ERRlogg != ERRlogg or
-                    ERRZ != ERRZ)
+                    ERRteff<=0. or ERRteff != ERRteff or
+                    ERRlogg<=0. or ERRlogg != ERRlogg or
+                    ERRZ<=0. or ERRZ != ERRZ)
     astrom_problem = (parallax_error != parallax_error or
                       parallax != parallax or
                       (parallax_error < 0. and parallax > 0.))
@@ -113,27 +113,38 @@ def process_single_distance(
                          errmags, data_errs, prior,
                          np.float64(median_log_av), np.float64(std_log_av),
                          np.log(np.float64(dist_ebv.value)),
-                         w, mag_str, False, parallax, parallax_error,
+                         w, mag_str, return_pdf, parallax, parallax_error,
                          mass, mass_error)
         # distances = np.append(distances[:-5], distances[-1])
         # Convert log() to log10()
         distances[7:9] /= np.log(10.)
         distances[13:15] /= np.log(10.)
         distances[19:21] /= np.log(10.)
-        # Covariance to correlation
-        distances[19] /= distances[7] * distances[1]
-        distances[20] /= distances[7] * distances[11]
-        distances[21] /= distances[1] * distances[11]
+        # Covariance to correlation -- This is wrong as dividing by mean!!
+        distances[19] /= distances[8] * distances[2]
+        distances[20] /= distances[8] * distances[12]
+        distances[21] /= distances[2] * distances[12]
         print i, distances
         in_data.loc[i, 's'] = 10**(0.2 * distances[1] - 2.)
-        if(distances[2] < 0.):
-            X = np.ones(19) * np.nan
-            distances[:2] = np.nan
-            distances[3:] = np.nan
+        if(distances[2] < 0. or distances[2]!=distances[2] or distances[2]==np.nan or distances[0]<1e-321):
+            X = np.ones(17 + 14*with_errors) * np.nan
+            lb = aa_py.EquatorialToGalactic(
+                                      np.array([np.deg2rad(in_data['ra'][i]),
+                                                np.deg2rad(in_data['dec'][i]),1.]))
+            X[0]=lb[0]
+            X[1]=lb[1]
+            distances = np.nan*np.ones(len(distances))
             X[-1] = 1
         else:
-            if in_data['pmra'][i] != in_data['pmra'][i]:
+            if in_data['pmra'][i] != in_data['pmra'][i] or \
+               in_data['hrv'][i] != in_data['hrv'][i] or \
+               in_data['e_hrv'][i] != in_data['e_hrv'][i]:
                 X = np.ones(16 + 14 * with_errors) * np.nan
+                lb = aa_py.EquatorialToGalactic(
+                                      np.array([np.deg2rad(in_data['ra'][i]),
+                                                np.deg2rad(in_data['dec'][i]),1.]))
+                X[0]=lb[0]
+                X[1]=lb[1]
             else:
                 if(with_errors):
                     Nsamples = 30
@@ -181,6 +192,11 @@ def process_single_distance(
         return np.append(distances[1:], X)
     else:
         XX = np.ones(38 + 14 * with_errors) * np.nan
+	lb = aa_py.EquatorialToGalactic(
+			      np.array([np.deg2rad(in_data['ra'][i]),
+					np.deg2rad(in_data['dec'][i]),1.]))
+	XX[21]=lb[0]
+	XX[22]=lb[1]
         if spec_problem:
             XX[-1] = 2
         if ir_problem:
@@ -285,6 +301,7 @@ def column_descr(name, id_col, which, prior, with_parallax, with_mass):
     parallax_string = ''
     if with_parallax:
         parallax_string = ' combined with Gaia DR2'
+    mass_string = ''
     if with_mass:
         mass_string = ' using spectroscopic mass estimates'
     prior_string = 'No prior'
@@ -323,7 +340,7 @@ def column_descr(name, id_col, which, prior, with_parallax, with_mass):
              '(vR,vphi,vz) are Galactocentric polar velocities (km/s)-- note '
              'vphi is in the negative phi direction ',
              '(so Sun has positive vphi)',
-             'We assume the Sun is at (R,z) = (%0.1f,%0.2f) kpc' % (R0, z0) +
+             'We assume the Sun is at (R,z) = (%0.1f,%0.3f) kpc' % (R0, z0) +
              ' with peculiar velocity (U,V,W) = '
              '(%0.2f,%0.2f,%0.2f) km/s' % (U0, V0, W0),
              'We use the potential %s from McMillan (2017).' % pot,
@@ -346,7 +363,7 @@ def column_descr(name, id_col, which, prior, with_parallax, with_mass):
 
 def process_distances(input_data, output, id_col, name, which="Padova",
                       prior=True, npool=32,
-                      with_parallax=True, with_mass=True):
+                      with_parallax=True, with_mass=True, return_pdf=False):
     ''' Computes the distances to the stars in the table
         input_data. which is an array of strings which give the isochrone
         sets to use, if prior we use the Binney prior'''
@@ -368,7 +385,7 @@ def process_distances(input_data, output, id_col, name, which="Padova",
             r = p.map(partial(process_single_distance,
                               # input_data,
                               which,
-                              prior, with_parallax, with_mass),
+                              prior, with_parallax, with_mass, return_pdf),
                       Nindx,
                       # chunksize=30
                       )
@@ -377,7 +394,7 @@ def process_distances(input_data, output, id_col, name, which="Padova",
         else:
             r = map(lambda i: process_single_distance(
                 # input_data,
-                which, prior, with_parallax, with_mass, i), Nindx)
+                which, prior, with_parallax, with_mass, return_pdf, i), Nindx)
         for nindx, X in zip(Nindx, r):
             output_cols = distance_output + additional_output + \
                 flag_output
@@ -400,13 +417,15 @@ def mfe(data):
     return np.nanmedian(data.e_fe_h)
 
 
-def run_distance_pipeline(data, out, id_col, name, npool=-1, with_parallax=True):
-    print mfe(data)
+def run_distance_pipeline(data, out, id_col, name, npool=-1, with_parallax=True, mid=None):
+    if mid is None:
+        mid=mfe(data)
+    print mid
     with open('config.json') as data_file:
         config = json.load(data_file)
     isochrones = str(config['isochrones']['type'])
     init(types=isochrones,
-         wemap=False, mean_feh_err=np.float64(mfe(data)),
+         wemap=False, mean_feh_err=np.float64(mid),
          solar_motion=np.array(config['solar_motion']))
     process_distances(data, out, id_col, name,
                       which=isochrones, prior=True,

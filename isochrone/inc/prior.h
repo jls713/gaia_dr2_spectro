@@ -6,7 +6,7 @@ class galaxy_prior{
         VecDoub SolarPosition;
         double R0, z0;
     public:
-        galaxy_prior(VecDoub SolarPosition):eval_prior(false),SolarPosition(SolarPosition){R0=SolarPosition[0];z0=SolarPosition[1];}
+        galaxy_prior(VecDoub SolarPosition, bool ep=false):eval_prior(ep),SolarPosition(SolarPosition){R0=SolarPosition[0];z0=SolarPosition[1];}
         VecDoub solar(void){return SolarPosition;}
         virtual double prior(VecDoub x, double Z, double tau){
             return 1.;
@@ -21,6 +21,9 @@ class galaxy_prior{
             return prior_polar(Rpz,Z,tau);
         }
         bool bprior(void){return eval_prior;}
+        void turn_on_prior(void){eval_prior=true;}
+        void turn_off_prior(void){eval_prior=false;}
+        void set_prior(bool bprior){eval_prior=bprior;}
 };
 
 inline double double_exponential(double R, double z, double Rd, double zd){
@@ -46,7 +49,7 @@ class binney_prior: public galaxy_prior{
     const double halo_metal_mean = -1.6;
     const double halo_metal_disp = 0.5;
 public:
-    binney_prior(VecDoub SP):galaxy_prior(SP){}
+    binney_prior(VecDoub SP):galaxy_prior(SP,true){}
     double prior(VecDoub x, double Z, double tau);
 };
 
@@ -73,7 +76,7 @@ class binney_prior_alpha: public galaxy_prior{
     const double halo_alpha_mean = 0.25;
     const double halo_alpha_disp = 0.25;
 public:
-    binney_prior_alpha(VecDoub SP):galaxy_prior(SP){}
+    binney_prior_alpha(VecDoub SP):galaxy_prior(SP,true){}
     double prior(VecDoub x, double Z, double tau, double alpha);
     double prior(VecDoub x, double Z, double tau){return prior(x,Z,tau,0.);}
 };
@@ -128,7 +131,7 @@ class new_prior_2018: public galaxy_prior{
     const double cpar = 3.04;
     const double bulge_r_core = 2.54;
 public:
-    new_prior_2018(VecDoub SP):galaxy_prior(SP){}
+    new_prior_2018(VecDoub SP):galaxy_prior(SP,true){}
     double thin_prior(double R, double z, double Z, double tau);
     double thick_prior(double R, double z, double Z, double tau);
     double halo_prior(double R, double z, double Z, double tau);

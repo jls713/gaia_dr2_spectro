@@ -1,16 +1,19 @@
 from lamost_cannon import *
 import sys
 sys.path.append('/data/jls/cyanide/comparisons/')
+sys.path.append('../')
 from neural_network import *
+from spectro_data.lamost import *
+l = load_and_match(use_dr1=True)
 
 model = tc.CannonModel.read(
     '/data/jls/GaiaDR2/spectro/lamost_cannon/lamost.cannon')
-data = full_sample()#[:100000].reset_index(drop=True)
+data = full_sample()[500000:].reset_index(drop=True)
 for i, l in enumerate(model.vectorizer.label_names):
     if l in data.columns:
         data[l + '_orig'] = data[l]
 grid = np.load('lamost_wavelengths.npy')
-output_file = '/data/jls/GaiaDR2/spectro/lamost_cannon/LAMOST_results.hdf5'
+output_file = '/data/jls/GaiaDR2/spectro/lamost_cannon/LAMOST_results3.hdf5'
 
 fl_dict = {}
 flux = np.zeros((len(data), len(grid)))
@@ -26,8 +29,8 @@ def load(i):
 
 
 def label_model(flux, ivar):
-    if len(flux)!=len(grid) or len(ivar)!=len(grid):
-        return np.nan*np.ones(7), np.nan*np.ones((7,7)), {'r_chi_sq':np.nan}
+    #if len(flux)!=len(grid) or len(ivar)!=len(grid):
+    #    return np.nan*np.ones(7), np.nan*np.ones((7,7)), {'r_chi_sq':np.nan}
     results, cov, meta = model.test(flux, ivar, threads=44)
 
     ll = False
@@ -41,22 +44,35 @@ def label_model(flux, ivar):
     return results, cov, meta
 
 
-p = Pool(44)
+p = Pool(32)
 flux, ivar = zip(*p.map(load, np.arange(len(data))))
 p.close()
 p.join()
+
+print 'Spectra loaded'
 
 snr = np.nanmedian(np.sqrt(ivar) * flux, axis=1)
 data['snr']=snr
 snr_sc = np.load('lamost_cannon_params.dat.npy')
 
+flux = np.array(flux)
+ivar = np.array(ivar)
+# Remove some dodgy pixels
+fltr = (flux != flux) | (ivar != ivar) | (ivar < 0.) | (flux<0.)
+flux[fltr] = 1.
+ivar[fltr] = 0.
+
+fltr = np.count_nonzero(ivar!=0.,axis=1)<10
+flux = flux[~fltr]
+ivar = ivar[~fltr]
+data = data[~fltr].reset_index(drop=True)
+
 result, cov, meta = label_model(flux, ivar)
 for i, l in enumerate(model.vectorizer.label_names):
     data[l] = result.T[i]
     data[l + '_ERR'] = np.sqrt(cov[:, i, i])
-    data[l + '_ERR_SNR'] = snr_sc[i][0] / (np.power(snr,snr_sc[i][1])+snr_sc[i][2]**2)
+    data[l + '_ERR_SNR'] = snr_sc[i][0] / (np.power(data['snr'],snr_sc[i][1])+snr_sc[i][2]**2)
 data['r_chi_sq'] = [m['r_chi_sq'] for m in meta]
-data['snr_Cannon'] = snr
 #print 'Calculate in convex hull'
 #data['in_convex_hull'] = model.in_convex_hull(
 #    data[list(model.vectorizer.label_names)])

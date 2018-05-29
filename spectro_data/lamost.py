@@ -9,7 +9,7 @@ def format_columns(data):
                 'feh_err': 'e_fe_h',
                 'feh': 'fe_h',
                 'rv': 'hrv',
-                'rverr': 'e_hrv'}
+                'rv_err': 'e_hrv'}
     data = data.rename(index=str, columns=col_dict)
     return data
 
@@ -42,10 +42,12 @@ def load_data():
     df['rho_TZ'] = 0.
     df['rho_gZ'] = 0.
 
-    output_file = '/data/jls/GaiaDR2/spectro/lamost_cannon/LAMOST_results.fits'
+    output_file = '/data/jls/GaiaDR2/spectro/lamost_cannon/LAMOST_results.hdf5'
     t = pd.read_hdf(output_file)
-    fltr = (t.r_chi_sq < 3.) #& (t.in_convex_hull == True)
+    fltr = (t.TEFF>4000.)&(t.TEFF<5250.)&(t.LOGG>1.)&(t.LOGG<3.3)&(t.M_H>-1.5)&(t.M_H<0.5)
+    fltr &= (t.r_chi_sq < 3.) #& (t.in_convex_hull == True)
     t = t[fltr].reset_index(drop=True)
+
     df = df.merge(t[['obsid','mass','mass_error']], how='left')
     fltr = df.mass!=df.mass
 

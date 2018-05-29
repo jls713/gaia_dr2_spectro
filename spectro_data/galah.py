@@ -45,7 +45,7 @@ def load_data():
         data.fe_h, data.alpha_fe, data.e_fe_h, data.e_alpha_fe)
 
     col_dict = {'raj2000': 'ra', 'dej2000': 'dec',
-                'rv_obst': 'hrv', 'e_rv_obst': 'e_hrv',
+                'rv_synt': 'hrv', 'e_rv_synt': 'e_hrv',
                 'jmag': 'J', 'hmag': 'H', 'kmag': 'K',
                 'e_jmag': 'eJ', 'e_hmag': 'eH', 'e_kmag': 'eK'}
     data = data.rename(index=str, columns=col_dict)

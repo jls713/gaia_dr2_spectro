@@ -97,6 +97,7 @@ namespace distance_compute{
                                   const std::string & which="BaSTI",
                                   std::vector<std::string> magstr={"H","J","K"}
 ){
+        prior->set_prior(bprior);
         double l=inputs[0]; double b=inputs[1];
         double s = pow(10.,0.2*mu-2.);
 
@@ -119,6 +120,7 @@ namespace distance_compute{
                                   const std::string & which="BaSTI",
                                   std::vector<std::string> magstr={"H","J","K"}
 ){
+        prior->set_prior(bprior);
         double l=inputs[0]; double b=inputs[1];
         double s = pow(10.,0.2*mu-2.);
 
@@ -142,6 +144,7 @@ namespace distance_compute{
                                   const std::string & which="BaSTI",
                                   std::vector<std::string> magstr={"H","J","K"}
 ){
+        prior->set_prior(bprior);
         double Z=inputs[0]; double Teff=inputs[1];
         double logg=inputs[2]; double l=inputs[3]; double b=inputs[4];
 
@@ -187,6 +190,7 @@ namespace distance_compute{
                                   const std::string & which="BaSTI",
                                   std::vector<std::string> magstr={"H","J","K"}
 ){
+        prior->set_prior(bprior);
         double Z=inputs[0]; double Teff=inputs[1];
         double logg=inputs[2]; double l=inputs[3]; double b=inputs[4];
 
@@ -242,6 +246,7 @@ namespace distance_compute{
                           double parallax_error=-1.,
                           double mass=0.,
                           double mass_error=-1.){
+        prior->set_prior(bprior);
         double Z=inputs[0]; double Teff=inputs[1];
         double logg=inputs[2]; double l=inputs[3]; double b=inputs[4];
 
@@ -298,6 +303,7 @@ namespace distance_compute{
                                 std::vector<std::string> magstr={"H","J","K"},
                                 bool extinction=false,
                                 double Aprior=0., bool return_pdf=false){
+        prior->set_prior(bprior);
         double Z=inputs[0]; double Teff=inputs[1];
         double logg=inputs[2]; double alpha=inputs[3]; double l=inputs[4]; double b=inputs[5];
 
@@ -347,6 +353,7 @@ namespace distance_compute{
                                   double parallax_error=-1.,
                                   double mass=0.,
                                   double mass_error=-1.){
+        prior->set_prior(bprior);
         double Z=inputs[0]; double Teff=inputs[1];
         double logg=inputs[2]; double l=inputs[3]; double b=inputs[4];
 
