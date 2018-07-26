@@ -4,7 +4,7 @@ import sqlutil
 from login import wsdbpassword
 
 
-def crossmatch_gaia(data, dr1=False, epoch=2000,
+def crossmatch_gaia(dataIN, dr1=False, epoch=2000,
                     dist_max=5., no_proper_motion=True,
                     phot_g_cut=None):
     """
@@ -14,6 +14,7 @@ def crossmatch_gaia(data, dr1=False, epoch=2000,
         dist_max maximum angular separation to consider (in arcsec)
         max_epoch_diff = 20 years -- each star can have separate epoch.
     """
+    data = dataIN.copy()
     ra, dec = data.ra.values, data.dec.values
     gaia_catalogue = 'gaia_dr2.gaia_source'
     if isinstance(epoch, basestring):
@@ -65,6 +66,8 @@ def crossmatch_gaia(data, dr1=False, epoch=2000,
                'phot_g_mean_flux_error',
                'phot_rp_mean_flux_error', 'phot_bp_mean_flux_error',
                'a_g_val', 'a_g_percentile_lower', 'a_g_percentile_upper',
+               'teff_val', 'teff_percentile_lower', 'teff_percentile_upper',
+               'astrometric_excess_noise',
                'dist']
 
     for c in add_data.keys():
@@ -174,13 +177,15 @@ def crossmatch_gaia_spectro_id(data):
 
 
 def crossmatch_gaia_spectro(data, dr1=False, epoch=2000, dist_max=5.,
-                            no_proper_motion=True, phot_g_cut=None):
+                            no_proper_motion=True, phot_g_cut=None,
+                            sys_error_floor=0.01, zero_point_parallax=-0.029):
     df = crossmatch_gaia(data, dr1=dr1, epoch=epoch,
                          dist_max=dist_max,
                          no_proper_motion=no_proper_motion,
                          phot_g_cut=phot_g_cut)
 
-    sys_error_floor = 0.02  # Approximate systematic errors of 20mmag in G
+    #sys_error_floor = 0.02  # Approximate systematic errors of 20mmag in G
+    #sys_error_floor = 0.01  # Approximate systematic errors of 10mmag in G
     # Also reflects the degree to which the isochrones are good.
     phot = ['G', 'GBP', 'GRP']
     if dr1:
@@ -188,6 +193,7 @@ def crossmatch_gaia_spectro(data, dr1=False, epoch=2000, dist_max=5.,
     for c in phot:
         df['e%s' % c] = np.sqrt(
             df['e%s' % c]**2 + sys_error_floor**2)
+    df['parallax']-=zero_point_parallax
     fltr = (df.parallax != df.parallax)
     df.loc[fltr, 'parallax'] = 0.
     df.loc[fltr, 'parallax_error'] = -1.

@@ -23,7 +23,7 @@ void isochrone_grid<isochrone_g>::thin_feh_grid(double feh_err){
 //=============================================================================
 
 template<class isochrone_g>
-isochrone_grid<isochrone_g>::isochrone_grid(std::string type,int thin, double feh_err)
+isochrone_grid<isochrone_g>::isochrone_grid(std::string type,int thin, double feh_err, double thin_mag)
     {
     // find list of isochrone files
     std::vector<std::string> iso_files;
@@ -143,7 +143,7 @@ isochrone_grid<isochrone_g>::isochrone_grid(std::string type,int thin, double fe
                 continue;
             for(auto age_index:agegrid){
     		    isochrone_g iso;
-    		    iso.fill(s, dir, age_index);
+    		    iso.fill(s, dir, age_index, thin_mag);
     		    // sort results
     		    for(i=0;i<NF;i++){
         			f = fehgrid[i];
@@ -158,7 +158,7 @@ isochrone_grid<isochrone_g>::isochrone_grid(std::string type,int thin, double fe
     			    massmax[i][j]=iso.maxmass();
     		    }
     		}
-            std::cout<<iso_grid[j+NA*i].feh()<<std::endl;
+            std::cout<<iso_grid[j+NA*i].feh()<<" "<<iso_grid[j+NA*i].N()<<std::endl;
 	    }
    }
     else{

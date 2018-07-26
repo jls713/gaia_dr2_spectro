@@ -42,9 +42,9 @@ double VpMag(double B, double V){
 VecDoub JKH_vista_from_2MASS(double J2, double K2, double H2){
     return
     {
-     J2-0.077*(J2-H2),
-     K2+0.01*(J2-K2),
-     H2+0.032*(J2-H2)
+     J2-0.031*(J2-K2),
+     K2-0.006*(J2-K2),
+     H2+0.015*(J2-K2)
     };
 }
 //=============================================================================

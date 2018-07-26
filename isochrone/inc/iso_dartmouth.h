@@ -19,7 +19,7 @@ namespace Dartmouth{
     public:
         isochrone_dartmouth(void);
         double get_metallicity(std::vector<std::string> input_iso, std::string dir);
-        void fill(std::vector<std::string> input_iso, std::string dir, double Age=0.);
+        void fill(std::vector<std::string> input_iso, std::string dir, double Age=0., double thin_mag=-1.);
 };
 
 //=============================================================================

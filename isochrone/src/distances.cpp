@@ -264,8 +264,10 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance(
                             mu+=dmu){
                     s = pow(10.,0.2*mu-2.);s2=s*s;
                     tmp4=s2*s*tmp3*dmu; // p(mu) dmu
-                    if(parallax_error>0.)
+                    if(parallax_error>0.){
+                        if(fabs(parallax-1./s)>nstd*parallax_error) continue;
                         tmp4*=GFunction(parallax-1./s,parallax_error);
+		    }
                     for(unsigned c = 0; c<mag_list.size(); c++){
                         Mag=iso_grid->iso(i,j)->mag(k,mag_list[c]);
                         tmp4*=GFunction(mag[c]-(mu+Mag),err_mag[c]);
@@ -328,7 +330,7 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance(
         }
     }
     if(total[0]<=0.){
-        if(NSTD>=40.){
+        if(NSTD>=20.){
             total[0]=std::numeric_limits<double>::quiet_NaN();
             total[1]=std::numeric_limits<double>::quiet_NaN();
             total[2]=-1.;
@@ -701,9 +703,9 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
     VecDoub log_dist_AV,
     extinction_law *EL,
     double parallax, double parallax_error,
-    double mass, double mass_error){
+    double mass, double mass_error, double first_guess){
 
-    double lp;
+    double lp, lp_p3, lp_m3;
 
     // Only use IR bands to estimate distance
     VecDoub mags_use, err_mags_use; std::vector<std::string> mag_str_use;
@@ -726,27 +728,112 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
     }
     if(mag_str_use.size()==0){
         std::cerr<<"No valid bands to initially guess distance.";
-        std::cerr<<" Using initial guess of s=1kpc."<<std::endl;
-        lp=0.;
+        if(parallax_error>0. and parallax>0.){
+             std::cerr<<"Using initial guess from parallax";
+             lp = log(1./parallax);
+             lp_m3 = log(1./(parallax+3.*parallax_error));
+             lp_p3 = 1./(parallax-3.*parallax_error);
+             if(lp_p3>0.)
+                 lp_p3=log(lp_p3);
+             else
+                 lp_p3=log(10.);
+        }
+        else{
+            std::cerr<<" Using initial guess of s=1kpc."<<std::endl;
+            lp=log(1.);
+            lp_m3=log(0.1);
+            lp_p3=log(20.);
+        }
+     }
+    /*
+ *   else if(parallax_error>0. and parallax>0. and parallax_error/parallax<0.2){
+        lp=log(1./parallax);
+        lp_p3 = log(1./parallax+3.*parallax_error/parallax/parallax);
+        lp_m3 = 1./parallax-3.*parallax_error/parallax/parallax;
+        if(lp_m3>0.)
+           lp_m3=log(lp_m3);
+        else
+           lp_m3=log(0.1);
     }
+    else if(first_guess>0.){
+        lp=log(first_guess);
+    }
+    */
     else{
         VecDoub first_guess=prob_distance(mags_use,Z,Teff,logg,
                                           l,b,err_mags_use,covar_ZTL,
                                           prior,return_pdf,NSTD,
                                           mag_str_use,
                                           parallax,parallax_error);
-
-        lp = log(first_guess[3]);
+        //printVector(first_guess);
+        lp = log(pow(10.,0.2*first_guess[1]-2.));
+        lp_p3 = log(pow(10.,0.2*(first_guess[1]+3.*first_guess[2])-2.));
+        lp_m3 = log(pow(10.,0.2*(first_guess[1]-3.*first_guess[2])-2.));
+        if(first_guess[2]==-1.){
+		if(parallax_error>0. and parallax>0.){
+			lp=log(1./parallax);
+                        lp_m3 = log(1./(parallax+3.*parallax_error));
+                        lp_p3 = 1./(parallax-3.*parallax_error);
+                        if(lp_p3>0.)
+                            lp_p3=log(lp_p3);
+                        else
+                            lp_p3=log(20.);
+                }
+                else{
+                    lp=log(1.);lp_p3=log(20.);lp_m3=log(0.1);
+                }
+                /*else{
+                    for(int i=0;i<5;++i) first_guess.push_back(std::numeric_limits<double>::infinity());
+	            return first_guess;
+                }*/
+	}
     }
+    int npar=NSTD;
+    while(parallax_error>0. and parallax<0. and parallax+npar*parallax_error<0.)
+        npar*=2;
+    double fg = exp(lp);
 
     // Aprior and sigAprior used to define integration range of Av
     double Aprior= linterp(log_dist_AV,Aprior_VEC,lp,"linear");
     double sigAprior = linterp(log_dist_AV,sigAprior_VEC,lp,"linear");
+    double AVmin=linterp(log_dist_AV,Aprior_VEC,lp_m3,"linear")-3.*linterp(log_dist_AV,sigAprior_VEC,lp_m3,"linear");
+    double AVmax=linterp(log_dist_AV,Aprior_VEC,lp_p3,"linear")+3.*linterp(log_dist_AV,sigAprior_VEC,lp_p3,"linear");
+    AVmin-=0.1*(NSTD-5.);
+    AVmax+=0.1*(NSTD-5.);
+    //if(sigAprior<0.2) sigAprior=0.2;
+    //double delta_lav = sigAprior/2.;
     double av = 0.;
-    double AVmin=Aprior-3.*sigAprior;
-    double AVmax=Aprior+3.*sigAprior;
-    if(AVmax>Aprior_VEC.back()) AVmax=Aprior_VEC.back();
+    //double AVmin=Aprior-3.*sigAprior;//(NSTD*1./5.)*sigAprior;
+    //double AVmax=Aprior+3.*sigAprior;//*(NSTD*1./5.)*sigAprior;
+    double deltaAprior=sigAprior;
+    //if(deltaAprior>0.3)
+    //    deltaAprior=0.3;
+    //double AVmin=Aprior-1.2-0.1*(NSTD-5.);//3.*deltaAprior-0.1*(NSTD-5.);
+    //double AVmax=Aprior+1.2+0.1*(NSTD-5.);//3.*deltaAprior+0.1*(NSTD-5.);
+    //if(AVmax>Aprior_VEC.back()) AVmax=Aprior_VEC.back();
+    
+    if(AVmin<-4.5) AVmin=-4.5;
     if(AVmax>3.4) AVmax=3.4;
+    double delta_lav = sigAprior/2.;
+    if(delta_lav>0.15)
+        delta_lav=0.15;
+   // if(delta_lav<0.01/exp(AVmax))
+   //     delta_lav=0.01/exp(AVmax);
+    //if(delta_lav<0.005)
+    //    delta_lav=0.005;
+
+    if(delta_lav<0.15)
+        delta_lav = (AVmax-AVmin)/50.;
+    if(delta_lav<sigAprior/2.)
+        delta_lav = sigAprior/2.;
+    //delta_lav=0.001;
+    /*
+ *  double delta_lav = 0.05/exp(Aprior);///(NSTD*1./5.); 
+    if(delta_lav>sigAprior*0.5) 
+    	delta_lav=sigAprior*0.5;
+    */
+    std::cout<<"FG Aprior sAprior Amin Amax deltalav deltaAprior"<<std::endl;
+    std::cout<<fg<<" "<<Aprior<<" "<<sigAprior<<" "<<AVmin<<" "<<AVmax<<" "<<delta_lav<<" "<<deltaAprior<<std::endl;
 
     VecDoub total(22,0.);
     double dmu=err_mag[0]/2.,s,Teffmodel,loggmodel,agemodel,mmodel;
@@ -786,7 +873,16 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
     VecDoub prob_mu,mu_grid;
     double grid_space=0.2;
 
-
+    /*
+ *   int nfeh=nstd;
+    if(Z<iso_grid->iso(0,0)->feh())
+        while(fabs(iso_grid->iso(0,0)->feh()-Z)>nfeh*err_Z)
+            nfeh*=2;
+    if(Z>iso_grid->iso(iso_grid->NF-1,0)->feh())
+        while(fabs(iso_grid->iso(iso_grid->NF-1,0)->feh()-Z)>nfeh*err_Z)
+            nfeh*=2;
+    std::cout<<nfeh<<std::endl;
+    */
     for(int i=0;i<iso_grid->NF;i++){
         // Check outside metallicity range
         if(fabs(iso_grid->iso(i,0)->feh()-Z)>nstd*err_Z)
@@ -827,8 +923,9 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
                 // Initial magnitude -- used to define integration range
                 // and also to compute central extinction from prior
                 Mag=iso_grid->iso(i,j)->mag(k,mag_list[0]);
-                for(double lav=AVmin;lav<AVmax;lav+=sigAprior/2.){
-
+                
+                for(double lav=AVmin;lav<AVmax;lav+=delta_lav){
+                //for(double lav=AVmin;lav<AVmax;lav+=0.02){
                     // Find extinction prior
                     av  = exp(lav);
                     Mag_extN = Mag+av*mag_ext_const[0]*(1-av*avgradient[0]);
@@ -846,8 +943,10 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
                         // prior on extinction
                         tmp4=s2*s*tmp3*dmu*EF;
                         // Parallax if required
-                        if(parallax_error>0.)
+                        if(parallax_error>0.){
+                            if(fabs(parallax-1./s)>npar*parallax_error) continue;
                             tmp4*=GFunction(parallax-1./s,parallax_error);
+		        }
                         // Now magnitudes
                         for(unsigned c=0;c<mag.size();++c){
                             Mag_ext=iso_grid->iso(i,j)->mag(k,mag_list[c])+
@@ -927,6 +1026,7 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
         }
     }
     // If not found valid overlap, expand range
+    //std::cout<<total[0]<<std::endl;
     if(total[0]<=0.){
         if(NSTD>=20.){
             total[0]=std::numeric_limits<double>::infinity();
@@ -940,9 +1040,16 @@ VecDoub DistanceCalculator<isochrone_g>::prob_distance_extinctprior(
                                                covar_ZTL,prior,return_pdf,
                                                2*NSTD,mag_list,Aprior_VEC,
                                                sigAprior_VEC,log_dist_AV,
-                                               EL, parallax,parallax_error);
+                                               EL, parallax,parallax_error,fg);
     }
-
+    double averror = total[14]/total[0]-total[13]*total[13]/total[0]/total[0];
+    if(averror<1e-10 and NSTD<20.)
+        return prob_distance_extinctprior(mag,Z,Teff,logg,l,b,err_mag,
+                                               covar_ZTL,prior,return_pdf,
+                                               2*NSTD,mag_list,Aprior_VEC,
+                                               sigAprior_VEC,log_dist_AV,
+                                               EL, parallax,parallax_error,fg);
+    
     total=compute_mean_std_from_total(total, 19);
     // Covariances
     total[19]-=total[1]*total[7];

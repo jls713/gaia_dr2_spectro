@@ -13,13 +13,16 @@ sys.path.append('edf_sampling/py')
 import isodist_js as isodist
 import edf_sampling as edf_sampling
 import aa_py
+from actions import rejection_dm
 
-def init(types="All", wemap=False, mean_feh_err=1e-5,
-         solar_motion=np.array([8.2, 0.015, 11.1, 245., 7.25])):
-    isodist.init_isochrone(types, 1, mean_feh_err)
+def init(types="All", wemap=False, mean_feh_err=1e-5,thin_mag=0.02,
+         solar_motion=np.array([8.2, 0.025, 11.1, 245., 7.25])):
+    isodist.init_isochrone(types, 1, mean_feh_err, thin_mag)
     if(wemap):
         isodist.load_emap()
-    isodist.load_prior("2018", solar_motion)
+    with open('config.json') as data_file:
+        data = json.load(data_file)
+    isodist.load_prior(str(data["prior"]), solar_motion)
     edf_sampling.setup(False, False)
 
 
@@ -46,6 +49,19 @@ def process_single_distance(
     mag_str = in_data['mag_use'][i]
     mags = np.array([np.float64(in_data[k][i]) for k in mag_str])
     errmags = np.array([np.float64(in_data['e' + k][i]) for k in mag_str])
+
+    # Sort by effective wavelength -- approximately
+    poss_mags = np.array(['K','Kv','H','Hv','J','Jv','GRP','iP','i','G','rP',
+				'r','GBP','gP','g','W1','W2','B','V'])
+    del_list = np.array([])
+    for posmag in range(len(poss_mags)):
+        if poss_mags[posmag] not in mag_str:
+            del_list = np.append(del_list,posmag)
+    poss_mags=np.delete(poss_mags,del_list)
+    sort_order = np.array([np.argwhere(mag_str==pm)[0][0] for pm in poss_mags])
+    mag_str = mag_str[sort_order]
+    mags = mags[sort_order]
+    errmags = errmags[sort_order]
 
     c_icrs = SkyCoord(ra=in_data.ra[i] * u.degree,
                       dec=in_data.dec[i] * u.degree, frame='icrs')
@@ -100,14 +116,14 @@ def process_single_distance(
                     ERRlogg<=0. or ERRlogg != ERRlogg or
                     ERRZ<=0. or ERRZ != ERRZ)
     astrom_problem = (parallax_error != parallax_error or
-                      parallax != parallax or
-                      (parallax_error < 0. and parallax > 0.))
+                      parallax != parallax) 
+    # or (parallax_error < 0. and parallax!=0.))
     mass_problem = (mass_error != mass_error or
                     mass != mass or
                     (mass_error < 0. and mass > 0.))
 
     if(not spec_problem and not ir_problem and not astrom_problem):
-        print i, mags, data, errmags, data_errs, mag_str, parallax, mass
+        print i, mag_str, mags, errmags, data, np.sqrt(data_errs[[0,3,5]]), parallax, parallax_error, mass, mass_error
         func = isodist.prob_distance_extinctprior
         distances = func(mags, data,
                          errmags, data_errs, prior,
@@ -120,13 +136,13 @@ def process_single_distance(
         distances[7:9] /= np.log(10.)
         distances[13:15] /= np.log(10.)
         distances[19:21] /= np.log(10.)
-        # Covariance to correlation -- This is wrong as dividing by mean!!
+        # Covariance to correlation
         distances[19] /= distances[8] * distances[2]
         distances[20] /= distances[8] * distances[12]
         distances[21] /= distances[2] * distances[12]
         print i, distances
         in_data.loc[i, 's'] = 10**(0.2 * distances[1] - 2.)
-        if(distances[2] < 0. or distances[2]!=distances[2] or distances[2]==np.nan or distances[0]<1e-321):
+        if(distances[2] < 0. or distances[2]!=distances[2] or distances[2]==np.nan):# or distances[0]<1e-321):
             X = np.ones(17 + 14*with_errors) * np.nan
             lb = aa_py.EquatorialToGalactic(
                                       np.array([np.deg2rad(in_data['ra'][i]),
@@ -138,7 +154,8 @@ def process_single_distance(
         else:
             if in_data['pmra'][i] != in_data['pmra'][i] or \
                in_data['hrv'][i] != in_data['hrv'][i] or \
-               in_data['e_hrv'][i] != in_data['e_hrv'][i]:
+               in_data['e_hrv'][i] != in_data['e_hrv'][i] or \
+               in_data['e_hrv'][i] < 0.:
                 X = np.ones(16 + 14 * with_errors) * np.nan
                 lb = aa_py.EquatorialToGalactic(
                                       np.array([np.deg2rad(in_data['ra'][i]),
@@ -147,38 +164,90 @@ def process_single_distance(
                 X[1]=lb[1]
             else:
                 if(with_errors):
-                    Nsamples = 30
-                    covar = np.zeros((4, 4))
-                    covar[0][0] = distances[2]**2
+                    Nsamples=50
+                    covar = np.zeros((3, 3))
+                    covar[0][0] = in_data['parallax_error'][i]**2
                     covar[1][1] = in_data['pmra_error'][i]**2
                     covar[2][2] = in_data['pmdec_error'][i]**2
                     covar[0][1] = covar[1][0] = in_data['parallax_pmra_corr'][i] * \
-                        in_data['pmra_error'][i] * distances[2]
+                       in_data['pmra_error'][i] * in_data['parallax_error'][i]
                     covar[0][2] = covar[2][0] = in_data['parallax_pmdec_corr'][i] * \
-                        in_data['pmdec_error'][i] * distances[2]
+                       in_data['pmdec_error'][i] * in_data['parallax_error'][i]
                     covar[1][2] = covar[2][1] = in_data['pmra_pmdec_corr'][i] * \
-                        in_data['pmra_error'][i] * in_data['pmdec_error'][i]
-                    covar[3][3] = in_data['e_hrv'][i]
-                    mean = np.array([distances[1],
-                                     in_data['pmra'][i],
-                                     in_data['pmdec'][i],
-                                     in_data['hrv'][i]])
-                    samples = np.random.multivariate_normal(
-                        mean, covar, size=Nsamples)
-                    samples[:, 0] = np.power(10., 0.2 * samples[:, 0] - 2.)
-                    Xs = np.array([
-                                  edf_sampling.process_data(
-                                      np.array([np.deg2rad(in_data['ra'][i]),
-                                                np.deg2rad(in_data['dec'][i]),
-                                                samples[ns][0],
-                                                samples[ns][3],
-                                                samples[ns][1],
-                                                samples[ns][2]]))
-                                  for ns in range(Nsamples)
-                                  ])
-                    X = np.concatenate((np.nanmean(Xs, axis=0),
+                       in_data['pmra_error'][i] * in_data['pmdec_error'][i]
+                    fr = []
+		    N = 1000
+		    while len(fr) < Nsamples and N < 200000:
+			sampl = np.random.multivariate_normal(
+			    np.array([in_data['parallax'][i], in_data['pmra'][i], 
+					in_data['pmdec'][i]]),
+			    covar, size=N)
+			fr = rejection_dm(sampl, in_data['parallax'][i], distances[1],
+					  in_data['parallax_error'][i], distances[2])
+			N *= 2
+		    fr[:, 0] = 5. * np.log10(100. / fr[:, 0])
+		    if len(fr) > Nsamples:
+			fr = fr[:Nsamples]
+		    else:
+			fr = np.zeros((Nsamples, 3))
+			fr[:, 0] = np.random.normal(
+			    distances[1], distances[2], Nsamples)
+			fr[:, 1:] = sampl[:Nsamples, 1:]
+		    samples = np.zeros((Nsamples, 4))
+		    samples[:, 0] = np.power(10., 0.2 * fr[:, 0] - 2.)
+		    samples[:, 1:3] = fr[:, 1:]
+		    samples[:, 3] = np.random.normal(
+			in_data['hrv'][i], in_data['e_hrv'][i], Nsamples)
+		    #print i, np.nanmedian(samples, axis=0)
+		    Xs = np.array([
+				  edf_sampling.process_data(
+				      np.array([np.deg2rad(in_data['ra'][i]),
+						np.deg2rad(in_data['dec'][i]),
+						samples[ns][0],
+						samples[ns][3],
+						samples[ns][1],
+                                samples[ns][2]]))
+				  for ns in range(Nsamples)
+				  ])
+		    if np.count_nonzero(~np.isinf(Xs[:, -1])) == 0:
+			X = np.zeros(30) * np.nan
+		    else:
+			X = np.concatenate((np.nanmean(Xs[~np.isinf(Xs[:, -1])], axis=0),
+					     np.nanstd(Xs[~np.isinf(Xs[:, -1])], axis=0)[2:]))
+                    old=False
+                    if(old):
+			    Nsamples = 30
+			    covar = np.zeros((4, 4))
+			    covar[0][0] = distances[2]**2
+			    covar[1][1] = in_data['pmra_error'][i]**2
+			    covar[2][2] = in_data['pmdec_error'][i]**2
+			    covar[0][1] = covar[1][0] = in_data['parallax_pmra_corr'][i] * \
+				in_data['pmra_error'][i] * distances[2]
+			    covar[0][2] = covar[2][0] = in_data['parallax_pmdec_corr'][i] * \
+				in_data['pmdec_error'][i] * distances[2]
+			    covar[1][2] = covar[2][1] = in_data['pmra_pmdec_corr'][i] * \
+				in_data['pmra_error'][i] * in_data['pmdec_error'][i]
+			    covar[3][3] = in_data['e_hrv'][i]
+			    mean = np.array([distances[1],
+					     in_data['pmra'][i],
+					     in_data['pmdec'][i],
+					     in_data['hrv'][i]])
+			    samples = np.random.multivariate_normal(
+				mean, covar, size=Nsamples)
+			    samples[:, 0] = np.power(10., 0.2 * samples[:, 0] - 2.)
+			    Xs = np.array([
+					  edf_sampling.process_data(
+					      np.array([np.deg2rad(in_data['ra'][i]),
+							np.deg2rad(in_data['dec'][i]),
+							samples[ns][0],
+							samples[ns][3],
+							samples[ns][1],
+							samples[ns][2]]))
+					  for ns in range(Nsamples)
+					  ])
+			    X = np.concatenate((np.nanmean(Xs, axis=0),
                                         np.nanstd(Xs, axis=0)[2:]))
-                    # Drop l and b errors
+                            # Drop l and b errors
                 else:
                     X = edf_sampling.process_data(
                         np.array([np.deg2rad(in_data['ra'][i]),
@@ -189,6 +258,25 @@ def process_single_distance(
                                   in_data['pmdec'][i]]))
 
             X = np.append(X, [0])  # flag set to zero
+        
+        ## Flag bad errors
+        for col in np.arange(2,19,2):
+            if (distances[col]!=distances[col])&(X[-1]==0):
+                X[-1]=6
+            if (distances[col]==0.)&(X[-1]==0):
+                X[-1]=6
+        for col in [19,20,21]:
+            if (distances[col]!=distances[col])&(X[-1]==0):
+                X[-1]=6
+            if (distances[col]==0.)&(X[-1]==0):
+                X[-1]=6
+            if (np.abs(distances[col])>1.)&(X[-1]==0):
+                X[-1]=6
+        ## Flag low age
+        ## 7=log10age, 17=logg, 15=log10teff
+        if (distances[7] < -1)&(distances[17]>3.5)&(distances[15]<3.9)&(X[-1]==0):
+            X[-1]=7
+
         return np.append(distances[1:], X)
     else:
         XX = np.ones(38 + 14 * with_errors) * np.nan
@@ -417,7 +505,7 @@ def mfe(data):
     return np.nanmedian(data.e_fe_h)
 
 
-def run_distance_pipeline(data, out, id_col, name, npool=-1, with_parallax=True, mid=None):
+def run_distance_pipeline(data, out, id_col, name, npool=-1, with_parallax=True, mid=None, thin_mag=0.02):
     if mid is None:
         mid=mfe(data)
     print mid
@@ -425,7 +513,7 @@ def run_distance_pipeline(data, out, id_col, name, npool=-1, with_parallax=True,
         config = json.load(data_file)
     isochrones = str(config['isochrones']['type'])
     init(types=isochrones,
-         wemap=False, mean_feh_err=np.float64(mid),
+         wemap=False, mean_feh_err=np.float64(mid), thin_mag=thin_mag,
          solar_motion=np.array(config['solar_motion']))
     process_distances(data, out, id_col, name,
                       which=isochrones, prior=True,

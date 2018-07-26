@@ -362,7 +362,7 @@ def run_lamost_ps1():
                           'obsid', 'LAMOST',
                           npool=npool,
                           with_parallax=with_parallax, mid=None)
-    
+ 
 
 
 def run_find_gridding(survey, output_name, unique_id):
@@ -387,8 +387,21 @@ def run_find_gridding(survey, output_name, unique_id):
                           unique_id, survey,
                           npool=npool,
                           with_parallax=with_parallax, mid=0.01)
-    
 
+def run_parallax_fix_segue():
+    pp = pd.read_hdf('/data/jls/GaiaDR2/spectro/SEGUE_input_MASTER.hdf5')    
+    oo = pd.read_hdf('/data/jls/GaiaDR2/spectro/SEGUE_distances_withPRIOR_MASTER.hdf5')    
+    pp = pp.reset_index(drop=True)
+    oo = oo.reset_index(drop=True)
+    pp = pp[(oo.flag==4)].reset_index(drop=True)
+    pp['parallax']=0.
+    pp['parallax_error']=-1.
+    run_distance_pipeline(pp,
+                          output_folder + 'SEGUE_distances_withPRIOR_parallax_fillin.hdf5',
+                          'specobjid', 'SEGUE',
+                          npool=npool,
+                          with_parallax=with_parallax, mid=None, thin_mag=-1.)
+                          
 def run_find_gridding_ps1():
     pp = pd.read_hdf('/data/jls/GaiaDR2/spectro/LAMOST_input_PS1__withPRIOR.hdf5')
     oo = pd.read_hdf('/data/jls/GaiaDR2/spectro/LAMOST_distances_PS1__withPRIOR.hdf5')
@@ -400,6 +413,7 @@ def run_find_gridding_ps1():
                           with_parallax=with_parallax, mid=0.01)
 
 if __name__=="__main__":
+    run_parallax_fix_segue()
     # run_segue()
     #run_lamost_ps1()
     #run_find_gridding('GALAH', 'GALAH', 'sobject_id')
@@ -409,7 +423,7 @@ if __name__=="__main__":
     #run_find_gridding('GES', 'GES_DR3', 'CNAME')
     #run_find_gridding('LAMOST', 'LAMOST', 'obsid')
     #run_find_gridding('SEGUE', 'SEGUE', 'specobjid')
-    run_find_gridding_ps1()
+    #run_find_gridding_ps1()
     # run_galah_giants_mass()
     # run_rave_on_extra()
     # run_rave_on()

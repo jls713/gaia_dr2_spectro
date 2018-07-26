@@ -29,8 +29,9 @@ class isochrone_grid{
          * @param type -- type of isochrone (Sloan, Johnson, Johnson_More, Padova_dense, Dartmouth)
          * @param thin -- store every thin entry in isochrone
          * @param feh_err -- down sample metallicities until spacing=feh_err/2
+         * @param thin_mag -- down sample magnitude spacing to less than thin_mag
          */
-        isochrone_grid(std::string type = "Padova",int thin=1, double feh_err=1e-4);
+        isochrone_grid(std::string type = "Padova",int thin=1, double feh_err=1e-4, double thin_mag=-1.);
         /**
          * @brief separation in age between neighbouring isochrones
          *

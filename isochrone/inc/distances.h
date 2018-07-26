@@ -198,6 +198,7 @@ public:
      * @param mass -- independent measurement of mass (e.g. from [C/N])
      * @param mass_error -- measurement of mass error
      *          (if <0 mass not used)
+     * @param first_guess -- first guess at distance (if negative, a first guess is made)
      * @return vector described above
      */
      VecDoub prob_distance_extinctprior(VecDoub mag,
@@ -216,6 +217,7 @@ public:
                                         double parallax=0.,
                                         double parallax_error=-1.,
                                         double mass=0.,
-                                        double mass_error=-1.);
+                                        double mass_error=-1.,
+                                        double first_guess=-1.);
 };
 #endif

@@ -38,23 +38,23 @@ namespace distance_compute{
 
     std::unique_ptr<galaxy_prior> prior;
 
-    void init_isochrone(const std::string & which,int thin=1,double feh_err=1e-5){
+    void init_isochrone(const std::string & which,int thin=1,double feh_err=1e-5,double thin_mag=-1.){
         if(which=="BaSTI"){
-            iso = make_unique<isochrone_grid<isochrone_johnson>>(which,thin,feh_err);
+            iso = make_unique<isochrone_grid<isochrone_johnson>>(which,thin,feh_err,thin_mag);
             isoD = make_unique<DistanceCalculator<isochrone_johnson>>(&*iso);
         }
         else if(which=="Padova"){
-            iso_Padova = make_unique<isochrone_grid<isochrone_padova>>(which,thin,feh_err);
+            iso_Padova = make_unique<isochrone_grid<isochrone_padova>>(which,thin,feh_err,thin_mag);
             isoD_Padova = make_unique<DistanceCalculator<isochrone_padova>>(&*iso_Padova);
         }
         else if(which=="Dartmouth"){
-            iso_Dartmouth = make_unique<isochrone_grid<isochrone_dartmouth>>(which,thin,feh_err);
+            iso_Dartmouth = make_unique<isochrone_grid<isochrone_dartmouth>>(which,thin,feh_err,thin_mag);
             isoD_Dartmouth = make_unique<DistanceCalculator<isochrone_dartmouth>>(&*iso_Dartmouth);
         }
         else if(which=="All"){
-            iso = make_unique<isochrone_grid<isochrone_johnson>>("BaSTI",thin,feh_err);
-            iso_Padova = make_unique<isochrone_grid<isochrone_padova>>("Padova",thin,feh_err);
-            iso_Dartmouth = make_unique<isochrone_grid<isochrone_dartmouth>>("Dartmouth",thin,feh_err);
+            iso = make_unique<isochrone_grid<isochrone_johnson>>("BaSTI",thin,feh_err,thin_mag);
+            iso_Padova = make_unique<isochrone_grid<isochrone_padova>>("Padova",thin,feh_err,thin_mag);
+            iso_Dartmouth = make_unique<isochrone_grid<isochrone_dartmouth>>("Dartmouth",thin,feh_err,thin_mag);
             isoD = make_unique<DistanceCalculator<isochrone_johnson>>(&*iso);
             isoD_Padova = make_unique<DistanceCalculator<isochrone_padova>>(&*iso_Padova);
             isoD_Dartmouth = make_unique<DistanceCalculator<isochrone_dartmouth>>(&*iso_Dartmouth);
@@ -69,13 +69,18 @@ namespace distance_compute{
 
     void load_prior(std::string prior_type="2018",
                     VecDoub SolarPosition=conv::StandardSolarPAUL){
+        std::cout<<prior_type<<std::endl;
         if(prior_type=="Binney"){
             prior = make_unique<binney_prior>(SolarPosition);
             std::cout<<"Binney 2014 prior loaded for isochrone fitting\n";
         }
-        if(prior_type=="2018"){
+        else if(prior_type=="2018"){
             prior = make_unique<new_prior_2018>(SolarPosition);
             std::cout<<"New 2018 prior loaded for isochrone fitting\n";
+        }
+        else if(prior_type=="2018_broad"){
+            prior = make_unique<new_prior_2018_broad_age>(SolarPosition);
+            std::cout<<"New 2018 broad age prior loaded for isochrone fitting\n";
         }
         else{
             prior = make_unique<galaxy_prior>(SolarPosition);

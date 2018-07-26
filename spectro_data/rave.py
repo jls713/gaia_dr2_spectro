@@ -96,6 +96,18 @@ def load_data(use_dr5=False, **args):
         data['rho_TZ'] = 0.
         data['rho_gZ'] = 0.
 
+    else:
+        fltr = data['qc']==False
+        data.loc[fltr,'teff'] = np.nan
+        data.loc[fltr,'e_teff'] = np.nan
+        data.loc[fltr,'logg'] = np.nan
+        data.loc[fltr,'e_logg'] = np.nan
+        data.loc[fltr,'fe_h'] = np.nan
+        data.loc[fltr,'e_fe_h'] = np.nan
+        data.loc[fltr,'rho_Tg'] = 0.
+        data.loc[fltr,'rho_TZ'] = 0.
+        data.loc[fltr,'rho_gZ'] = 0.
+
     data = data.rename(index=str, columns={'ehrv': 'e_hrv'})
 
     data['mag_use'] = [np.array(['J', 'H', 'K', 'G'])
@@ -120,7 +132,13 @@ def load_and_match(output_file='/data/jls/GaiaDR2/spectro/RAVE_input.hdf5',
 
     data = load_data(use_dr5=use_dr5)
     print 'Loaded. Now xmatch.'
+    
+    rx = cross_match.crossmatch_gaia_spectro(data, no_proper_motion=False, dist_max=5.)
     data = cross_match.crossmatch_gaia_spectro(data, dr1=use_dr1, epoch=2000.)
+    fltr = (rx.source_id > 0) & (data.source_id != rx.source_id)
+    if np.count_nonzero(fltr)>0:
+        data.loc[fltr]=rx.loc[fltr]
+    data = data.reset_index(drop=True)
 
     write_input_file(data, output_file, 'RAVE %s' % name)
 

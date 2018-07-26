@@ -10,7 +10,7 @@ public:
     isochrone_padova(void);
    double get_metallicity(std::vector<std::string> input_iso, std::string dir);
     void fill(std::vector<std::string> input_iso, std::string dir,
-              double Age=0.);
+              double Age=0., double thin_mag=-1.);
 };
 //=============================================================================
 #endif

@@ -39,7 +39,7 @@ double isochrone_dartmouth::get_metallicity(std::vector<std::string> input_iso_l
 }
 
 void isochrone_dartmouth::fill(std::vector<std::string> input_iso_list,
-                               std::string dir, double Age){
+                               std::string dir, double Age, double thin_mag){
     auto input_iso = input_iso_list[0];
     // Load in isochrone file
     std::ifstream inFile;inFile.open(input_iso);
@@ -96,6 +96,15 @@ void isochrone_dartmouth::fill(std::vector<std::string> input_iso_list,
         mags[n.first].resize(N);
     age = Age;
     N_length=InitialMass.size();
+    deltamass = VecDoub(N_length,0.);
+    for(unsigned index_m=0; index_m<N_length; ++index_m){
+        if(index_m==0) 
+            deltamass[index_m]=fabs(InitialMass[1]-InitialMass[0]);
+        else if(index_m==N_length-1)
+            deltamass[index_m]=fabs(InitialMass[N_length-1]-InitialMass[N_length-2]);
+        else
+            deltamass[index_m]=fabs((InitialMass[index_m+1]-InitialMass[index_m-1])/2.);
+    }
     inFile.close();
 }
 //=============================================================================

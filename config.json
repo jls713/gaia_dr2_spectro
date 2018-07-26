@@ -10,9 +10,9 @@
 	"edf_params":"/home/jls/work/code/edf/edf_results/fitoutput_060115.edf",
 	"selection_function_folder":"/data/jls/selection_functions/",
 	"with_halo":true,
-	"solar_motion":[8.2,0.014,11.1,12.24,7.25],
+	"solar_motion":[8.2,0.025,11.1,12.24,7.25],
 	"isochrones":{
-		 "filters":["2MASS","Gaia", "PanSTARRS"],
+		 "filters":["2MASS","Gaia","SDSS", "PanSTARRS"],
 		 "type":"Padova"
 	},
 	"dir":{
@@ -21,6 +21,7 @@
 		"extinction_coeffs":"isochrone/extinction_files/",
                 "output_folder":"/data/jls/GaiaDR2/spectro/"
 	},
+        "prior":"2018_broad",
 	"MassFunction":{
 		"MinMass": 0.1,
 		"MaxMass": 50.0,

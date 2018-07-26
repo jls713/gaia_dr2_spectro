@@ -74,7 +74,8 @@ double isochrone_padova::get_metallicity(std::vector<std::string> input_iso,
 }
 
 void isochrone_padova::fill(std::vector<std::string> input_iso,
-                            std::string dir, double Age){
+                            std::string dir, double Age,
+                            double thin_mag){
     bool first=true;
     for(auto s: input_iso){
     std::ifstream inFile;inFile.open(s);
@@ -127,5 +128,52 @@ void isochrone_padova::fill(std::vector<std::string> input_iso,
         mags["Jv"][N]=JKHv[0];
         mags["Hv"][N]=JKHv[2];
         mags["Kv"][N]=JKHv[1];
+    }
+    if(thin_mag>0.){
+    std::vector<std::string> maglist =
+	{"B","V",
+	 "u","g","r","i","z",
+	 "gP","rP","iP","zP",
+	 "G","GBP","GRP",
+	 "J","H","K",
+	 "W1","W2","W3","W4",
+	 "Jv","Hv","Kv","Vp","I"};
+    for(unsigned N=0;N<N_length-1;++N){
+        std::string m = mag_maps[input_iso[0].substr(dir.length()+1,1)][0].first;
+        for(auto m: maglist)
+        if(fabs(mags[m][N+1]-mags[m][N])>thin_mag){
+            auto it = InitialMass.begin()+N+1;
+            InitialMass.insert(it, .5*(InitialMass[N]+InitialMass[N+1]));
+            it = Mass.begin()+N+1;
+            Mass.insert(it, .5*(Mass[N]+Mass[N+1]));
+            it = L.begin()+N+1;
+            L.insert(it, .5*(L[N]+L[N+1]));
+            it = Teff.begin()+N+1;
+            Teff.insert(it, .5*(Teff[N]+Teff[N+1]));
+            it = Logg.begin()+N+1;
+            Logg.insert(it, .5*(Logg[N]+Logg[N+1]));
+            it = es.begin()+N+1;
+            es.insert(it, .5*(es[N]+es[N+1]));
+            it = mf.begin()+N+1;
+            mf.insert(it, .5*(mf[N]+mf[N+1]));
+            
+            for(auto ii: maglist){
+                it=mags[ii].begin()+N+1;
+                mags[ii].insert(it, .5*(mags[ii][N]+mags[ii][N+1]));
+            }    
+            N_length+=1;
+	    N-=1;
+            break;
+        }
+    }
+    }
+    deltamass = VecDoub(N_length,0.);
+    for(unsigned index_m=0; index_m<N_length; ++index_m){
+        if(index_m==0) 
+            deltamass[index_m]=fabs(InitialMass[1]-InitialMass[0]);
+        else if(index_m==N_length-1)
+            deltamass[index_m]=fabs(InitialMass[N_length-1]-InitialMass[N_length-2]);
+        else
+            deltamass[index_m]=fabs((InitialMass[index_m+1]-InitialMass[index_m-1])/2.);
     }
 }

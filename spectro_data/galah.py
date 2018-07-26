@@ -57,6 +57,16 @@ def load_data():
     data['rho_Tg'] = 0.
     data['rho_TZ'] = 0.
     data['rho_gZ'] = 0.
+   
+    # GALAH masses from Payel 
+    payel = pd.read_hdf('/data/jls/GaiaDR2/spectro/GALAH_input_payel_masses.hdf5')
+    payel = payel[payel.massflag==0].reset_index(drop=True)
+    data = data.drop(['mass','mass_error'], axis=1)
+    data = pd.merge(data, payel[['sobject_id','mass','mass_error']], 
+                     on='sobject_id', how='left')
+    fltr = data['mass']!=data['mass']
+    data.loc[fltr,'mass']=0.
+    data.loc[fltr,'mass_error']=-1.
 
     return data
 
@@ -69,7 +79,12 @@ def load_and_match(output_file='/data/jls/GaiaDR2/spectro/GALAH_input.hdf5',
         return data
 
     data = load_data()
+    rx = cross_match.crossmatch_gaia_spectro(data, no_proper_motion=False, dist_max=5.)
     data = cross_match.crossmatch_gaia_spectro(data, dr1=use_dr1, epoch=2000.)
+    fltr = (rx.source_id > 0) & (data.source_id != rx.source_id)
+    if np.count_nonzero(fltr)>0:
+        data.loc[fltr]=rx.loc[fltr]
+    data = data.reset_index(drop=True)
 
     write_input_file(data, output_file, 'GALAH DR2')
     return data

@@ -47,6 +47,7 @@ def read_fits_to_pandas(data_file):
 
 def check_and_load(output_file, survey):
     if os.path.isfile(output_file):
+        return True,pd.read_hdf(output_file)
         #tbl = Table.read(output_file)
         tbl = Table.from_pandas(pd.read_hdf(output_file))
         tbl.meta['COMMENT'] = 'Input file for distance pipeline using the ' + \

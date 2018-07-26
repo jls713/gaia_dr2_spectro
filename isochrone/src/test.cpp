@@ -92,6 +92,13 @@ TEST(BaSTI,johnson){
     schlafly2017_extinction_law EL;
     test_distance(&D,&iso,&GP,&EL);
 }
+TEST(Padova,interp){
+    isochrone_grid<isochrone_padova> iso("Padova",1,0.5,0.03);
+    std::cout<<iso.iso(0,0)->N()<<std::endl;
+    //for(unsigned i=0;i<iso.iso(0,0)->N();++i){
+    //    std::cout<<iso.iso(0,0)->initial_mass(i)<<" "<<iso.iso(0,0)->mag(i,"G")<<std::endl;
+    //}
+}
 TEST(Padova,all){
     isochrone_grid<isochrone_padova> iso("Padova",1,0.5);
     DistanceCalculator<isochrone_padova> D(&iso);

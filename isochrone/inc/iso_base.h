@@ -30,6 +30,7 @@ class isochrone{
         int N_length; 				// number of isochrone points
         double FeH, age;			// metallicity and age of isochrone
         VecDoub InitialMass;		// Grid of the initial mass
+        VecDoub deltamass;              // Grid of volume of initial mass
         VecDoub Mass, Teff, L, Logg;// Grids of properties
                                     // (mass, effective temperature,
                                     //  luminosity and surface gravity)
@@ -95,9 +96,12 @@ class isochrone{
          */
         inline double delta_mass(int index_m){
 		    // find the volume occupied by an initial mass point
-		    if(index_m==0)return fabs(InitialMass[1]-InitialMass[0]);
+		    return deltamass[index_m];
+		    /*
+                    if(index_m==0)return fabs(InitialMass[1]-InitialMass[0]);
 		    if(index_m==N_length-1)return fabs(InitialMass[N_length-1]-InitialMass[N_length-2]);
 		    else return fabs((InitialMass[index_m+1]-InitialMass[index_m-1])/2.);
+                    */
 		}
         inline double mag(int j, std::string mag){
             return mags[mag][j];

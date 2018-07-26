@@ -41,9 +41,13 @@ def load_data_iDR4():
         ges[i] = cv[i]
 
     ges = format_columns(ges)
-    fltr = (data['fe_h'] != data['fe_h'])
-    data.loc[fltr, 'fe_h'] = data['MH'][fltr]
-    data.loc[fltr, 'e_fe_h'] = data['E_MH'][fltr]
+    fltr = (data['fe_h'] != ges['fe_h'])
+    ges.loc[fltr, 'fe_h'] = ges['MH'][fltr]
+    ges.loc[fltr, 'e_fe_h'] = ges['E_MH'][fltr]
+    
+    for b, f in zip(['Jv','Hv','Kv'],['j','h','ks']):
+        p = np.genfromtxt('/home/jls/work/data/gaia_dr2_prep/vista_uncertainties/cal_%s_err.dat'%f)
+        ges['e%s'%b]=np.interp(ges[b].values,p.T[0],p.T[1])
 
     vista_fltr = (ges.Jv == ges.Jv)
     vista_h = (ges.Hv == ges.Hv)  # For VHS GPS
@@ -75,6 +79,10 @@ def load_data():
     ges = ges[ges.RA == ges.RA].reset_index(drop=True)
 
     ges = format_columns(ges)
+    
+    for b, f in zip(['Jv','Hv','Kv'],['j','h','ks']):
+        p = np.genfromtxt('/home/jls/work/data/gaia_dr2_prep/vista_uncertainties/cal_%s_err.dat'%f)
+        ges['e%s'%b]=np.interp(ges[b].values,p.T[0],p.T[1])
 
     vista_fltr = (ges.Jv == ges.Jv)
     vista_h = (ges.Hv == ges.Hv)  # For VHS GPS
@@ -109,8 +117,12 @@ def load_and_match(output_file='/data/jls/GaiaDR2/spectro/GES_input.hdf5',
         return data
 
     data = load_data()
+    rx = cross_match.crossmatch_gaia_spectro(data, no_proper_motion=False, dist_max=5.)
     data = cross_match.crossmatch_gaia_spectro(data, epoch=2000, dr1=use_dr1)
-
+    fltr = (rx.source_id > 0) & (data.source_id != rx.source_id)
+    if np.count_nonzero(fltr)>0:
+        data.loc[fltr]=rx.loc[fltr]
+    data = data.reset_index(drop=True)
     write_input_file(data, output_file, 'Gaia-ESO DR3')
 
     return data
