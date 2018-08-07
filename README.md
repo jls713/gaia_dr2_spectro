@@ -1,4 +1,4 @@
-# gaia_dr2_prep
+# gaia_dr2_spectro
 
 Distances, ages and masses for spectroscopic surveys with Gaia
 
