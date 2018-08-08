@@ -37,6 +37,7 @@ def flag_errors(data, covar_correction=True):
 
 def run_rave_dr5():
     rave = load_rave(output_file=output_folder + 'RAVE_input.hdf5', use_dr1=DR1, use_dr5=True)
+    return
     rave = check_photometry(rave)
     run_distance_pipeline(rave,
                           output_folder + 'RAVE_DR5_distances%s.hdf5' % name_str,
@@ -47,6 +48,7 @@ def run_rave_dr5():
 
 def run_rave_on():
     rave = load_rave(output_folder + 'RAVEON_input.hdf5', use_dr1=DR1)
+    return
     rave = check_photometry(rave)
     run_distance_pipeline(rave,
                           output_folder + 'RAVE_Cannon_distances%s.hdf5' % name_str,
@@ -56,6 +58,7 @@ def run_rave_on():
 
 def run_apogee():
     apogee = load_apogee(output_file=output_folder + 'APOGEE_input.hdf5', use_dr1=DR1)
+    return
     apogee = check_photometry(apogee)
     run_distance_pipeline(apogee,
                           output_folder + 'APOGEE_distances%s.hdf5' % name_str,
@@ -65,6 +68,7 @@ def run_apogee():
 
 def run_galah():
     galah = load_galah(output_file=output_folder + 'GALAH_input.hdf5', use_dr1=DR1)
+    return
     galah = check_photometry(galah)
     run_distance_pipeline(galah,
                           output_folder + 'GALAH_distances%s.hdf5' % name_str,
@@ -85,6 +89,7 @@ def run_ges_dr3():
 
 def run_segue():
     segue = load_segue(output_file=output_folder+'SEGUE_input.hdf5', use_dr1=DR1) 
+    return
     segue = segue.reset_index(drop=True)
     run_distance_pipeline(segue,
                           output_folder +
@@ -96,6 +101,7 @@ def run_segue():
 
 def run_lamost():
     lamost = load_lamost(output_file=output_folder+'LAMOST_input.hdf5', use_dr1=DR1)
+    return
     lamost = check_photometry(lamost)
     STARTNUMBER, ENDNUMBER =int(sys.argv[2]), int(sys.argv[3])
     lamost = lamost.iloc[STARTNUMBER:ENDNUMBER].reset_index(drop=True)
@@ -108,7 +114,9 @@ def run_lamost():
                           with_parallax=with_parallax)
 
 def run_lamost_ps1():
+    print 'REMEMBER SATURATION'
     lamost = load_lamost(output_file=output_folder+'LAMOST_input.hdf5', use_dr1=DR1)
+    print 'REMEMBER SATURATION'
     d = pd.read_hdf('/data/jls/GaiaDR2/spectro/LAMOST_input_PS1__withPRIOR.hdf5', 'data')
     d = d[['obsid','gP','rP','iP','egP','erP','eiP','mag_use']]
     sys_error_floor=0.01 ## From Magnier et al. (2016) and Schlafly et al. (2012)
@@ -160,6 +168,7 @@ def run_find_gridding_lamost():
                           with_parallax=with_parallax, mid=0.01)
 
 def run_find_gridding_ps1():
+    print 'REMEMBER SATURATION'
     pp = pd.read_hdf(output_folder+'LAMOST_input_PS1__withPRIOR.hdf5')
     oo = pd.read_hdf(output_folder+'LAMOST_distances_PS1__withPRIOR_BROAD.hdf5')
     oo = flag_errors(oo)
@@ -167,6 +176,7 @@ def run_find_gridding_ps1():
     sys_error_floor=0.01 ## From Magnier et al. (2016) and Schlafly et al. (2012)
     for i in ['egP','erP','eiP']:
         pp[i]=np.sqrt(pp[i]**2+sys_error_floor**2)
+    print 'REMEMBER SATURATION'
     run_distance_pipeline(pp,
                           output_folder + 'LAMOST_distances_PS1_FINEGRID_withPRIOR_BROAD.hdf5',
                           'obsid', 'LAMOST',

@@ -412,8 +412,22 @@ def run_find_gridding_ps1():
                           npool=npool,
                           with_parallax=with_parallax, mid=0.01)
 
+def run_find_gridding_ps1_saturated():
+    pp = pd.read_hdf('/data/jls/GaiaDR2/spectro/LAMOST_input_PS1__withPRIOR.hdf5')
+    saturated = (pp.gP<13.5)|(pp.rP<13.5)|(pp.iP<13.5)
+    pp = pp[saturated].reset_index(drop=True)
+    pp['mag_use']=pp.applymap(lambda x: np.array(['G','GBP','GRP'])) 
+    run_distance_pipeline(pp,
+                          output_folder + 'LAMOST_distances_PS1_FINEGRID_SATURATED_withPRIOR.hdf5',
+                          'obsid', 'LAMOST',
+                          npool=npool,
+                          with_parallax=with_parallax, mid=0.01, thin_mag=-1.)
+
 if __name__=="__main__":
-    run_parallax_fix_segue()
+
+    run_find_gridding_ps1_saturated()
+
+    # run_parallax_fix_segue()
     # run_segue()
     #run_lamost_ps1()
     #run_find_gridding('GALAH', 'GALAH', 'sobject_id')

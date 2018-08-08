@@ -977,7 +977,8 @@ namespace edf_sampling{
         VecDoub Acts(4,0);
         double phi = Pol[1];
         Pol[4]*=-1.;Pol[1]=0.;
-        if(EDF->pot->H(Pol)>0. or fabs(Pol[4])>500.)
+        //if(EDF->pot->H(Pol)>0. or fabs(Pol[4])>500.)
+        if(EDF->pot->H(Pol)>0.)
             for(int i=0;i<4;++i)Acts[i]=std::numeric_limits<double>::infinity();
         else{
             bool wf = true;

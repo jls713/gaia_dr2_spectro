@@ -3,6 +3,7 @@ from astropy.table import Table, vstack, join
 from astropy import units as u
 import numpy as np
 import actions
+from reprocess_nogaia_match import check_photometry
 
 print 'NEED A COVARIANCE FLAG -- SOME STARS COVAR IS CORRECT'
 
@@ -202,7 +203,19 @@ def build_master_output_withPRIOR():
         '/data/jls/GaiaDR2/spectro/LAMOST_distances_FINEGRID__withPRIOR.hdf5')
     rfill = flag_errors(rfill, covar_correction=False)
     lm = fillin(lm, rfill, 'obsid')
+    lfill = Table.read('/data/jls/GaiaDR2/spectro/LAMOST_distances_PS1_FINEGRID_withPRIOR.hdf5')
+    lfill = flag_errors(lfill, covar_correction=False)
+    lm = fillin(lm, lfill, 'obsid')
+    lfill = Table.read('/data/jls/GaiaDR2/spectro/LAMOST_distances_PS1_FINEGRID_SATURATED_withPRIOR.hdf5')
+    lfill = flag_errors(lfill, covar_correction=False)
+    lm = fillin(lm, lfill, 'obsid')
+
     linput = pd.read_hdf('/data/jls/GaiaDR2/spectro/LAMOST_input_MASTER.hdf5')
+
+    ### Adjust LAMOST radial velocities -- add 4.5
+    linput['hrv']+=4.5
+    ##########
+
     lm=actions.process_actions(linput,lm,None)
     lm.meta['COMMENT'] = la.meta['COMMENT'] + extra_meta
     lm.write('/data/jls/GaiaDR2/spectro/LAMOST_distances_withPRIOR_MASTER.hdf5',
@@ -211,6 +224,7 @@ def build_master_output_withPRIOR():
              serialize_meta=True,
              overwrite=True)
     lm['survey']='LAMOST'
+
     del linput
 
     # RAVE
@@ -368,6 +382,11 @@ def build_master_output_withPRIOR():
        '/data/jls/GaiaDR2/spectro/SEGUE_distances_withPRIOR_parallax_fillin.hdf5')
     rfill = flag_errors(rfill, covar_correction=False)
     r = fillin(r, rfill, 'specobjid')
+    #############################
+    ## Failed on SEGUE, no parallax -- adding here
+    rfill = Table.read('/data/jls/GaiaDR2/spectro/SEGUE_distances_withPRIOR_parallax_fillin.hdf5')
+    rfill = flag_errors(rfill, covar_correction=False)
+    r = fillin(r, rfill, 'specobjid')
 
     linput = pd.read_hdf('/data/jls/GaiaDR2/spectro/SEGUE_input_MASTER.hdf5')
     r=actions.process_actions(linput,r,None)
@@ -420,15 +439,23 @@ def build_input_master():
                'source_id',
                'G','eG','GBP','eGBP','GRP','eGRP',
                'a_g_val', 'a_g_percentile_lower', 'a_g_percentile_upper',
-               'dist'] 
+               'dist']
+        p['indx']=np.arange(len(p))
         p = join(p, p2[columns], keys=fld, join_type='left', uniq_col_name='{col_name}{table_name}',
 		 table_names=['','_copy'])
-        p['source_id'][p['source_id_copy']>=0]=p['source_id_copy'][p['source_id_copy']>=0]
+        fltr = ~p['source_id_copy'].mask
+        p['source_id'][fltr]=p['source_id_copy'][fltr]
         del p['source_id_copy']
         for col in p.colnames:
             if col[-5:]=='_copy':
-                p[col[:-5]][p[col]==p[col]]=p[col][p[col]==p[col]]
+                p[col[:-5]][fltr]=p[col][fltr]
                 del p[col]
+        p['mag_use']=[','.join(pp) for pp in p['mag_use']]
+        for i in p.colnames:
+            if p[i].dtype==type(object):
+                p[i]=p[i].astype('|S')
+        p.sort('indx')
+        del p['indx']
         p.write('/data/jls/GaiaDR2/spectro/%s_input_MASTER.hdf5'%s, path='data',
                 format='hdf5',compression=True,serialize_meta=True,overwrite=True)
 
@@ -436,11 +463,6 @@ def build_input_master():
 def fix_master_file():
     d = Table.read('/data/jls/GaiaDR2/spectro/distances_withPRIOR_MASTER.hdf5')
     #############################
-    ## Failed on SEGUE, no parallax -- adding here
-    d2 = Table.read('/data/jls/GaiaDR2/spectro/SEGUE_distances_withPRIOR_parallax_fillin.hdf5')
-    d2['survey']='SEGUE'
-    d2 = flag_errors(d2, covar_correction=False)
-    d = fillin(d, d2, 'specobjid')
     # Keep non-duplicate entries
     d['duplicated']=0
     lp = d[['source_id','survey','flag','vz_err']].to_pandas()
@@ -461,41 +483,69 @@ def fix_master_file():
     d['source_id']=-1
     d['ra']=0.*u.deg
     d['dec']=0.*u.deg
-    #d['dist_crossmatch']=np.nan*u.deg
-    
+    d['angular_separation']=np.nan*u.arcsec
+    d['mag_use']=''
+    d['mag_use']=d['mag_use'].astype('|S10')
+
     for s, fld in zip(['LAMOST','GES','APOGEE','RAVE','RAVEON','GALAH','SEGUE'],
                       ['obsid','CNAME','APOGEE_ID','raveid','raveid','sobject_id','specobjid']):
-        p = Table.from_pandas(pd.read_hdf('/data/jls/GaiaDR2/spectro/%s_input.hdf5'%s))
+
+        p = pd.read_hdf('/data/jls/GaiaDR2/spectro/%s_input.hdf5'%s)
+
+        if s=='LAMOST':
+            p = check_photometry(p)
+            pp = pd.read_hdf('/data/jls/GaiaDR2/spectro/LAMOST_input_PS1__withPRIOR.hdf5')
+            saturated = (pp.gP<13.5)|(pp.rP<13.5)|(pp.iP<13.5)
+            pp.loc[saturated,'mag_use']=pp.applymap(lambda x: np.array(['G','GBP','GRP']))
+            p = pd.merge(p, pp[['obsid','mag_use']], on='obsid', how='left')
+            p['mag_use']=p['mag_use_x']
+            p.loc[p['mag_use_y']==p['mag_use_y'],'mag_use']=p['mag_use_y'][p['mag_use_y']==p['mag_use_y']]
+            del p['mag_use_y']
+            del p['mag_use_x']
+        elif s=='GES':
+            fltr = p['mag_use'].apply(lambda x: x[0]) == 'J'
+            p.loc[fltr] = check_photometry(p[fltr])
+        elif s=='SEGUE':
+            pass
+        else:
+            p = check_photometry(p)
+
+        p['mag_use']=[','.join(pp) for pp in p['mag_use']]
+        p['mag_use']=p['mag_use'].astype(str)
+
+        p = Table.from_pandas(p)
+
         if s!='SEGUE':
             p2 = Table.from_pandas(pd.read_hdf('/data/jls/GaiaDR2/spectro/%s_input_pm.hdf5'%s))
-            columns = [fld, 
+            columns = [fld,
                'source_id',
-               'dist', 'ra', 'dec'] 
-            p = join(p, p2[columns], keys=fld, join_type='left', uniq_col_name='{col_name}{table_name}',
-		 table_names=['','_copy'])
+               'ra', 'dec']
+            p = join(p, p2[columns], keys=fld, join_type='left', uniq_col_name='{col_name}{table_name}', table_names=['','_copy'])
             #p['dist'][(p['source_id_copy']>=0)&(~p['source_id_copy'].mask)]=p['dist_copy'][(p['source_id_copy']>=0)&(~p['source_id_copy'].mask)]
             p['source_id'][(p['source_id_copy']>=0)&(~p['source_id_copy'].mask)]=p['source_id_copy'][(p['source_id_copy']>=0)&(~p['source_id_copy'].mask)]
             del p['source_id_copy']
             #del p['dist_copy']
             del p['ra_copy']
             del p['dec_copy']
-        #p['dist'].name='dist_crossmatch' 
+        p_i = pd.read_hdf('/local/scratch_2/jls/%s_input.hdf5'%s)
+        p['angular_separation']=p_i['dist'].values*3600.*u.arcsec
+        #p['dist'].name='dist_crossmatch'
         if s!='RAVE':
             survey=s
         else:
             survey='RAVEDR5'
         p['survey']=survey
         print len(p), np.count_nonzero(p['ra'])
-        p = p[['source_id',fld,'survey','ra','dec']]#,'dist_crossmatch']]
+        p = p[['source_id',fld,'survey','ra','dec','angular_separation','mag_use']]
         d = join(d,p,join_type='left',keys=[fld,'survey'], uniq_col_name='{col_name}{table_name}',table_names=['','_2'])
-        for f in ['ra','dec','source_id']:
-            d[f][(~d['source_id_2'].mask)]=d[f+'_2'][(~d['source_id_2'].mask)] 
+        for f in ['ra','dec','angular_separation','mag_use','source_id']:
+            d[f][(~d['source_id_2'].mask)]=d[f+'_2'][(~d['source_id_2'].mask)]
             del d[f+'_2']
         print np.count_nonzero(d['ra'])
 
-    d['sobject_id']=d['sobject_id'].astype(np.int64)   
-    d['specobjid']=d['specobjid'].astype(np.int64)   
- 
+    d['sobject_id']=d['sobject_id'].astype(np.int64)
+    d['specobjid']=d['specobjid'].astype(np.int64)
+
     lm = d[['survey','flag','vz_err']].to_pandas()
     lm['source_id']=d['source_id']
     # Keep non-duplicate entries
@@ -517,7 +567,8 @@ def fix_master_file():
     d.meta['COMMENT'][3]='survey is a string giving the name of the survey the star was taken from -- APOGEE, GALAH, GES, RAVEON, RAVEDR5, LAMOST, SEGUE'
 
     d.meta['COMMENT'][10]='ra,dec are the equatorial coordinates from the spectroscopic surveys (in degrees) -- we use the spectroscopic survey ra,dec instead of Gaia ra,dec so cross-match failures with Gaia still have values.'
-    #d.meta['COMMENT'][11]='dist_crossmatch is the cross-match distance in degrees between the spectroscopic catalogue and Gaia DR2.'
+    d.meta['COMMENT'][11]='angular_separation is the cross-match distance in arcsec between the spectroscopic catalogue and Gaia DR2 (if the proper motion has been considered, it is the epoch correct distance).'
+    d.meta['COMMENT'][12]='mag_use is a comma-separated string giving the magnitudes used in the pipeline. J,H,K are 2MASS bands, G,GBP,GRP are Gaia bands, gP,rP,iP are Pan-STARRS bands, g,r,i are SDSS bands, Jv,Hv,Kv are VISTA bands'
 
     d.write('/data/jls/GaiaDR2/spectro/distances_withPRIOR_fixedint64.hdf5',
             path='data', format='hdf5',
