@@ -8,6 +8,7 @@
 #include <cmath>
 #include <memory>
 #include <stdexcept>
+#include <regex>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <dirent.h>
@@ -102,6 +103,42 @@ double VpMag(double B, double V);
 double cross_product2D(const VecDoub &a, const VecDoub &b);
 
 json parameters(void);
+/**
+ * @brief split string
+ *
+ * @param a input string
+ * @param b string to split on
+ *
+ * @return vector of substrings
+ */
+std::vector<std::string> Split(const std::string& subject, const std::string& split_string);
+
+// Custom comparator for Padova isochrone files
+// Sorts alphabetical and then numerical
+// e.g. string = A/B_C.dat -- sorts by B (alphabetical) then C (numerical)
+// Done to sort negative numbers 
+struct cmp_isov{
+	bool operator()(const std::string& lhs, const std::string& rhs){
+                if (lhs==rhs) return false;
+                std::string comp = "/";
+                std::vector<std::string> spllhs = Split(lhs,comp);
+		std::vector<std::string> splrhs = Split(rhs,comp);
+                int entryL = spllhs.size();
+                int entryR = splrhs.size();
+                std::string comp3 = "_";
+                spllhs = Split(spllhs[entryL-1],comp3);
+		splrhs = Split(splrhs[entryR-1],comp3);
+                entryL = spllhs.size();
+                entryR = splrhs.size();
+		std::string comp2 = ".dat";
+                std::vector<std::string> spllhsR = Split(spllhs[entryL-1],comp2);
+                std::vector<std::string> splrhsR = Split(splrhs[entryR-1],comp2);
+                if(spllhs[0]==splrhs[0])
+		    return atof(spllhsR[0].c_str())<atof(splrhsR[0].c_str());
+		else
+		    return spllhs[0]<splrhs[0];
+	}
+};
 //=============================================================================
 #endif
 //=============================================================================

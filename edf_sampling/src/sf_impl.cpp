@@ -12,6 +12,7 @@ std::string rave_dir(void){
     return s+"RAVE/";}
 
 std::map<std::string, Selection_function*(*)(void)> sf_types={
+  {"Null",&createSFInstance<NullSelection_Function>},
   {"RAVE",&createSFInstance<RAVE_selection_function>},
   {"TGAS",&createSFInstance<TGAS_selection_function>},
   {"TGAS_HQ",&createSFInstance<TGAS_HQ_selection_function>},

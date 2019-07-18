@@ -21,7 +21,7 @@
 		"extinction_coeffs":"isochrone/extinction_files/",
                 "output_folder":"/data/jls/GaiaDR2/spectro/"
 	},
-        "prior":"2018",
+        "prior":"2018_flat",
 	"MassFunction":{
 		"MinMass": 0.1,
 		"MaxMass": 50.0,

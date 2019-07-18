@@ -56,8 +56,8 @@ public:
 class TypeIaRate_DTD: public TypeIaRate{
 protected:
     double ABinary = 0.0025;
-    const double tau_min = 0.04;
-    const double tau_max = 14.;
+    double tau_min = 0.04;
+    double tau_max = 14.;
     double Norm;
 public:
     TypeIaRate_DTD(ModelParameters M,
@@ -67,6 +67,10 @@ public:
                    std::shared_ptr<StellarLifetime> SL=nullptr)
         :TypeIaRate(imf,sfr,SL,RM){
             ABinary=M.parameters["typeIa"]["BinaryFraction"];
+            double MB_min=M.parameters["typeIa"]["MinimumIaBinaryMass"];
+            double MB_max=M.parameters["typeIa"]["MaximumIaBinaryMass"];
+            tau_min=(*SL)(MB_max,0.02);
+            tau_max=(*SL)(MB_min,0.02);
             ABinary*=imf->norm();
         }
     /**
@@ -127,8 +131,8 @@ public:
 class TypeIaRate_BinaryMass: public TypeIaRate{
 protected:
     double ABinary = 0.05;
-    const double MB_min = 3.;
-    const double MB_max = 16.;
+    double MB_min = 3.;
+    double MB_max = 16.;
     const double gamma = 2.;
     double tau_min;
 public:
@@ -139,6 +143,8 @@ public:
                           std::shared_ptr<StellarLifetime> SL)
         :TypeIaRate(imf,sfr,SL,RM){
         ABinary=M.parameters["typeIa"]["BinaryFraction"];
+        MB_min=M.parameters["typeIa"]["MinimumIaBinaryMass"];
+        MB_max=M.parameters["typeIa"]["MaximumIaBinaryMass"];
         tau_min=(*SL)(MB_max,0.02);
     }
     double lifetime(double m){return (*stellar_lifetime)(m,0.02);}

@@ -17,6 +17,15 @@ public:
     virtual double min_mag(void)=0;
     virtual double max_mag(void)=0;
 };
+class NullSelection_Function:public Selection_function{
+public:
+    std::vector<std::string> mag_band(void){return {};}
+    double evaluate(double l, double b, std::vector<double> mag, bool interp=false){
+        return 1.;
+    }
+    double min_mag(void){return 0.;}
+    double max_mag(void){return 0.;}
+};
 class Binned_selection_function:public Selection_function{
     // returns zero outside mag range supplied
 private:

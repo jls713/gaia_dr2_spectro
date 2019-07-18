@@ -9,7 +9,7 @@ DoubleInfallInflow::DoubleInfallInflow(ModelParameters M,double present_rSFR){
             throw std::invalid_argument(v+" not found in parameters file");
         }
     F = M.parameters["fundamentals"];
-    vars = {"PresentInfallRate","GasScaleLength"};
+    vars = {"GasScaleLength"};
     for(auto v:vars)
         if (F.find(v) == F.end()) {
             LOG(INFO)<<v<<" not found in parameters file\n";
@@ -22,7 +22,7 @@ DoubleInfallInflow::DoubleInfallInflow(ModelParameters M,double present_rSFR){
 	pif=1.;
 	double pif0 = (*this)(M.parameters["fundamentals"]["SolarRadius"],
 	                      M.parameters["fundamentals"]["GalaxyAge"]);
-	pif = (double)M.parameters["fundamentals"]["PresentInfallRate"]/pif0;
+	pif = (double)M.parameters["flows"]["inflow"]["PresentInfallRate"]/pif0;
 }
 double DoubleInfallInflow::operator()(double R, double t, Grid *rSFR){
 	return (exp(-t/ts)*(1.-weight)+exp(-t/tf)*weight)*pif*exp(-R/Rd);
@@ -248,6 +248,7 @@ template class PezzulliInflowRadialFlow_rSFR<RadialFlow>;
 unique_map< RadialFlow,
             ModelParameters,
             double> radialflow_types ={
+    {"None",&createInstance<RadialFlow,RadialFlowNone>},
     {"Linear",&createInstance<RadialFlow,LinearRadialFlow>},
     {"Pezzulli",&createInstance<RadialFlow,PezzulliInflowRadialFlow_rSFR<RadialFlow>>}
 };
@@ -255,12 +256,14 @@ unique_map< RadialFlow,
 unique_map< Inflow,
             ModelParameters,
             double> inflow_types ={
+    {"None",&createInstance<Inflow,InflowNone>},
     {"Double",&createInstance<Inflow,DoubleInfallInflow>},
     {"Pezzulli",&createInstance<Inflow,PezzulliInflowRadialFlow_rSFR<Inflow>>}
 };
 // Map for creating shared pointer instances of Outflow from string of class name
 unique_map< Outflow,
             ModelParameters> outflow_types ={
+    {"None",&createInstance<Outflow,OutflowNone>},
     {"SimpleGalacticFountain",&createInstance<Outflow,SimpleGalacticFountain>}
 };
 //=============================================================================

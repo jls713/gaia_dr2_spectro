@@ -195,3 +195,52 @@ public:
     double bulge_prior(VecDoub x, double Z, double tau);
     double prior(VecDoub x, double Z, double tau);
 };
+class new_prior_2018_flat_age: public galaxy_prior{
+
+    // From Bland-Hawthorn & Gerhard (2016) (as well as scalelengths below)
+    const double local_thick_thin = 0.04;
+    const double local_halo_thin = 0.005;
+
+    // Need to normalize age distributions over [0, 12.586 Gyr]
+    const double thin_norm = 1.; // 1/integral of p(tau)
+    const double thick_norm = local_thick_thin; // n2/n1 * 1/integral of gaussian in age over [0,13]
+    const double halo_factor = pow(R0*R0+z0*z0,3.39/2.)*1.13; // n3/n1 * 1/integral of gaussian in age over [0.,13.]
+    // Times 1/integral of p(metal) from -2.2 to 0.6 dex
+    const double halo_norm = local_halo_thin * halo_factor;
+
+    const double thin_metal_mean = -0.1;
+    const double thin_metal_disp = 0.3;
+    const double thin_Rd = 2.6;
+    const double thin_zd = 0.3;
+    const double thick_metal_mean = -0.6;
+    const double thick_metal_disp = 0.5;
+    const double thick_Rd = 2.;
+    const double thick_zd = 0.9;
+    const double halo_metal_mean = -1.6;
+    const double halo_metal_disp = 0.5;
+
+    const double bulge_metal_mean = 0.;
+    const double bulge_metal_disp = 0.5;
+
+    // Using S model parameters from Simion et al. (2017) with central
+    // normalization from Robin et al. (2012), Rc from Sharma et al. (2011)
+
+    const double bulge_phi = 19.57*PI/180.; // in radians
+    const double xb0 = 1.47;
+    const double yb0 = 0.63;
+    const double zb0 = 0.47;
+    const double bulge_norm = 35.45/0.04*1.13; // central/local thin Msun/pc^3
+    // Bovy (2018) total mid-plane stellar density of 0.04 Msun/pc^3
+    // Times 1/integral of p(tau) from 0 to 12.586 Gyr
+    // Times 1/integral of p(metal) from -2.2 to 0.6 dex
+    const double cperp = 1.88;
+    const double cpar = 3.04;
+    const double bulge_r_core = 2.54;
+public:
+    new_prior_2018_flat_age(VecDoub SP):galaxy_prior(SP,true){}
+    double thin_prior(double R, double z, double Z, double tau);
+    double thick_prior(double R, double z, double Z, double tau);
+    double halo_prior(double R, double z, double Z, double tau);
+    double bulge_prior(VecDoub x, double Z, double tau);
+    double prior(VecDoub x, double Z, double tau);
+};

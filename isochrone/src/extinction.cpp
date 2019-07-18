@@ -89,7 +89,7 @@ schlafly2017_extinction_law::schlafly2017_extinction_law(double RV){
         G_lTeff.pop_back();//G_lTeff.pop_back();
         // Normalize relative to A_V
 	double VV = coeff_list["V"];
-	std::cout<<VV<<std::endl;
+	std::cout<<"V coefficient = "<<VV<<std::endl;
         for (auto const& x : coeff_list){
 		coeff_list[x.first]/=VV;
 	}

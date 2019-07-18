@@ -85,7 +85,9 @@ namespace edf_sampling{
             isoD_Padova = make_unique<DistanceCalculator<isochrone_padova>>(&*iso_Padova);
             isoD_Dartmouth = make_unique<DistanceCalculator<isochrone_dartmouth>>(&*iso_Dartmouth);
         }
-        EL = std::make_shared<schlafly2017_extinction_law>();
+        // Commented this out as it seems to load extinction law twice. It could be that this function is called 
+        // assuming EL will load. If so, this needs fixing. 17/07/2019
+        //EL = std::make_shared<schlafly2017_extinction_law>();
     }
 
     void setup(bool ext_load=true, bool iso_load=true){
@@ -126,6 +128,12 @@ namespace edf_sampling{
         if(iso_load)
             init_isochrone(isochrones,1,params["isochrones"]["feh_spacing"]);
 
+        // Load selection function
+        // Check if selection function given in file, otherwise use "Null"
+        if (params.find("selection_function")!=params.end()) 
+		load_selection_function(params["selection_function"]);
+        else load_selection_function("Null");
+
     	// Load prior
     	auto prior_type = params["prior"];
         if(prior_type=="Binney"){
@@ -156,7 +164,12 @@ namespace edf_sampling{
 	EM = std::make_shared<sfd_extinction_map>(&*EL,conv::StandardSolarPAUL);
     }
 
-    VecDoub LogL_sample(double *f,std::string which="BaSTI", std::string band="I", bool extinct=true,bool interp=false, double modbcut=0.,double deccut=PI,VecDoub JKcut={0.,0.}, VecDoub Teffcut = {-1e6,1e6}, VecDoub loggcut = {-1e6,1e6},VecDoub FeHcut={-1e6,1e6}){
+    VecDoub LogL_sample(double *f,std::string which="BaSTI", 
+                        std::string band="I", VecDoub maglimits = {-1000.,1000.},
+                        bool extinct=true,bool interp=false, double modbcut=0.,
+                        double deccut=PI,std::vector<std::string>color={"J","K"},VecDoub colorcut={0.,0.}, 
+                        VecDoub Teffcut = {-1e6,1e6}, VecDoub loggcut = {-1e6,1e6},
+                        VecDoub FeHcut={-1e6,1e6}){
         //
         // Calculates log-likelihood given f
         // f = tau, Z, M, vR, vp,  vz, Mag, l, b
@@ -164,8 +177,8 @@ namespace edf_sampling{
         // Cut in modb in radians
         // deccut>0 we cut everything with dec<deccut-PI/2
         // deccut<0 we cut everything with dec>deccut+PI/2
-        // JKcut = {Cut value (i.e. keep everything greater than cut),
-        //          only apply cut for stars with fabs(b)<JKcut[1]}
+        // colorcut = {Cut value (i.e. keep everything greater than cut),
+        //          only apply cut for stars with fabs(b)<colorcut[1]}
         // Teffcut = Keep all Teffcut[0]<log10(Teff)<Teffcut[1]
         // loggcut = Keep all loggcut[0]<logg<loggcut[1]
         // -- Extract quantities from f and check if allowed
@@ -186,6 +199,10 @@ namespace edf_sampling{
             return {-std::numeric_limits<double>::infinity(),0.,0.,0.,0.,0.,0.,0.};
         }
         double Mag = f[6];
+        if(Mag>maglimits[1] and !extinct)
+            return {-std::numeric_limits<double>::infinity(),0.,0.,0.,0.,0.,0.,0.};
+        if(Mag<maglimits[0] and !extinct)
+            return {-std::numeric_limits<double>::infinity(),0.,0.,0.,0.,0.,0.,0.};
         double l = f[7];
         double b = f[8];
 
@@ -202,12 +219,12 @@ namespace edf_sampling{
             }
         }
         // -- Find nearest isochrone point or interpolate
-        double s,JK;
+        double s,colorI,teff,logg;
         std::vector<std::string> mag_sf = RSF->mag_band();
         VecDoub sf_mags;
         if(interp){
-            VecDoub ite;
-            std::vector<std::string> req_bands = {band,"J","K"};
+	    VecDoub ite;
+            std::vector<std::string> req_bands = {band,color[0],color[1]};
             req_bands.insert(req_bands.end(),mag_sf.begin(),mag_sf.end());
             if(which=="BaSTI")
                 ite = iso->interp_es(Z,tau,M,req_bands);
@@ -218,11 +235,11 @@ namespace edf_sampling{
             else{
                 s=0.;std::cerr<<"Isochrone type not valid"<<std::endl;
             }
-            // std::cout<<ite[0]<<" "<<ite[1]<<" ";
+            teff=ite[0];logg=ite[1];
             if(ite[0]<0. or ite[0]<Teffcut[0] or ite[0]>Teffcut[1]
                or ite[1]<loggcut[0] or ite[1]>loggcut[1])
                 return {-std::numeric_limits<double>::infinity(),0.,0.,0.,0.,0.,0.,0.};
-            s=pow(10.,0.2*(Mag-ite[2])-2.); JK=ite[3]-ite[4];
+            s=pow(10.,0.2*(Mag-ite[2])-2.); colorI=ite[3]-ite[4];
             for(int i=5;i<5+mag_sf.size();++i)
                 sf_mags.push_back(ite[i]+5*log10(s*100));
         }
@@ -232,14 +249,13 @@ namespace edf_sampling{
                 if(near[2]<0){
                     return {-std::numeric_limits<double>::infinity(),0.,0.,0.,0.,0.,0.,0.};
                 }
-                double teff = iso->iso(near[0],near[1])->logTeff(near[2]);
-                double logg = iso->iso(near[0],near[1])->logg(near[2]);
-                // std::cout<<teff<<" "<<logg<<" ";
+                teff = iso->iso(near[0],near[1])->logTeff(near[2]);
+                logg = iso->iso(near[0],near[1])->logg(near[2]);
                 if(teff<Teffcut[0] or teff>Teffcut[1] or logg<loggcut[0] or
                    logg>loggcut[1])
                         return {-std::numeric_limits<double>::infinity(),0.,0.,0.,0.,0.,0.,0.};
                 s = iso->iso(near[0],near[1])->distance(near[2], Mag, band);
-                JK = iso->iso(near[0],near[1])->colour(near[2],{"J","K"});
+                colorI = iso->iso(near[0],near[1])->colour(near[2],color);
                 for(auto m: mag_sf)
                     sf_mags.push_back(iso->iso(near[0],near[1])->mag(near[2],m)+5*log10(s*100));
             }
@@ -248,13 +264,13 @@ namespace edf_sampling{
                 if(near[2]<0){
                     return {-std::numeric_limits<double>::infinity(),0.,0.,0.,0.,0.,0.,0.};
                 }
-                double teff = iso_Padova->iso(near[0],near[1])->logTeff(near[2]);
-                double logg = iso_Padova->iso(near[0],near[1])->logg(near[2]);
+                teff = iso_Padova->iso(near[0],near[1])->logTeff(near[2]);
+                logg = iso_Padova->iso(near[0],near[1])->logg(near[2]);
                 if(teff<Teffcut[0] or teff>Teffcut[1] or logg<loggcut[0] or
                    logg>loggcut[1])
                         return {-std::numeric_limits<double>::infinity(),0.,0.,0.,0.,0.,0.,0.};
                 s = iso_Padova->iso(near[0],near[1])->distance(near[2], Mag, band);
-                JK = iso_Padova->iso(near[0],near[1])->colour(near[2],{"J","K"});
+                colorI = iso_Padova->iso(near[0],near[1])->colour(near[2],color);
                 for(auto m: mag_sf)
                     sf_mags.push_back(iso_Padova->iso(near[0],near[1])->mag(near[2],m)+5*log10(s*100));
             }
@@ -262,9 +278,11 @@ namespace edf_sampling{
                 s=0.;std::cerr<<"Isochrone type not valid"<<std::endl;
             }
         }
-        if(extinct)
-            JK+=EM->A_JK(l,b,s);
-        if(fabs(b)<JKcut[1] and JK<JKcut[0])
+        if(extinct){
+	    double av = EM->A_V(l,b,s);
+            colorI+=av*EM->extinct_const_colour(color,teff,av);
+        }
+        if(fabs(b)<colorcut[1] and colorI<colorcut[0])
             return {-std::numeric_limits<double>::infinity(),0.,0.,0.,0.,0.,0.,0.};
         // -- Find polar coordinates and check if unbound
         VecDoub Pol = conv::GalacticToPolar({l,b,s},EDF->SunCoords());
@@ -293,9 +311,11 @@ namespace edf_sampling{
             for(int i=0;i<sf_mags.size();++i){
                 sf_mags[i]+=A*EM->extinct_const(mag_sf[i]);
             }
+            if(Mag>maglimits[1] or Mag<maglimits[0])
+                return {-std::numeric_limits<double>::infinity(),0.,0.,0.,0.,0.,0.,0.};
         }
         // -- Apply selection function
-        double sf = RSF->evaluate(l,b,sf_mags);
+        double sf=RSF->evaluate(l,b,sf_mags);
         if(sf>0) ll += log(sf);
         else{
             return {-std::numeric_limits<double>::infinity(),0.,0.,0.,0.,0.,0.,0.};
@@ -303,7 +323,12 @@ namespace edf_sampling{
         return {ll,Actions[0],Actions[1],Actions[2],Actions[3],Actions[4],Actions[5],edf};
     }
 
-    double LogL_sample_lb(boost::python::numeric::array f,std::string which="BaSTI", std::string band="I", bool extinct=true,bool interp=false, double modbcut=0.,double deccut=PI,VecDoub JKcut={0.,0.}, VecDoub Teffcut = {-1e6,1e6}, VecDoub loggcut = {-1e6,1e6},VecDoub FeHcut={-1e6,1e6}){
+    double LogL_sample_lb(boost::python::numeric::array f,std::string which="BaSTI", 
+                          std::string band="I", VecDoub maglimits={-1000.,1000.},
+                          bool extinct=true,bool interp=false, 
+                          double modbcut=0.,double deccut=PI,std::vector<std::string> color={"J","K"},
+                          VecDoub colorcut={0.,0.}, VecDoub Teffcut = {-1e6,1e6}, 
+                          VecDoub loggcut = {-1e6,1e6},VecDoub FeHcut={-1e6,1e6}){
         //
         // Calculates log-likelihood given f
         // f = tau, Z, M, vR, vp,  vz, Mag, l, b
@@ -311,17 +336,23 @@ namespace edf_sampling{
         // Cut in modb in radians
         // deccut>0 we cut everything with dec<deccut-PI/2
         // deccut<0 we cut everything with dec>deccut+PI/2
-        // JKcut = {Cut value (i.e. keep everything greater than cut),
-        //          only apply cut for stars with fabs(b)<JKcut[1]}
+        // colorcut = {Cut value (i.e. keep everything greater than cut),
+        //          only apply cut for stars with fabs(b)<colorcut[1]}
         // Teffcut = Keep all Teffcut[0]<log10(Teff)<Teffcut[1]
         // loggcut = Keep all loggcut[0]<logg<loggcut[1]
         // FeHcut = Keep all FeHcut[0]<Z<FeHcut[1]
         VecDoub fvec(9,0.);
         for(unsigned i=0;i<9;++i)
             fvec[i]=extract<double>(f[i]);
-        return LogL_sample(&fvec[0],which, band, extinct, interp, modbcut, deccut, JKcut, Teffcut, loggcut, FeHcut)[0];
+        return LogL_sample(&fvec[0],which, band, maglimits, extinct, interp, modbcut, deccut, color,colorcut, 
+			    Teffcut, loggcut, FeHcut)[0];
     }
-    double LogL_sample_radec_vec(double *f,std::string which="BaSTI", std::string band="I", bool extinct=true,bool interp=false, double modbcut=0.,double deccut=PI,VecDoub JKcut={0.,0.}, VecDoub Teffcut = {-1e6,1e6}, VecDoub loggcut = {-1e6,1e6},VecDoub FeHcut={-1e6,1e6}){
+    double LogL_sample_radec_vec(double *f,std::string which="BaSTI", 
+				 std::string band="I", VecDoub maglimits={-1000.,1000.},
+				 bool extinct=true,bool interp=false, 
+                                 double modbcut=0.,double deccut=PI,std::vector<std::string> color={"J","K"},
+                                 VecDoub colorcut={0.,0.}, VecDoub Teffcut = {-1e6,1e6}, 
+                                 VecDoub loggcut = {-1e6,1e6},VecDoub FeHcut={-1e6,1e6}){
         //
         // Calculates log-likelihood given f
         // f = tau, Z, M, vR, vp,  vz, Mag, ra, dec
@@ -329,8 +360,8 @@ namespace edf_sampling{
         // Cut in modb in radians
         // deccut>0 we cut everything with dec<deccut-PI/2
         // deccut<0 we cut everything with dec>deccut+PI/2
-        // JKcut = {Cut value (i.e. keep everything greater than cut),
-        //          only apply cut for stars with fabs(b)<JKcut[1]}
+        // colorcut = {Cut value (i.e. keep everything greater than cut),
+        //          only apply cut for stars with fabs(b)<colorcut[1]}
         // Teffcut = Keep all Teffcut[0]<log10(Teff)<Teffcut[1]
         // loggcut = Keep all loggcut[0]<logg<loggcut[1]
         // FeHcut = Keep all FeHcut[0]<Z<FeHcut[1]
@@ -339,9 +370,15 @@ namespace edf_sampling{
         VecDoub gal = conv::EquatorialToGalactic({f[7],f[8],1.});
         double Jac = log(cos(f[8]))-log(cos(gal[1]));
         f[7]=gal[0];f[8]=gal[1];
-        return LogL_sample(f,which, band, extinct, interp, modbcut, deccut, JKcut, Teffcut, loggcut, FeHcut)[0]+Jac;
+        return LogL_sample(f,which, band, maglimits, extinct, interp, modbcut, deccut, color, colorcut, 
+			   Teffcut, loggcut, FeHcut)[0]+Jac;
     }
-    double LogL_sample_radec(VecDoub f,std::string which="BaSTI", std::string band="I", bool extinct=true,bool interp=false, double modbcut=0.,double deccut=PI,VecDoub JKcut={0.,0.}, VecDoub Teffcut = {-1e6,1e6}, VecDoub loggcut = {-1e6,1e6},VecDoub FeHcut={-1e6,1e6}){
+    double LogL_sample_radec(VecDoub f,std::string which="BaSTI", 
+                             std::string band="I", VecDoub maglimits={-1000.,1000.},
+                             bool extinct=true,bool interp=false, 
+                             double modbcut=0.,double deccut=PI,
+                             std::vector<std::string> color={"J","K"}, VecDoub colorcut={0.,0.}, 
+                             VecDoub Teffcut = {-1e6,1e6}, VecDoub loggcut = {-1e6,1e6},VecDoub FeHcut={-1e6,1e6}){
         //
         // Calculates log-likelihood given f
         // f = tau, Z, M, vR, vp,  vz, Mag, ra, dec
@@ -349,8 +386,8 @@ namespace edf_sampling{
         // Cut in modb in radians
         // deccut>0 we cut everything with dec<deccut-PI/2
         // deccut<0 we cut everything with dec>deccut+PI/2
-        // JKcut = {Cut value (i.e. keep everything greater than cut),
-        //          only apply cut for stars with fabs(b)<JKcut[1]}
+        // colorcut = {Cut value (i.e. keep everything greater than cut),
+        //          only apply cut for stars with fabs(b)<colorcut[1]}
         // Teffcut = Keep all Teffcut[0]<log10(Teff)<Teffcut[1]
         // loggcut = Keep all loggcut[0]<logg<loggcut[1]
         // FeHcut = Keep all FeHcut[0]<Z<FeHcut[1]
@@ -359,9 +396,15 @@ namespace edf_sampling{
         VecDoub gal = conv::EquatorialToGalactic({f[7],f[8],1.});
         double Jac = log(cos(f[8]))-log(cos(gal[1]));
         f[7]=gal[0];f[8]=gal[1];
-        return LogL_sample(&f[0],which, band, extinct, interp, modbcut, deccut, JKcut, Teffcut, loggcut, FeHcut)[0]+Jac;
+        return LogL_sample(&f[0],which, band, maglimits, extinct, interp, modbcut, deccut, color, 
+				colorcut, Teffcut, loggcut, FeHcut)[0]+Jac;
     }
-    VecDoub LogL_sample_radec_full(VecDoub f,std::string which="BaSTI", std::string band="I", bool extinct=true,bool interp=false, double modbcut=0.,double deccut=PI,VecDoub JKcut={0.,0.}, VecDoub Teffcut = {-1e6,1e6}, VecDoub loggcut = {-1e6,1e6},VecDoub FeHcut={-1e6,1e6}){
+    VecDoub LogL_sample_radec_full(VecDoub f,std::string which="BaSTI", 
+				   std::string band="I", VecDoub maglimits={-1000.,1000.},
+				   bool extinct=true,bool interp=false, 
+                                   double modbcut=0.,double deccut=PI,std::vector<std::string> color={"J","K"},
+                                   VecDoub colorcut={0.,0.}, 
+                                   VecDoub Teffcut = {-1e6,1e6}, VecDoub loggcut = {-1e6,1e6},VecDoub FeHcut={-1e6,1e6}){
         //
         // Calculates log-likelihood given f
         // f = tau, Z, M, vR, vp,  vz, Mag, ra, dec
@@ -369,8 +412,8 @@ namespace edf_sampling{
         // Cut in modb in radians
         // deccut>0 we cut everything with dec<deccut-PI/2
         // deccut<0 we cut everything with dec>deccut+PI/2
-        // JKcut = {Cut value (i.e. keep everything greater than cut),
-        //          only apply cut for stars with fabs(b)<JKcut[1]}
+        // colorcut = {Cut value (i.e. keep everything greater than cut),
+        //          only apply cut for stars with fabs(b)<colorcut[1]}
         // Teffcut = Keep all Teffcut[0]<log10(Teff)<Teffcut[1]
         // loggcut = Keep all loggcut[0]<logg<loggcut[1]
         // FeHcut = Keep all FeHcut[0]<Z<FeHcut[1]
@@ -381,7 +424,8 @@ namespace edf_sampling{
         VecDoub gal = conv::EquatorialToGalactic({f[7],f[8],1.});
         double Jac = log(cos(f[8]))-log(cos(gal[1]));
         f[7]=gal[0];f[8]=gal[1];
-        VecDoub result = LogL_sample(&f[0],which, band, extinct, interp, modbcut, deccut, JKcut, Teffcut, loggcut, FeHcut);
+        VecDoub result = LogL_sample(&f[0],which, band, maglimits, extinct, interp, modbcut, deccut, color,
+					colorcut, Teffcut, loggcut, FeHcut);
         result[0]+=Jac;
         return result;
     }
@@ -450,37 +494,48 @@ namespace edf_sampling{
         return RSF->evaluate(l,b,m);
     }
 
-    double check_color(double tau, double Z, double M, std::vector<std::string> band, VecDoub colorlimits,std::string which){
-        double s, color;
+    double check_color(double tau, double Z, double M, std::vector<std::string> color, 
+			VecDoub colorlimits,std::string which){
+        double s, colorI;
         if(which=="BaSTI"){
             std::vector<int> near = iso->find_nearest(Z,tau,M);
             if(near[2]<0){
                 return true;
             }
-            color = iso->iso(near[0],near[1])->mag(near[2],band[0])-iso->iso(near[0],near[1])->mag(near[2],band[1]);
+            colorI = iso->iso(near[0],near[1])->colour(near[2],color);
         }
         else if(which=="Padova"){
             std::vector<int> near = iso_Padova->find_nearest(Z,tau,M);
             if(near[2]<0){
                 return false;
             }
-            color = iso_Padova->iso(near[0],near[1])->mag(near[2],band[0])-iso_Padova->iso(near[0],near[1])->mag(near[2],band[1]);
-        }
-        if(color<colorlimits[0] or color>colorlimits[1]) return false;
+            colorI = iso_Padova->iso(near[0],near[1])->colour(near[2],color);       
+	}
+        if(colorI<colorlimits[0] or colorI>colorlimits[1]) return false;
         else return true;
     }
 
-    double los_magbox_LogL_sample(boost::python::numeric::array f, double ll, double bb, std::string band, VecDoub limits, std::string which, bool RcPorZ=false, VecDoub JminusKcut={-10.,10.},VecDoub loggcut={-2000.,2000.}, VecDoub Teffcut = {.01,20000.}, VecDoub extinctflags={1.,0.}, double fieldradius=-10.,bool interp=false,VecDoub break_par={1000.,1000.},VecDoub TgJK_err={0.,0.,0.}){
+    double los_magbox_LogL_sample(boost::python::numeric::array f, VecDoub lb, 
+				 std::string band, VecDoub maglimits, std::string which, 
+				 bool RcPorZ=false, std::vector<std::string> color={"J","K"},
+				 VecDoub colorcut={-10.,10.},VecDoub loggcut={-2000.,2000.}, 
+				 VecDoub Teffcut = {.01,20000.}, 
+				 VecDoub extinctflags={1.,0.}, 
+				 double fieldradius=-10.,bool interp=false,
+				 // additional selection of form (1-break_par[1]*(mag-break_par[0])
+				 VecDoub break_par={1000.,1000.},
+                                 // sample in error-convolved quantities
+                                 VecDoub Tgcolor_err={0.,0.,0.}){
         //
         // Calculates log-likelihood given f
         // f = tau, Rc/Z, M, vR, vp,  vz, apparent magnitude (V),
         //      and l and b if fieldradius>0
-        bool extinct = extinctflags[0]!=0.;
-        bool dered = extinctflags[1]!=0.;
+        bool extinct = extinctflags[0]!=0.; // Use extinction
+        bool dered = extinctflags[1]!=0.;   // Sample in dereddened color
 
-        double lower_limit=limits[0];
-        double upper_limit=limits[1];
-
+        double lower_limit=maglimits[0];
+        double upper_limit=maglimits[1];
+        double ll=lb[0], bb=lb[1];
     	double l=0.,b=0.;
         if(fieldradius>0.){
             if(len(f)>7){
@@ -489,7 +544,8 @@ namespace edf_sampling{
                 if(pow(cos(bb)*(l-ll),2.)+pow(b-bb,2.)>pow(fieldradius,2.))
                     return -std::numeric_limits<double>::infinity();
             }
-            else std::cerr<<"For sampling l and b must specify fieldradius (in radians) and ll and bb are field centre\n";
+            else std::cerr<<"""For sampling l and b must specify fieldradius (in radians) """
+			    """and ll and bb are field centre\n""";
         }
         else{l=ll;b=bb;}
         // -- Extract quantities from f and check if allowed
@@ -517,53 +573,57 @@ namespace edf_sampling{
             return -std::numeric_limits<double>::infinity();
 
         // -- Find nearest isochrone point or interp
-        double s=0.,JK=0.;
+        double s=0.,colorI=0., Teff, logg;
         if(interp){
             VecDoub ite;
             if(which=="BaSTI")
-                ite = iso->interp_es(Z,tau,M,{band,"J","K"});
+                ite = iso->interp_es(Z,tau,M,{band,color[0],color[1]});
             else if(which=="Padova")
-                ite = iso_Padova->interp_es(Z,tau,M,{band,"J","K"});
+                ite = iso_Padova->interp_es(Z,tau,M,{band,color[0],color[1]});
             else if(which=="Dartmouth")
-                ite = iso_Dartmouth->interp_es(Z,tau,M,{band,"J","K"});
+                ite = iso_Dartmouth->interp_es(Z,tau,M,{band,color[0],color[1]});
             else{
                 s=0.;std::cerr<<"Isochrone type not valid"<<std::endl;
             }
-            ite[0]+=rnGauss->nextnumber()*TgJK_err[0];
-            ite[1]+=rnGauss->nextnumber()*TgJK_err[1];
+            ite[0]+=rnGauss->nextnumber()*Tgcolor_err[0];
+            ite[1]+=rnGauss->nextnumber()*Tgcolor_err[1];
             if(ite[0]<log10(Teffcut[0]) or ite[0]>log10(Teffcut[1]))
                 return -std::numeric_limits<double>::infinity();
             if(ite[1]<loggcut[0] or ite[1]>loggcut[1])
                 return -std::numeric_limits<double>::infinity();
-            JK=ite[3]-ite[4];JK+=rnGauss->nextnumber()*TgJK_err[2];
+            colorI=ite[3]-ite[4];
+            colorI+=rnGauss->nextnumber()*Tgcolor_err[2];
             s=pow(10.,0.2*(V-ite[2])-2.);
-            if(extinct and !dered)
-                JK+=EM->A_JK(l,b,s);
-            if(JK<JminusKcut[0] or JK>JminusKcut[1])
+            if(extinct and !dered){
+                double av = EM->A_V(l,b,s);
+                colorI+=av*EM->extinct_const_colour(color,ite[0],av);
+            }
+            if(colorI<colorcut[0] or colorI>colorcut[1])
                 return -std::numeric_limits<double>::infinity();
+            Teff=ite[0];logg=ite[1];
         }
         else{
-            std::vector<int> near; double lg=0., Teff=0.;
+            std::vector<int> near;
             if(which=="BaSTI"){
                 near = iso->find_nearest(Z,tau,M);
-                lg = iso->iso(near[0],near[1])->logg(near[2]);
+                logg = iso->iso(near[0],near[1])->logg(near[2]);
                 Teff = iso->iso(near[0],near[1])->logTeff(near[2]);
                 s = iso->iso(near[0],near[1])->distance(near[2], V, band);
-                JK = iso->iso(near[0],near[1])->colour(near[2],{"J","K"});
+                colorI = iso->iso(near[0],near[1])->colour(near[2],color);
             }
             else if(which=="Padova"){
                 near = iso_Padova->find_nearest(Z,tau,M);
-                lg = iso_Padova->iso(near[0],near[1])->logg(near[2]);
+                logg = iso_Padova->iso(near[0],near[1])->logg(near[2]);
                 Teff = iso_Padova->iso(near[0],near[1])->logTeff(near[2]);
                 s = iso_Padova->iso(near[0],near[1])->distance(near[2], V, band);
-                JK = iso_Padova->iso(near[0],near[1])->colour(near[2],{"J","K"});
+                colorI = iso_Padova->iso(near[0],near[1])->colour(near[2],color);
             }
             else if(which=="Dartmouth"){
                 near = iso_Dartmouth->find_nearest(Z,tau,M);
-                lg = iso_Dartmouth->iso(near[0],near[1])->logg(near[2]);
+                logg = iso_Dartmouth->iso(near[0],near[1])->logg(near[2]);
                 Teff = iso_Dartmouth->iso(near[0],near[1])->logTeff(near[2]);
                 s = iso_Dartmouth->iso(near[0],near[1])->distance(near[2], V, band);
-                JK = iso_Dartmouth->iso(near[0],near[1])->colour(near[2],{"J","K"});
+                colorI = iso_Dartmouth->iso(near[0],near[1])->colour(near[2],color);
             }
             else{
                 s=0.;std::cerr<<"Isochrone type not valid"<<std::endl;
@@ -571,24 +631,23 @@ namespace edf_sampling{
             if(near[2]<0)
                 return -std::numeric_limits<double>::infinity();
 
-            Teff+=rnGauss->nextnumber()*TgJK_err[0];
-            lg+=rnGauss->nextnumber()*TgJK_err[1];
-            JK+=rnGauss->nextnumber()*TgJK_err[2];
-            if(lg<loggcut[0] or lg>loggcut[1])
+            Teff+=rnGauss->nextnumber()*Tgcolor_err[0];
+            logg+=rnGauss->nextnumber()*Tgcolor_err[1];
+            colorI+=rnGauss->nextnumber()*Tgcolor_err[2];
+            if(logg<loggcut[0] or logg>loggcut[1])
                 return -std::numeric_limits<double>::infinity();
             if(Teff<log10(Teffcut[0]) or Teff>log10(Teffcut[1]))
                 return -std::numeric_limits<double>::infinity();
-            if(extinct and !dered)
-                JK+=EM->A_JK(l,b,s);
-            if(JK<JminusKcut[0] or JK>JminusKcut[1])
+            if(extinct and !dered){
+                double av = EM->A_V(l,b,s);
+                colorI+=av*EM->extinct_const_colour(color,Teff,av);
+            }
+            if(colorI<colorcut[0] or colorI>colorcut[1])
                 return -std::numeric_limits<double>::infinity();
         }
         if(extinct){
-            double A=0.;
-            if(band=="V") A = EM->A_V(l,b,s);
-            if(band=="H") A = EM->A_H(l,b,s);
-            if(band=="J") A = EM->A_J(l,b,s);
-            V+=A;
+            double av = EM->A_V(l,b,s);
+            V+=av*EM->extinct_const(band,Teff,av);
         }
         if(V>upper_limit and extinct)
             return -std::numeric_limits<double>::infinity();
@@ -596,7 +655,7 @@ namespace edf_sampling{
             return -std::numeric_limits<double>::infinity();
 	    // -- Find polar coordinates and check if unbound
         VecDoub Pol = conv::GalacticToPolar({l,b,s},EDF->SunCoords());
-        for(unsigned i=3;i<6;++i)Pol.push_back(extract<double>(f[i]));
+        for(unsigned i=3;i<6;++i) Pol.push_back(extract<double>(f[i]));
         Pol[1]=0.;
         if(EDF->pot->H(Pol)>0.)
             return -std::numeric_limits<double>::infinity();
@@ -617,10 +676,101 @@ namespace edf_sampling{
     		loglike+=log(1.-break_par[1]*(V-break_par[0]));
         return loglike;
     }
+    VecDoub get_extra_magnitudes(boost::python::numeric::array f, std::string band, std::vector<std::string> bands,
+                                 std::string which, bool RcPorZ=false,bool extinct=true,bool interp=false){
+        // Take a sample f and calculate the additional magnitudes (extincted and unextincted)
+        //
+        double tau = extract<double>(f[0]);
+        double ZorRcP = extract<double>(f[1]),Z, RcP;
+        if(RcPorZ==false){
+            Z = ZorRcP;
+            RcP = EDF->RadiusFromMetal(tau,ZorRcP);
+        }
+        else{
+            RcP = ZorRcP;
+            Z = EDF->FeH(tau, ZorRcP);
+        }
+        double M = extract<double>(f[2]);
+        double Mg = extract<double>(f[6]);
+        double l = extract<double>(f[7]);
+        double b = extract<double>(f[8]);
 
-    VecDoub get_extra_data(boost::python::numeric::array f, std::string band, std::string which, bool RcPorZ=false,bool extinct=true,bool interp=false){
+        VecDoub band_output(bands.size(),0.), band_output_unextincted(bands.size(),0.);
+        bands.insert(bands.begin(),band);
+        
+        // -- Find nearest isochrone point
+        double dm=0.,s=0., Teff=0., logg=0.;
+        if(which=="BaSTI"){
+            if(interp){
+                VecDoub V = iso->interp_es(Z,tau,M,bands);
+                Teff=V[0];logg=V[1];
+                s=pow(10.,0.2*(Mg-V[2])-2.);
+                dm = 5.*log10(100.*s);
+                for(int i=0;i<bands.size()-1;++i)
+                    band_output_unextincted[i]=V[i+3]+dm;
+            }
+            else{
+                std::vector<int> near = iso->find_nearest(Z,tau,M);
+                Teff = iso->iso(near[0],near[1])->logTeff(near[2]);
+                logg = iso->iso(near[0],near[1])->logg(near[2]);
+                s = iso->iso(near[0],near[1])->distance(near[2], Mg, band);
+                dm = 5.*log10(100.*s);
+                for(int i=0;i<bands.size()-1;++i)
+                    band_output_unextincted[i]=iso->iso(near[0],near[1])->mag(near[2],bands[i+1])+dm;
+            }
+        }
+        else if(which=="Padova"){
+            if(interp){
+                VecDoub V = iso_Padova->interp_es(Z,tau,M,bands);
+                Teff=V[0];logg=V[1];
+                s=pow(10.,0.2*(Mg-V[2])-2.);
+                dm = 5.*log10(100.*s);
+                for(int i=0;i<bands.size()-1;++i)
+                    band_output_unextincted[i]=V[i+3]+dm;
+            }
+            else{
+                std::vector<int> near = iso_Padova->find_nearest(Z,tau,M);
+                Teff = iso_Padova->iso(near[0],near[1])->logTeff(near[2]);
+                logg = iso_Padova->iso(near[0],near[1])->logg(near[2]);
+                s = iso_Padova->iso(near[0],near[1])->distance(near[2], Mg, band);
+                dm = 5.*log10(100.*s);
+                for(int i=0;i<bands.size()-1;++i)
+                    band_output_unextincted[i]=iso->iso(near[0],near[1])->mag(near[2],bands[i+1])+dm;
+            }
+        }
+        else if(which=="Dartmouth"){
+            if(interp){
+                VecDoub V = iso_Dartmouth->interp_es(Z,tau,M,bands);
+                Teff=V[0];logg=V[1];
+                s=pow(10.,0.2*(Mg-V[2])-2.);
+                dm = 5.*log10(100.*s);
+                for(int i=0;i<bands.size()-1;++i)
+                    band_output_unextincted[i]=V[i+3]+dm;
+            }
+            else{
+                std::vector<int> near = iso_Dartmouth->find_nearest(Z,tau,M);
+                Teff = iso_Dartmouth->iso(near[0],near[1])->logTeff(near[2]);
+                logg = iso_Dartmouth->iso(near[0],near[1])->logg(near[2]);
+                s = iso_Dartmouth->iso(near[0],near[1])->distance(near[2], Mg, band);
+                dm = 5.*log10(100.*s);
+                for(int i=0;i<bands.size()-1;++i)
+                    band_output_unextincted[i]=iso->iso(near[0],near[1])->mag(near[2],bands[i+1])+dm;
+            }
+        }
+        if(extinct){
+            double av = EM->A_V(l,b,s);
+            if(av<0.)std::cerr<<"A<0 at l="<<l<<", b="<<b<<", s="<<s<<std::endl;
+            for(int i=0;i<bands.size()-1;++i)
+               band_output[i]=band_output_unextincted[i]+av*EM->extinct_const(bands[i+1],Teff,av); 
+        }
+        band_output.insert(band_output.end(),band_output_unextincted.begin(),band_output_unextincted.end());
+        return band_output;
+    }
+
+    VecDoub get_extra_data(boost::python::numeric::array f, std::string band, std::string which, 
+			   bool RcPorZ=false,bool extinct=true,bool interp=false){
         // Take a sample f and calculate the additional variables from the
-        // model
+        // model -- teff, logg, extincted sampling magnitude, polar coordinates
         double tau = extract<double>(f[0]);
         double ZorRcP = extract<double>(f[1]),Z, RcP;
         if(RcPorZ==false){
@@ -637,14 +787,15 @@ namespace edf_sampling{
         double b = extract<double>(f[8]);
 
         // -- Find nearest isochrone point
-        double dm=0.,s=0., JK=0., Teff=0., logg=0.,J=0.,K=0.;
+        double dm=0.,s=0., Teff=0., logg=0.;//,JK=0.,J=0.,K=0.;
         if(which=="BaSTI"){
             if(interp){
-                VecDoub V = iso->interp_es(Z,tau,M,{band,"J","K"});
+                VecDoub V = iso->interp_es(Z,tau,M,{band});//{band,"J","K"});
                 Teff=V[0];logg=V[1];
-                JK=V[3]-V[4];
+                //JK=V[3]-V[4];
                 s=pow(10.,0.2*(Mg-V[2])-2.);
-                dm = 5.*log10(100.*s);J=V[3]+dm;K=V[4]+dm;
+                dm = 5.*log10(100.*s);
+                //J=V[3]+dm;K=V[4]+dm;
             }
             else{
                 std::vector<int> near = iso->find_nearest(Z,tau,M);
@@ -652,18 +803,18 @@ namespace edf_sampling{
                 logg = iso->iso(near[0],near[1])->logg(near[2]);
                 s = iso->iso(near[0],near[1])->distance(near[2], Mg, band);
                 dm = 5.*log10(100.*s);
-		        JK = iso->iso(near[0],near[1])->colour(near[2],{"J","K"});
-                J = iso->iso(near[0],near[1])->mag(near[2],"J")+dm;
-                K = iso->iso(near[0],near[1])->mag(near[2],"K")+dm;
+	        //JK = iso->iso(near[0],near[1])->colour(near[2],{"J","K"});
+                //J = iso->iso(near[0],near[1])->mag(near[2],"J")+dm;
+                //K = iso->iso(near[0],near[1])->mag(near[2],"K")+dm;
             }
         }
         else if(which=="Padova"){
             if(interp){
-                VecDoub V = iso_Padova->interp_es(Z,tau,M,{band,"J","K"});
+                VecDoub V = iso_Padova->interp_es(Z,tau,M,{band});//{band,"J","K"});
                 Teff=V[0];logg=V[1];
-                JK=V[3]-V[4];
+                //JK=V[3]-V[4];
                 s=pow(10.,0.2*(Mg-V[2])-2.);
-                dm = 5.*log10(100.*s);J=V[3]+dm;K=V[4]+dm;
+                dm = 5.*log10(100.*s);//J=V[3]+dm;K=V[4]+dm;
             }
             else{
                 std::vector<int> near = iso_Padova->find_nearest(Z,tau,M);
@@ -671,18 +822,18 @@ namespace edf_sampling{
                 logg = iso_Padova->iso(near[0],near[1])->logg(near[2]);
                 s = iso_Padova->iso(near[0],near[1])->distance(near[2], Mg, band);
                 dm = 5.*log10(100.*s);
-        	JK = iso_Padova->iso(near[0],near[1])->colour(near[2],{"J","K"});
-                J = iso_Padova->iso(near[0],near[1])->mag(near[2],"J")+dm;
-                K = iso_Padova->iso(near[0],near[1])->mag(near[2],"K")+dm;
+        	//JK = iso_Padova->iso(near[0],near[1])->colour(near[2],{"J","K"});
+                //J = iso_Padova->iso(near[0],near[1])->mag(near[2],"J")+dm;
+                //K = iso_Padova->iso(near[0],near[1])->mag(near[2],"K")+dm;
             }
         }
         else if(which=="Dartmouth"){
             if(interp){
-                VecDoub V = iso_Dartmouth->interp_es(Z,tau,M,{band,"J","K"});
+                VecDoub V = iso_Dartmouth->interp_es(Z,tau,M,{band});//{band,"J","K"});
                 Teff=V[0];logg=V[1];
-                JK=V[3]-V[4];
+                //JK=V[3]-V[4];
                 s=pow(10.,0.2*(Mg-V[2])-2.);
-                dm = 5.*log10(100.*s);J=V[3]+dm;K=V[4]+dm;
+                dm = 5.*log10(100.*s);//J=V[3]+dm;K=V[4]+dm;
             }
             else{
                 std::vector<int> near = iso_Dartmouth->find_nearest(Z,tau,M);
@@ -690,9 +841,9 @@ namespace edf_sampling{
                 logg = iso_Dartmouth->iso(near[0],near[1])->logg(near[2]);
                 s = iso_Dartmouth->iso(near[0],near[1])->distance(near[2], Mg, band);
                 dm = 5.*log10(100.*s);
-        	JK = iso_Dartmouth->iso(near[0],near[1])->colour(near[2],{"J","K"});
-                J = iso_Dartmouth->iso(near[0],near[1])->mag(near[2],"J")+dm;
-                K = iso_Dartmouth->iso(near[0],near[1])->mag(near[2],"K")+dm;
+        	//JK = iso_Dartmouth->iso(near[0],near[1])->colour(near[2],{"J","K"});
+                //J = iso_Dartmouth->iso(near[0],near[1])->mag(near[2],"J")+dm;
+                //K = iso_Dartmouth->iso(near[0],near[1])->mag(near[2],"K")+dm;
             }
         }
         if(extinct){
@@ -700,9 +851,9 @@ namespace edf_sampling{
             A = EM->A_V(l,b,s)*EM->extinct_const(band);
             Mg+=A;
             if(A<0.)std::cerr<<"A<0 at l="<<l<<", b="<<b<<", s="<<s<<std::endl;
-            JK+=EM->A_JK(l,b,s);
-            J+=EM->A_J(l,b,s);
-            K+=EM->A_K(l,b,s);
+            //JK+=EM->A_JK(l,b,s);
+            //J+=EM->A_J(l,b,s);
+            //K+=EM->A_K(l,b,s);
         }
         // -- Find Galactic coordinates
         VecDoub Pol = conv::GalacticToPolar({l,b,s},EDF->SunCoords());
@@ -712,7 +863,7 @@ namespace edf_sampling{
         VecDoub Eq = conv::GalacticToEquatorial(Gal);
         VecDoub extras = {s,RcPorZ?Z:RcP,Teff,logg,Pol[0],Pol[1],Pol[2],
                  Gal[3],Gal[4],Gal[5],
-                 Eq[0],Eq[1],Eq[4],Eq[5],JK,J,K,Mg};
+                 Eq[0],Eq[1],Eq[4],Eq[5],Mg};
         return extras;
     }
 
@@ -734,7 +885,7 @@ namespace edf_sampling{
 		return -9999.;
 	}
 }
-
+    // Superceded by get_extra_magnitudes
     VecDoub get_APASS(boost::python::numeric::array f, std::string band, std::string which, bool RcPorZ=false, bool extinct=true,bool interp=false){
         // Take a sample f and calculate the additional variables from the
         // model
@@ -922,49 +1073,53 @@ namespace edf_sampling{
         else return true;
     }
 
-    bool check_JK_logg_cut(double age, double Z, double M, double b, double bcut, VecDoub JminusKcut,VecDoub loggcut,VecDoub Teffcut, std::string which="BaSTI", bool interp=false){
-        double JK,lg,Teff;
+    bool check_color_logg_cut(double age, double Z, double M, double b, double bcut,
+                              std::vector<std::string>color, 
+                              VecDoub colorcut,VecDoub loggcut,VecDoub Teffcut, 
+                              std::string which="BaSTI", bool interp=false){
+        double colorI,lg,Teff;
         if(which=="BaSTI"){
             if(interp){
-                VecDoub ite = iso->interp_es(Z,age,M,{"J","K"});
-                Teff=ite[0];lg=ite[1];JK=ite[2]-ite[3];
+                VecDoub ite = iso->interp_es(Z,age,M,color);
+                Teff=ite[0];lg=ite[1];colorI=ite[2]-ite[3];
             }
             else{
                 std::vector<int> near = iso->find_nearest(Z,age,M);
-                JK = iso->iso(near[0],near[1])->colour(near[2],{"J","K"});
+                colorI = iso->iso(near[0],near[1])->colour(near[2],color);
                 lg = iso->iso(near[0],near[1])->logg(near[2]);
                 Teff = iso->iso(near[0],near[1])->logTeff(near[2]);
             }
         }
 	else if(which=="Padova"){
             if(interp){
-                VecDoub ite = iso_Padova->interp_es(Z,age,M,{"J","K"});
-                Teff=ite[0];lg=ite[1];JK=ite[2]-ite[3];
+                VecDoub ite = iso_Padova->interp_es(Z,age,M,color);
+                Teff=ite[0];lg=ite[1];colorI=ite[2]-ite[3];
             }
             else{
                 std::vector<int> near = iso_Padova->find_nearest(Z,age,M);
-                JK = iso_Padova->iso(near[0],near[1])->colour(near[2],{"J","K"});
+                colorI = iso_Padova->iso(near[0],near[1])->colour(near[2],color);
                 lg = iso_Padova->iso(near[0],near[1])->logg(near[2]);
                 Teff = iso_Padova->iso(near[0],near[1])->logTeff(near[2]);
             }
         }
         else if (which=="Dartmouth"){
             if(interp){
-                VecDoub ite = iso_Dartmouth->interp_es(Z,age,M,{"J","K"});
-                Teff=ite[0];lg=ite[1];JK=ite[2]-ite[3];
+                VecDoub ite = iso_Dartmouth->interp_es(Z,age,M,color);
+                Teff=ite[0];lg=ite[1];colorI=ite[2]-ite[3];
             }
             else{
                 std::vector<int> near = iso_Dartmouth->find_nearest(Z,age,M);
-                JK = iso_Dartmouth->iso(near[0],near[1])->colour(near[2],{"J","K"});
+                colorI = iso_Dartmouth->iso(near[0],near[1])->colour(near[2],color);
                 lg = iso_Dartmouth->iso(near[0],near[1])->logg(near[2]);
                 Teff = iso_Dartmouth->iso(near[0],near[1])->logTeff(near[2]);
             }
         }
         else{
-            std::cerr<<"Invalid isochrone type in check_JK_cut\n";
+            std::cerr<<"Invalid isochrone type in check_color_logg_cut\n";
             return false;
         }
-        if((fabs(b)<=bcut*PI/180. and (JK<JminusKcut[0] or JK>JminusKcut[1])) or lg>loggcut[1] or lg<loggcut[0] or Teff<log10(Teffcut[0]) or Teff>log10(Teffcut[1]))
+        if((fabs(b)<=bcut*PI/180. and (colorI<colorcut[0] or colorI>colorcut[1])) 
+	or lg>loggcut[1] or lg<loggcut[0] or Teff<log10(Teffcut[0]) or Teff>log10(Teffcut[1]))
             return false;
         else return true;
     }
@@ -1021,27 +1176,31 @@ namespace edf_sampling{
     struct norm_st: edf_norm_struct{
         std::string which="BaSTI";
         std::string band = "I";
+        VecDoub maglimits = {-1000.,1000.};
         bool extinct=true;
         bool interp=false;
         double modbcut=0.;
         double deccut=PI;
-        VecDoub JKcut={0.,0.};
+        std::vector<std::string> color={"J","K"};
+        VecDoub colorcut={0.,0.};
         VecDoub Teffcut={-1e6,1e6};
         VecDoub loggcut={-1e6,1e6};
         norm_st(VecDoub x2min,
                 VecDoub x2max,
                 std::string which="BaSTI",
                 std::string band = "I",
+                VecDoub maglimits = {-1000.,1000.},
                   bool extinct=true,
                   bool interp=false,
                   double modbcut=0.,
                   double deccut=PI,
-                  VecDoub JKcut={0.,0.},
+                  std::vector<std::string> color={"J","K"},
+                  VecDoub colorcut={0.,0.},
                   VecDoub Teffcut={-1e6,1e6},
                   VecDoub loggcut={-1e6,1e6})
-            :edf_norm_struct(nullptr,x2min,x2max,0.), which(which), band(band),
+            :edf_norm_struct(nullptr,x2min,x2max,0.), which(which), band(band), maglimits(maglimits),
                 extinct(extinct), interp(interp), modbcut(modbcut),
-                deccut(deccut),JKcut(JKcut),Teffcut(Teffcut),loggcut(loggcut){};
+                deccut(deccut),color(color),colorcut(colorcut),Teffcut(Teffcut),loggcut(loggcut){};
     };
 
     static int norm_integrand_cuba(const int ndim[],const double y[], const int*fdim, double fval[], void *fdata){
@@ -1051,9 +1210,9 @@ namespace edf_sampling{
             y2[i]=(P->x2max[i]-P->x2min[i])*y[i]+P->x2min[i];
             std::cout<<(P->x2max[i]-P->x2min[i])*y[i]+P->x2min[i]<<" ";
         }
-        double rslt=LogL_sample_radec(y2,P->which,P->band,P->extinct,
+        double rslt=LogL_sample_radec(y2,P->which,P->band,P->maglimits,P->extinct,
                                           P->interp, P->modbcut,P->deccut,
-                                          P->JKcut,P->Teffcut, P->loggcut);
+                                          P->color,P->colorcut,P->Teffcut, P->loggcut);
         if(rslt!=rslt)
             fval[0]=0.;
         else
@@ -1067,7 +1226,8 @@ namespace edf_sampling{
                               bool interp=false,
                               double modbcut=0.,
                               double deccut=PI,
-                              VecDoub JKcut={0.,0.},
+                              std::vector<std::string> color={"J","K"},
+                              VecDoub colorcut={0.,0.},
                               VecDoub Teffcut={-1e6,1e6},
                               VecDoub loggcut={-1e6,1e6}){
         // tau, Z, M, vR, vp,  vz, I, ra, dec
@@ -1117,8 +1277,8 @@ namespace edf_sampling{
                           maxMag, ramax, decmax};
         double IE = 1e-3;
         double err;
-        norm_st P(x2min,x2max,which,RSF->mag_band()[0],extinct,interp,modbcut,
-                  deccut,JKcut,Teffcut,loggcut);
+        norm_st P(x2min,x2max,which,RSF->mag_band()[0],{minMag,maxMag},extinct,interp,modbcut,
+                  deccut,color,colorcut,Teffcut,loggcut);
         // factor of two for velocity space
         return 2.*edf_integrate(norm_integrand_cuba,&P,IE,0,"Divonne",&err,0,&peaks);
     }
@@ -1250,6 +1410,7 @@ BOOST_PYTHON_MODULE(edf_sampling)
     def("maxZ", edf_sampling::maxZ);
     def("chemDF_actions", edf_sampling::chemDF_actions);
     def("get_extra_data", edf_sampling::get_extra_data);
+    def("get_extra_magnitudes", edf_sampling::get_extra_magnitudes);
     def("get_APASS", edf_sampling::get_APASS);
     def("get_magnitude", edf_sampling::get_magnitude);
     def("get_actions", edf_sampling::get_actions);
@@ -1260,7 +1421,7 @@ BOOST_PYTHON_MODULE(edf_sampling)
     def("check_lowmass",edf_sampling::check_lowmass);
     def("check_lowmass_Z",edf_sampling::check_lowmass_Z);
     def("check_radius_positive",edf_sampling::check_radius_positive);
-    def("check_JK_logg_cut",edf_sampling::check_JK_logg_cut);
+    def("check_color_logg_cut",edf_sampling::check_color_logg_cut);
     def("check_dec",edf_sampling::check_dec);
     def("check_sf",edf_sampling::check_sf);
     def("get_extinct",edf_sampling::get_extinct);

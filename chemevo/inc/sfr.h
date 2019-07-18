@@ -88,12 +88,14 @@ public:
     SFR_ExpDecay(double t_d=8.,double Rd=4.,
              double Rmin=0.3, double Rmax=20., double Tmax=12.,double Rb=1000.)
        :StarFormationRate(Rmin,Rmax,Tmax),t_d(t_d),Rd(Rd){}
-    SFR_ExpDecay(ModelParameters M,double t_d=8.,double Rdx=4.,double Rbx=1000.)
+    SFR_ExpDecay(ModelParameters M,double t_dx=8.,double Rdx=4.,double Rbx=1000.)
         :StarFormationRate(M),
-     t_d(t_d),
+     t_d(t_dx),
      Rd(Rdx),
      Rb(Rbx){
         auto F = M.parameters["fundamentals"];
+        if (F.find("SFR_decay_scale") != F.end())
+            t_d=M.parameters["fundamentals"]["SFR_decay_scale"];
         if (F.find("StarScaleLength") != F.end())
             Rd=M.parameters["fundamentals"]["StarScaleLength"];
         if (F.find("TruncationRadius") != F.end())

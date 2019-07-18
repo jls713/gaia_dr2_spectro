@@ -6,11 +6,14 @@ rm isodist_js.so
 make isodist_js.so -j 15
 make lib/libisodist_js.so -j 15
 cd ../edf/
+rm obj/*.o
 rm lib/libedf.so
 make lib/libedf.so -j 15
+make mains -j 15
 rm py/edf_py.so
 make py/edf_py.so -j 15
 cd ../edf_sampling/
+rm obj/*.o
 rm py/edf_sampling.so
 make py/edf_sampling.so
 cd ..

@@ -22,6 +22,9 @@ double halo_edf::haloDF_nometal_real(const VecDoub& X){
 double halo_edf::chemDF_actions(const VecDoub& A, double F){
 	return HALOWEIGHT*HW*halo_actions(A)*halo_metal(F);
 }
+double halo_edf::chemDF_actions(const VecDoub& A, double age, double F){
+	return chemDF_actions(A,F)/delta_halo_age;
+}
 
 double halo_edf::chemDF_real(const VecDoub& X, double F){
 	if(pot->H(X)>0.) return 0.;
@@ -30,4 +33,8 @@ double halo_edf::chemDF_real(const VecDoub& X, double F){
 	if(P<0.)std::cerr<<"DF negative: Z="<<F<<std::endl;
 	if(P!=P)std::cerr<<"DF nan: Z="<<F<<std::endl;
 	return P;
+}
+
+double halo_edf::chemDF_real(const VecDoub& X, double age, double F){
+	return chemDF_real(X,F)/delta_halo_age;
 }

@@ -21,6 +21,14 @@ public:
 	virtual double operator()(double R, double t, Grid *rSFR=nullptr)=0;
 };
 /**
+ * @brief No inflow model
+**/
+class InflowNone: public Inflow{
+public:
+	InflowNone(ModelParameters M, double prSFR=0.){}
+	double operator()(double R, double t, Grid *rSFR=nullptr){return 0.;}
+};
+/**
  * @brief Simple double inflow model
  * @details gas infall at two rates -- one fast initial rate and a slower more
  * continuous infall. The gas falls in according to an exponential profile
@@ -51,6 +59,14 @@ public:
 	 * @return outflow fraction at radius R and time t
 	 */
 	virtual double operator()(double R, double t)=0;
+};
+/**
+ * @brief No outflow model
+**/
+class OutflowNone: public Outflow{
+public:
+	OutflowNone(ModelParameters M, double prSFR=0.){}
+	double operator()(double R, double t){return 0.;}
 };
 /**
  * @brief Simple Galactic Fountain
@@ -123,6 +139,22 @@ public:
 	 * @return rate of change of mass in annulus R
 	 */
 	double dMdt(double mass, double massup, double R, double Rdown, double Rup, double t, double dt, Grid *rSFR=nullptr, int*err=nullptr);
+};
+/**
+ * @brief Simple linear radial flow
+ */
+class RadialFlowNone:public RadialFlow{
+private:
+public:
+	RadialFlowNone(ModelParameters M,double present_rSFR=0.){}
+	double flow_rate(double R, double t, Grid *rSFR=nullptr){
+		return 0.;
+	}
+	double dMdt(double mass, double massup, double R, double Rdown, double Rup, double t, double dt, Grid *rSFR=nullptr, int*err=nullptr){
+		return 0.;
+	}
+	double beta_g(double R, double Rdown, double Rup, double t, double dt, Grid *rSFR=nullptr, int*err=nullptr){return 0.;}
+	double gamma_g(double R, double Rdown, double Rup, double t, double dt, Grid *rSFR=nullptr, int*err=nullptr){return 0.;}
 };
 /**
  * @brief Simple linear radial flow

@@ -48,6 +48,8 @@ private:
 	std::map<Element,int> elements_r;
 	//=========================================================================
 	bool agb_yields, typeII_yields, typeIa_yields, migration;
+        bool single_zone, gasdump=false;
+        double gasdumptime, gasdumpsurfacedensity,gasdumpMetal,gasdumpAlpha;
 protected:
 public:
 	// Constructors

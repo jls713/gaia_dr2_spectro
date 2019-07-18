@@ -20,6 +20,8 @@ void GetFilesInDirectory(std::vector<std::string> &out, const std::string &direc
 }
 //=============================================================================
 double KroupaIMF_default(double M){
+    // This is Kroupa, Tout & Gilmore (1993) -- differs in high mass end from 
+    // Kroupa (2001) by -2.7 -> -2.3
 	if(M>=0.08 and M<0.5) return 0.035*pow(M,-1.3);
 	else if(M>=0.5 and M<1.0) return 0.019*pow(M,-2.2);
 	else  if(M>=1.0)  return 0.019*pow(M,-2.7);
@@ -68,5 +70,23 @@ json parameters(void){
     inFile>>parameters;
     inFile.close();
     return parameters;
+}
+//=============================================================================
+std::vector<std::string> Split(const std::string& strIn,
+				const std::string& token) {
+   std::string str = strIn;
+   std::vector<std::string>result;
+    while(str.size()){
+        int index = str.find(token);
+        if(index!=std::string::npos){
+            result.push_back(str.substr(0,index));
+            str = str.substr(index+token.size());
+            if(str.size()==0)result.push_back(str);
+        }else{
+            result.push_back(str);
+            str = "";
+        }
+    }
+    return result;
 }
 //=============================================================================

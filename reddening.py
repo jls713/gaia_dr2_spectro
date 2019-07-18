@@ -57,14 +57,14 @@ class ReddeningMaps(object):
         median_log_ebv, std_log_ebv, dist_ebv = \
             self.get_bayestar_log_ebv_along_los(ldeg, bdeg)
         # Invalid value encountered here means it is outside the footprint
-        in_bayestar_footprint = (median_log_ebv[0] == median_log_ebv[0])
+        in_bayestar_footprint = (median_log_ebv[0] == median_log_ebv[0])&(not np.isinf(median_log_ebv[0]))
         if not in_bayestar_footprint:
             # Use Marshall map (2006) -- returns A_Ks
             distance_grid = np.logspace(-1.2, 1.8, 31) * units.kpc
             median_log_ebv, std_log_ebv, dist_ebv = \
                 self.get_marshall_log_ebv_along_los(ldeg, bdeg, distance_grid,
                                                     RV=RV)
-            in_marshall_footprint = (median_log_ebv[0] == median_log_ebv[0])
+            in_marshall_footprint = (median_log_ebv[0] == median_log_ebv[0])&(not np.isinf(median_log_ebv[0]))
             if not in_marshall_footprint:
                 median_log_ebv, std_log_ebv, dist_ebv = \
                     self.get_drimmel_log_ebv_along_los(ldeg, bdeg,
@@ -136,6 +136,8 @@ class ReddeningMaps(object):
                           distance=s, frame='galactic')
         ak = self.marshall(coords, return_sigma=True)
         ebv = ak[0] / self.get_reddening('K', RV=RV)  # EBV
+        ebv[ebv==0.]=np.nan
+        ak[0][ak[0]==0.]=np.nan
         return np.log(ebv), ak[1] / ak[0], s
 
     def get_drimmel_log_ebv_along_los(self, l, b, s, RV=3.3,

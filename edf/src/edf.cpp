@@ -36,29 +36,11 @@ double sb15_edf::fullDF_actions(const VecDoub& actions, double age, double RcP){
 		thick = GFunction(Lz-LcP-DV, rm->SigmaF(age, RcP,Jz))/rm->LzPrimeNormalization(LcP+DV, age, Jz);
 		thick *= RcP*thickd->fullDF_actions(actions, age, RcP);
 	}
-	double halo = 0.;
-	// double halo = haloDF_nometal_real(X)*halo_metal(MeanMetalF_thin(age, RcP))/tau_m;
+	double halo = 0.; // halo is meaningless when expressing in terms of birth radius
 	return thin+thick+halo;
 }
 
 double sb15_edf::fullDF_actions_Z(const VecDoub& actions, double age, double Z){
-	// double RcP = mr->RadiusFromMetal(age, Z);
-	// double Lz = actions[1],Jz=actions[2];
-	// double LcP=ActionCalculator->L_circ_current(RcP);
-	// double thin=0., thick=0.;
-	// // First thin
-	// double DV = rm->DriftVelocity(age,RcP,Jz);
-	// if(age<thind->tau_T and RcP>0. and ifthin){
-	// 	thin = GFunction(Lz-LcP-DV, rm->SigmaF(age, RcP,Jz))/rm->LzPrimeNormalization(LcP+DV, age, Jz);
-	// 	thin *= RcP*thind->fullDF_actions(actions, age, RcP);
-	// }
-	// if(age>thind->tau_T and RcP>0. and ifthick){
-	// 	thick = GFunction(Lz-LcP-DV, rm->SigmaF(age, RcP,Jz))/rm->LzPrimeNormalization(LcP+DV, age, Jz);
-	// 	thick *= RcP*thickd->fullDF_actions(actions, age, RcP);
-	// }
-	// double halo = 0.;
-	// // double halo = haloDF_nometal_real(X)*halo_metal(MeanMetalF_thin(age, RcP))/tau_m;
-	// return thin+thick+halo;
 
 	double Lz = actions[1], Jz=actions[2];
 	double RcP = mr->RadiusFromMetal(age, Z);
@@ -81,8 +63,8 @@ double sb15_edf::fullDF_actions_Z(const VecDoub& actions, double age, double Z){
 		}
 	}
 	double halo=0.;
-	if(age>halod->min_halo_age and ifhalo)
-		halo = halod->chemDF_actions(actions,Z);
+	if(age>thickd->tau_m-halod->delta_halo_age and ifhalo)
+		halo = halod->chemDF_actions(actions,age,Z);
 	return thin+thick+halo;
 }
 
@@ -111,8 +93,8 @@ double sb15_edf::full_DF_Z(const VecDoub& X, double age, double Z){
 		}
 	}
 	double halo=0.;
-	if(age>tau_m-1. and ifhalo)
-		halo = halod->chemDF_actions(actions,Z);
+	if(age>thickd->tau_m-halod->delta_halo_age and ifhalo)
+		halo = halod->chemDF_actions(actions,age,Z);
 	return thin+thick+halo;
 }
 double sb15_edf::chemDF_actions(const VecDoub& Actions, double FeH){
@@ -253,7 +235,7 @@ void sb15_edf::setParams(std::string jsonfile, bool print){
     auto thick_json = p["thick"];
     VecDoub ThickParams={thick_json["Rd"],	  thick_json["Rs"],
                       	 thick_json["sigmaR"],thick_json["sigmaZ"],
-					  	 p["sfr"]["tau_T"],   p["sfr"]["tau_m"]};
+			 p["sfr"]["tau_T"],   p["sfr"]["tau_m"]};
 	extra_params = {"RSigmaZ","Rd_io","sigmaR0","sigmaZ0","weight"};
 	for(auto ex: extra_params)
 		ThickParams.push_back(
@@ -262,7 +244,7 @@ void sb15_edf::setParams(std::string jsonfile, bool print){
 
 	auto halo_json = p["halo"];
 	VecDoub HaloParams = {halo_json["HW"],halo_json["FHALO"],halo_json["SIGFHALO"]};
-	extra_params = {"J0","phi_coeff","z_coeff","halo_slope","min_halo_age"};
+	extra_params = {"J0","phi_coeff","z_coeff","halo_slope","delta_halo_age"};
 	for(auto ex: extra_params)
 		HaloParams.push_back(
 		 (halo_json.find(ex) != halo_json.end())?(double)halo_json[ex]:0.);
@@ -374,7 +356,7 @@ double edf_integrate(integrand_t integrand, edf_norm_struct *P, double IE, doubl
     int NSIZE = P->x2min.size();
     double prod = 1.;
     for(int i=0;i<NSIZE;i++)prod*=(P->x2max[i]-P->x2min[i]);
-
+    
     if(type=="Vegas")
         Vegas(NSIZE,nproc,integrand,P,nvec,IE,AE,verbosity,SEED,
         MINEVAL,MAXEVAL,NSTART,NINCREASE,NBATCH,GRIDNO,STATEFILE,SPIN,
@@ -391,8 +373,11 @@ double edf_integrate(integrand_t integrand, edf_norm_struct *P, double IE, doubl
         &nregions, &neval, &fail, integral, error, prob);
 
     else{
-    	auto ngiven = peaks->size();
-    	auto ldxgiven = (*peaks)[0].size();
+    	unsigned ngiven=0, ldxgiven=0;
+        if(peaks){
+            ngiven = peaks->size();
+    	    ldxgiven = (*peaks)[0].size();
+        }
     	double peaks_a[ldxgiven][ngiven];
     	for(unsigned l=0;l<ldxgiven;++l)
 	    	for(unsigned n=0;n<ngiven;++n)
@@ -455,7 +440,7 @@ static int density_tt_integrand_cuba(const int ndim[], const double y[], const i
 	VecDoub X = {P->R,0.,P->Z,y2[0], y2[1], y2[2]};
 	if(P->edf->pot->H(X)>P->edf->pot->Phi({1.e7*(X[0]==0.?1.:X[0]),1.e7*(X[1]==0.?1.:X[1]),1.e7*(X[2]==0.?1.:X[2])}))
 		{ fval[0]=0.;return 0;}
-	fval[0] = P->edf->chemDF_real_justdiscs(X,y2[3]);
+        fval[0] = P->edf->chemDF_real_justdiscs(X,y2[3]);
 	return 0;
 }
 
@@ -474,7 +459,6 @@ double sb15_edf::density(double R, double z, double IE, VecDoub Flims){
 
 	double Ve=sqrt(-2*(pot->Phi({R,0.,z})-pot->Phi({10*R,0.,10*z}))), Vze=Ve;
 	double Flim=mr->FeH(0.,0.)-1e-5;
-
 	VecDoub Flimits = Flims;
 	if(Flims[0]<mr->FStart()) Flimits[0]=mr->FStart()+1e-5;
 	if(Flims[1]>Flim) Flimits[1]=Flim;
@@ -485,7 +469,7 @@ double sb15_edf::density(double R, double z, double IE, VecDoub Flims){
 	edf_density_struct P(this,R,z,x2min,x2max);
 
   	double thinthick=0.,halobit=0.;
-  	if(ifthin or ifthick)
+        if(ifthin or ifthick)
 		thinthick=2.*edf_integrate(&density_tt_integrand_cuba,&P,IE,0);
 
 	if(!ifhalo) return thinthick;
@@ -499,8 +483,8 @@ double sb15_edf::density(double R, double z, double IE, VecDoub Flims){
 	edf_density_struct P2(this,R,z,x2min2,x2max2);
 
 	halobit=edf_integrate(&density_halo_integrand_cuba,&P2,IE,0);
-
-	return thinthick+halobit;
+	
+        return thinthick+halobit;
 }
 
 static int FHistIntegrand_cuba(const int ndim[], const double y[], const int *fdim, double fval[], void *fdata){

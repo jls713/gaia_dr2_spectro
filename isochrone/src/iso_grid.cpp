@@ -49,6 +49,7 @@ isochrone_grid<isochrone_g>::isochrone_grid(std::string type,int thin, double fe
     NF = fehgrid.size(); NA = agegrid.size();
     iso_grid_size = NA*NF;
     GetFilesInDirectory(iso_files, dir);
+    // The files might need sorting -- this is done for Padova currently
     int isoPadova_filters=5;
     if(iso_files.size()!=iso_grid_size and (type=="BaSTI"))
         std::cout<<"More isochrones ("<<iso_files.size()<<") than grid spaces("
@@ -102,7 +103,10 @@ isochrone_grid<isochrone_g>::isochrone_grid(std::string type,int thin, double fe
         }
     }
     else if(type=="Padova"){
-	    int i, j;
+            // Sort files by name then by number    
+            cmp_isov()(iso_files[0],iso_files[1]);
+            std::sort(iso_files.begin(),iso_files.end(),cmp_isov());
+            int i, j;
 	    double f, a;
         auto filters = parameters()["isochrones"]["filters"];
 	    isoPadova_filters=filters.size();
@@ -111,15 +115,17 @@ isochrone_grid<isochrone_g>::isochrone_grid(std::string type,int thin, double fe
 	    std::map<std::string,std::string> filter_codes={{"Gaia","g"},
                                                         {"SDSS","s"},
                                                         {"Johnson","u"},
-							                            {"2MASS","2"},
+						        {"2MASS","2"},
                                                         {"PanSTARRS","p"}};
-	    for(std::string str:{"g","u","2","s","p"}){
-            bool cont=true;
+            std::vector<std::string> code_list = {"2","g","p","s","u"};
+            std::sort(code_list.begin(),code_list.end());
+	    for(std::string str:code_list){ // This list must be in alphabetical order -- sorted above
+                bool cont=true;
     		for(auto f: filters)
-                if (str.compare(0,1,filter_codes[f])==0
-                    or filters[0]=="All") cont=false;
-            if(cont)continue;
-            auto it = std::find_if(iso_files.begin(),iso_files.end(),
+                    if (str.compare(0,1,filter_codes[f])==0
+                        or filters[0]=="All") cont=false;
+                if(cont)continue;
+                auto it = std::find_if(iso_files.begin(),iso_files.end(),
                                    [str,dir](const std::string& obj){
 				return obj.compare(dir.length()+1,1,str)==0;});
     		int nn=0;
@@ -139,10 +145,11 @@ isochrone_grid<isochrone_g>::isochrone_grid(std::string type,int thin, double fe
                 f = fehgrid[i];
                 if(fabs(f-ff)<0.0001) break;
             }
-            if(fabs(f-ff)>0.0001)
-                continue;
-            for(auto age_index:agegrid){
-    		    isochrone_g iso;
+            if(fabs(f-ff)>0.0001){
+		    continue;
+	    }
+            for(auto age_index:agegrid){   	
+ 	    isochrone_g iso;
     		    iso.fill(s, dir, age_index, thin_mag);
     		    // sort results
     		    for(i=0;i<NF;i++){
@@ -158,7 +165,7 @@ isochrone_grid<isochrone_g>::isochrone_grid(std::string type,int thin, double fe
     			    massmax[i][j]=iso.maxmass();
     		    }
     		}
-            std::cout<<iso_grid[j+NA*i].feh()<<" "<<iso_grid[j+NA*i].N()<<std::endl;
+            std::cout<<i<<" "<<iso_grid[j+NA*i].feh()<<" "<<iso_grid[j+NA*i].N()<<std::endl;
 	    }
    }
     else{

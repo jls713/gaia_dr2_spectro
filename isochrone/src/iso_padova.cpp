@@ -77,6 +77,7 @@ void isochrone_padova::fill(std::vector<std::string> input_iso,
                             std::string dir, double Age,
                             double thin_mag){
     bool first=true;
+    VecDoub stage(Mass.size(),-1);
     for(auto s: input_iso){
     std::ifstream inFile;inFile.open(s);
     if(!inFile.is_open()){
@@ -94,6 +95,7 @@ void isochrone_padova::fill(std::vector<std::string> input_iso,
             L[N]=X[4];
             Teff[N]=X[5];
             Logg[N]=X[6];
+            stage[N]=X[X.size()-1];
         }
         for(auto n:mag_maps[s.substr(dir.length()+1,1)])
             mags[n.first][N]=X[n.second];
@@ -108,6 +110,7 @@ void isochrone_padova::fill(std::vector<std::string> input_iso,
         Teff.resize(N);
         Logg.resize(N);
         es.resize(N);
+        stage.resize(N);
         first=false;
     }
     for(auto n:mag_maps[s.substr(dir.length()+1,1)]){
@@ -139,6 +142,9 @@ void isochrone_padova::fill(std::vector<std::string> input_iso,
 	 "W1","W2","W3","W4",
 	 "Jv","Hv","Kv","Vp","I"};
     for(unsigned N=0;N<N_length-1;++N){
+        // Only on main-sequence
+        if(stage[N]>1)
+            break;
         std::string m = mag_maps[input_iso[0].substr(dir.length()+1,1)][0].first;
         for(auto m: maglist)
         if(fabs(mags[m][N+1]-mags[m][N])>thin_mag){

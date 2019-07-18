@@ -296,6 +296,11 @@ def build_master_output_withPRIOR():
     r = fillin(r, rfill, 'APOGEE_ID')
 
     linput = pd.read_hdf('/data/jls/GaiaDR2/spectro/APOGEE_input_MASTER.hdf5')
+
+    ## Assign VSCATTER=0 stars a median rv uncertainty
+    fltr = linput.e_hrv==0.
+    linput.loc[fltr,'e_hrv']=np.nanmedian(linput.e_hrv.values[linput.e_hrv.values>0.]) 
+
     r=actions.process_actions(linput,r,None)
     r.meta['COMMENT'] += extra_meta
     r.write('/data/jls/GaiaDR2/spectro/APOGEE_distances_withPRIOR_MASTER.hdf5',

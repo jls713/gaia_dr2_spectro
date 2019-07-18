@@ -82,6 +82,10 @@ namespace distance_compute{
             prior = make_unique<new_prior_2018_broad_age>(SolarPosition);
             std::cout<<"New 2018 broad age prior loaded for isochrone fitting\n";
         }
+        else if(prior_type=="2018_flat"){
+            prior = make_unique<new_prior_2018_flat_age>(SolarPosition);
+            std::cout<<"New 2018 flat age prior loaded for isochrone fitting\n";
+        }
         else{
             prior = make_unique<galaxy_prior>(SolarPosition);
             std::cout<<"Flat prior loaded for isochrone fitting\n";

@@ -1,0 +1,7 @@
+Note: Google Test filter = Gaia*
+[==========] Running 1 test from 1 test case.
+[----------] Global test environment set-up.
+[----------] 1 test from Gaia
+[ RUN      ] Gaia.Padova
+6 -0.258 206
+5 -0.585 190

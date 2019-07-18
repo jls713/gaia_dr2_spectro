@@ -178,7 +178,7 @@ def crossmatch_gaia_spectro_id(data):
 
 def crossmatch_gaia_spectro(data, dr1=False, epoch=2000, dist_max=5.,
                             no_proper_motion=True, phot_g_cut=None,
-                            sys_error_floor=0.01, zero_point_parallax=-0.029):
+                            sys_error_floor=0.01, zero_point_parallax=-0.05):
     df = crossmatch_gaia(data, dr1=dr1, epoch=epoch,
                          dist_max=dist_max,
                          no_proper_motion=no_proper_motion,

@@ -29,10 +29,6 @@ def read_fits_to_pandas(data_file):
             output_data[i[0]] = input_data[i[0]]
     return output_data
 
-data_file = '/data/arc/research/apogee/regularized-results/tc-cse-regularized-apogee-catalog.fits.gz'
-apogee_data = read_fits_to_pandas(data_file)
-apogee_data = andy_OK(apogee_data)
-
 ##=============================================================================
 
 Alpha_Elements = ['O','Ne','Mg','Si','S','Ar','Ca','Ti']
@@ -168,6 +164,9 @@ class chem_evo_data:
     def plot_abundance_matrix(self):
         ''' Plot the APOGEE data for each element with the chemical evolution
             tracks overplotted '''
+	data_file = '/data/arc/research/apogee/regularized-results/tc-cse-regularized-apogee-catalog.fits.gz'
+	apogee_data = read_fits_to_pandas(data_file)
+	apogee_data = andy_OK(apogee_data)
         elts = [i for i in self.elements if i not in ['H','He']]
         f=plt.figure(figsize=[10.,10.])
         n_plts=len(elts)

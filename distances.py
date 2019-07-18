@@ -155,7 +155,7 @@ def process_single_distance(
             if in_data['pmra'][i] != in_data['pmra'][i] or \
                in_data['hrv'][i] != in_data['hrv'][i] or \
                in_data['e_hrv'][i] != in_data['e_hrv'][i] or \
-               in_data['e_hrv'][i] < 0.:
+               in_data['e_hrv'][i] <= 0.:
                 X = np.ones(16 + 14 * with_errors) * np.nan
                 lb = aa_py.EquatorialToGalactic(
                                       np.array([np.deg2rad(in_data['ra'][i]),
@@ -214,6 +214,18 @@ def process_single_distance(
 		    else:
 			X = np.concatenate((np.nanmean(Xs[~np.isinf(Xs[:, -1])], axis=0),
 					     np.nanstd(Xs[~np.isinf(Xs[:, -1])], axis=0)[2:]))
+                    if np.count_nonzero(~np.isinf(Xs[:, -1])) == 0:
+                        XX = np.zeros(30) * np.nan
+                        XX[:12]=np.nanmean(Xs,axis=0)[:12]
+                        XX[16:26]=np.nanstd(Xs,axis=0)[2:12]
+                    else:
+                        XX = np.concatenate((
+                             np.nanmean(Xs, axis=0)[:12],
+                             np.nanmean(Xs[~np.isinf(Xs[:, -1])], axis=0)[12:],
+                             np.nanstd(Xs, axis=0)[2:12],
+                             np.nanstd(Xs[~np.isinf(Xs[:, -1])], axis=0)[12:]
+                           ))
+                    
                     old=False
                     if(old):
 			    Nsamples = 30

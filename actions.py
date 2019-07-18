@@ -51,7 +51,7 @@ def rejection_dm(samples, mu_old, mu_new, sig_old, sig_new):
 
 def actions_samples(i):
     inputs, outputs = in_data['inputs'], in_data['outputs']
-    if outputs['par'][i] != outputs['par'][i] or outputs['par_err'][i] != outputs['par_err'][i] or inputs['parallax'][i] != inputs['parallax'][i] or inputs['pmra_error'][i] != inputs['pmra_error'][i] or inputs['hrv'][i] != inputs['hrv'][i] or inputs['e_hrv'][i] != inputs['e_hrv'][i] or inputs['e_hrv'][i] < 0.:
+    if outputs['par'][i] != outputs['par'][i] or outputs['par_err'][i] != outputs['par_err'][i] or inputs['parallax'][i] != inputs['parallax'][i] or inputs['pmra_error'][i] != inputs['pmra_error'][i] or inputs['hrv'][i] != inputs['hrv'][i] or inputs['e_hrv'][i] != inputs['e_hrv'][i] or inputs['e_hrv'][i] <= 0.:
         return np.zeros(28) * np.nan
     covar = np.zeros((3, 3))
     covar[0][0] = inputs['parallax_error'][i]**2
@@ -99,9 +99,15 @@ def actions_samples(i):
                   ])
     if np.count_nonzero(~np.isinf(Xs[:, -1])) == 0:
         XX = np.zeros(28) * np.nan
+        XX[:10]=np.nanmean(Xs,axis=0)[2:12]
+        XX[14:24]=np.nanstd(Xs,axis=0)[2:12]
     else:
-        XX = np.concatenate((np.nanmean(Xs[~np.isinf(Xs[:, -1])], axis=0)[2:],
-                             np.nanstd(Xs[~np.isinf(Xs[:, -1])], axis=0)[2:]))
+        XX = np.concatenate((
+                             np.nanmean(Xs, axis=0)[2:12],
+                             np.nanmean(Xs[~np.isinf(Xs[:, -1])], axis=0)[12:],
+                             np.nanstd(Xs, axis=0)[2:12],
+                             np.nanstd(Xs[~np.isinf(Xs[:, -1])], axis=0)[12:]
+                           ))
     print i, XX
     return XX
 

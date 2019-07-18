@@ -30,7 +30,7 @@ Grid::Grid(ModelParameters params){
 	int NT = params.parameters["grids"]["AgeGridPoints"];
 	radial_grid = create_range(Rmin,Rmax,NR);
 	if(NR==1)
-		radial_grid=VecDoub(1,.5*(Rmax-Rmin));
+		radial_grid=VecDoub(1,.5*(Rmax+Rmin));
 	time_grid = create_range(0.,MaxAge,NT);
 	F = params.parameters["grids"];
 	if (F.find("LogAgeGrid") != F.end())
@@ -48,27 +48,30 @@ Grid::Grid(ModelParameters params){
 double Grid::operator()(double r, double t, bool loginterp, bool extrapolate){
 	if(t<time_grid.front())t=time_grid.front();
 	if(t>time_grid.back())t=time_grid.back();
-	if(r<radial_grid.front()){
+	if(r<radial_grid.front() and radial_grid.size()>1){
 		if(extrapolate) return log_extrapolate_low(r,t);
 		else r=radial_grid.front();
 	}
-	if(r>radial_grid.back()){
+	if(r>radial_grid.back() and radial_grid.size()>1){
 		if(extrapolate) return log_extrapolate_high(r,t);
 		else r=radial_grid.back();
 	}
 	int bott, topt, botr, topr;
-	topbottom(radial_grid,r,&botr,&topr);
+	if(radial_grid.size()>1) topbottom(radial_grid,r,&botr,&topr);
+        else {topr=0;botr=0;}
 	topbottom(time_grid,t,&bott,&topt);
 	double y1 = grid[botr][bott]+(t-time_grid[bott])/(time_grid[topt]-time_grid[bott])*(grid[botr][topt]-grid[botr][bott]);
 	double y2 = grid[topr][bott]+(t-time_grid[bott])/(time_grid[topt]-time_grid[bott])*(grid[topr][topt]-grid[topr][bott]);
-	if(loginterp){
+        if(loginterp){
 		y1=log(y1);
 		y2=log(y2);
 	}
-	double rslt=y1+(r-radial_grid[botr])/(radial_grid[topr]-radial_grid[botr])*(y2-y1);
+	double rslt=y1;
+        if(radial_grid.size()>1)
+            rslt += (r-radial_grid[botr])/(radial_grid[topr]-radial_grid[botr])*(y2-y1);
 	if(loginterp)
 		return exp(rslt);
-	return rslt;
+        return rslt;
 }
 // Extrapolation
 double Grid::log_extrapolate_low(double R, double t){
@@ -103,6 +106,7 @@ double Grid::t_gradient(double r, double t){
 	return y1+(r-radial_grid[botr])/(radial_grid[topr]-radial_grid[botr])*(y2-y1);
 }
 double Grid::R_gradient(double r, double t){
+        if(radial_grid.size()==1) return 0.;
 	if(r<radial_grid.front())r=radial_grid.front();
 	if(r>radial_grid.back())r=radial_grid.back();
 	if(t<time_grid.front())t=time_grid.front();

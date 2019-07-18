@@ -22,6 +22,8 @@ APOGEE_FOLDER = '/data/jls/apogee/apogee_data/'
 DR12_file = 'allStar-v603-nodups.fits'
 DR14_file = 'allStar-l31c.2.fits'
 
+print 'VSCATTER=0 stars need attention if needed'
+
 def format_columns(data):
     col_dict = {'J_ERR': 'eJ', 'H_ERR': 'eH', 'K_ERR': 'eK',
                 'M_H_ERR': 'e_fe_h', 'M_H': 'fe_h',
@@ -33,18 +35,18 @@ def format_columns(data):
     data = data.rename(index=str, columns=col_dict)
     return data
 
-def load_data(calibrated=True, use_dr12=False):
+def load_data(calibrated=True, use_dr12=False, add_masses=True):
     if use_dr12:
         fitsfile = APOGEE_FOLDER + DR12_file
     else:
         fitsfile = APOGEE_FOLDER + DR14_file
 
     apogeeF = fits.open(fitsfile)
-    flds = ['APOGEE_ID',
+    flds = ['APOGEE_ID','FIELD',
             'J', 'H', 'K',
             'J_ERR', 'H_ERR', 'K_ERR',
             'RA', 'DEC',
-            'ASPCAPFLAG', 'VHELIO_AVG', 'VSCATTER']
+            'ASPCAPFLAG', 'VHELIO_AVG', 'VSCATTER', 'STARFLAG']
     apogeeR = apogeeF[1].data
     apogee = pd.DataFrame()
     for i in flds:
@@ -143,17 +145,18 @@ def load_data(calibrated=True, use_dr12=False):
     apogee['mass_error'] = -1.
 
     # Add masses
-    with open('/data/jls/cyanide/comparisons/neural_network.pkl', 'r') as f:
-        nn = pickle.load(f)
-    flds = ['C_M', 'N_M', 'ALPHA_M', 'TEFF', 'LOGG', 'M_H']
-    inputData = apogee[flds].values
-    inputErrData = apogee[[fld + '_ERR' for fld in flds]].values
-    results = nn.label(inputData, inputErrData, samples=50)
-    fltr = True
-    for f in flds:
-        fltr &= (apogee[f] == apogee[f])
-    fltr &= (apogee.TEFF>4000.)&(apogee.TEFF<5250.)&(apogee.LOGG>1.)&(apogee.LOGG<3.3)&(apogee.M_H>-1.5)&(apogee.M_H<0.5)
-    apogee.loc[fltr, 'mass'], apogee.loc[fltr, 'mass_error'] = results[0][fltr], results[1][fltr]
+    if(add_masses):
+	    with open('/data/jls/cyanide/comparisons/neural_network.pkl', 'r') as f:
+		nn = pickle.load(f)
+	    flds = ['C_M', 'N_M', 'ALPHA_M', 'TEFF', 'LOGG', 'M_H']
+	    inputData = apogee[flds].values
+	    inputErrData = apogee[[fld + '_ERR' for fld in flds]].values
+	    results = nn.label(inputData, inputErrData, samples=50)
+	    fltr = True
+	    for f in flds:
+		fltr &= (apogee[f] == apogee[f])
+	    fltr &= (apogee.TEFF>4000.)&(apogee.TEFF<5250.)&(apogee.LOGG>1.)&(apogee.LOGG<3.3)&(apogee.M_H>-1.5)&(apogee.M_H<0.5)
+	    apogee.loc[fltr, 'mass'], apogee.loc[fltr, 'mass_error'] = results[0][fltr], results[1][fltr]
 
     apogee = format_columns(apogee)
     return apogee

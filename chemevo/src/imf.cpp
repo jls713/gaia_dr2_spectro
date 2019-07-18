@@ -48,11 +48,19 @@ double ScaloIMF::operator()(double m){
     else return 0.1553*pow(m,-2.3)/Norm;
 }
 //=============================================================================
-double KroupaIMF::operator()(double m){
+double KroupaToutGilmoreIMF::operator()(double m){
+    // This is Kroupa, Tout & Gilmore (1993)
     if(m<0.08) return 0.4375*pow(m,-0.3)/Norm;
     else if(m<0.5) return 0.035*pow(m,-1.3)/Norm;
     else if(m<1.) return 0.019*pow(m,-2.3)/Norm;
     else return 0.019*pow(m,-2.7)/Norm;
+}
+//=============================================================================
+double KroupaIMF::operator()(double m){
+    // Kroupa 2001
+    if(m<0.08) return 0.4375*pow(m,-0.3)/Norm;
+    else if(m<0.5) return 0.035*pow(m,-1.3)/Norm;
+    else return 0.019*pow(m,-2.3)/Norm;
 }
 //=============================================================================
 double ChabrierIMF::operator()(double m){
@@ -65,6 +73,7 @@ shared_map<InitialMassFunction,ModelParameters> imf_types ={
     {"Salpeter",&createSharedInstance<InitialMassFunction,SalpeterIMF>},
     {"Tinsley",&createSharedInstance<InitialMassFunction,TinsleyIMF>},
     {"Scalo",&createSharedInstance<InitialMassFunction,ScaloIMF>},
+    {"KroupaToutGilmore",&createSharedInstance<InitialMassFunction,KroupaToutGilmoreIMF>},
     {"Kroupa",&createSharedInstance<InitialMassFunction,KroupaIMF>},
     {"Chabrier",&createSharedInstance<InitialMassFunction,ChabrierIMF>}
 };

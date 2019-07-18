@@ -69,11 +69,19 @@ public:
 	double operator()(double m);
 };
 class KroupaIMF: public InitialMassFunction{
-/** Kroupa (2002) IMF **/
+/** Kroupa (2001) IMF **/
 public:
 	KroupaIMF(double MinimumMass=0.5, double MaximumMass=100.)
 		:InitialMassFunction(MinimumMass,MaximumMass){Norm=1.;Norm=mean_mass();}
 	KroupaIMF(ModelParameters M):InitialMassFunction(M){Norm=1.;Norm=mean_mass();}
+	double operator()(double m);
+};
+class KroupaToutGilmoreIMF: public InitialMassFunction{
+/** Kroupa, Tout & Gilmore (1993) IMF **/
+public:
+	KroupaToutGilmoreIMF(double MinimumMass=0.5, double MaximumMass=100.)
+		:InitialMassFunction(MinimumMass,MaximumMass){Norm=1.;Norm=mean_mass();}
+	KroupaToutGilmoreIMF(ModelParameters M):InitialMassFunction(M){Norm=1.;Norm=mean_mass();}
 	double operator()(double m);
 };
 class ChabrierIMF: public InitialMassFunction{

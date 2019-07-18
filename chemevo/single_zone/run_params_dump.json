@@ -1,0 +1,43 @@
+{
+"fundamentals":{
+	"MinimumMass": 0.5,
+	"MaximumMass": 50.0,
+	"GalaxyAge": 13.0,
+	"IMF": "Kroupa",
+	"SFR": "ExpDecay",
+	"lifetimes": "Portinari1998",
+	"PresentSFR":2.4,
+	"SFR_decay_scale":8.0,
+        "InitialMetallicity":0.001,
+	"InitialAlpha":-1.0,
+	"Kennicutt-Schmidt_Coeff":1.4,
+	"Kennicutt-Schmidt_A":0.067
+	},
+"grids":{
+	"RadialGridPoints":3,
+	"AgeGridPoints":50,
+        "LogAgeGrid":true
+},
+"yields":{
+	"typeIa":"Maeda",
+	"typeII":"ChieffiLimongi",
+	"AGB":"Karakas",
+	"SuperAGB":"None"
+},
+"typeIa":{
+	"Form": "Matteucci2006",
+	"MinimumIaBinaryMass": 1.0,
+	"MaximumIaBinaryMass": 5.0,
+	"BinaryFraction": 0.0035
+},
+"typeII":{
+	"Min_typeII_SN_mass": 10.0
+},
+"flows":{
+	"inflow":{"Form":"None"},
+	"outflow":{"Form":"None"},
+	"gasdump":{"time":1.3,"surfacedensity":150.0,"alpha":0.0,"metallicity":-1.2}
+},
+"elements":["S","Si","Mg","O","Ca","Fe"],
+"data_folder":"/data/jls/chem_evo/"
+}

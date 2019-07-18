@@ -8,10 +8,10 @@ clean: rm obj/*.o
 include ../Makefile.inc
 
 ## ============================================================================
-INC = $(PYTHONINCPATH) $(BOOSTINCPATH) $(POTPATH) $(JSONINC) $(LOGGINC) -Iinc/ -I$(GTESTINC) -I$(HDF5INCPATH) $(CUBAINCPATH) -I$(GENERALPATH) \
-    -I$(LOGGINC) -I$(JSONINC) -I../isochrone/inc/
-LIB = $(PYTHONLIBPATH) $(BOOSTLIBPATH) $(POTLIBPATH) $(HDF5LIBPATH) $(CUBALIBPATH) -L$(GSLPATH)
-LIBS = -lcuba -lboost_python -lpython2.7 -lhdf5_cpp -lhdf5 -lgsl -lgslcblas -lgomp
+INC = -I$(PYTHONINCPATH) -I$(BOOSTINCPATH) -I$(POTPATH) -I$(JSONINC) -I$(LOGGINC) -Iinc/ -I$(GTESTINC) -I$(HDF5INCPATH) $(CUBAINCPATH) -I$(GENERALPATH) \
+    -I$(LOGGINC) -I$(JSONINC) -I../isochrone/inc/ -I$(GSLPATH)include/
+LIB = $(PYTHONLIBPATH) $(BOOSTLIBPATH) $(POTLIBPATH) $(HDF5LIBPATH) $(CUBALIBPATH) -L$(GSLPATH)lib/
+LIBS = -lcuba -lhdf5_cpp -lhdf5 -lgsl -lgslcblas -lgomp
 ## ============================================================================
 OBJ = obj
 SRC = src
@@ -24,7 +24,7 @@ OBJECTS = $(OBJ)/params.o $(OBJ)/solar.o $(OBJ)/yields.o $(OBJ)/sfr.o $(OBJ)/imf
 $(OBJ)/%.o : $(SRC)/%.cpp
 	$(CCOMPILER) $(OPTS) -c $< -o $@ $(INC) -g -DGSL_2
 ## ============================================================================
-$(MAIN)%.exe: $(OBJ)/%.o
+$(MAIN)%.exe: $(OBJ)/%.o $(OBJECTS)
 	$(CCOMPILER) -g $(OBJECTS) $< $(LIB) $(LIBS) -o $@ -DGSL_2
 
 $(MAIN)test.exe: $(OBJ)/test.o

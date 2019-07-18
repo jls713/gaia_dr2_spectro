@@ -12,7 +12,9 @@ int main(int argc, char const *argv[])
 	setenv("CUBACORES","0",1);
 
     try{
-	    Model M("params/run_params.json");
+	    std::string paramfile = "params/run_params.json";
+	    if(argc>2) paramfile=std::string(argv[2]);
+	    Model M(paramfile);
 	    M.run();
 	    std::string outputfile = "tmp.h5";
 	    if(argc>1) outputfile=std::string(argv[1]);

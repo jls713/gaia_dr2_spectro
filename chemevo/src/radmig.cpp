@@ -4,7 +4,8 @@ double _convolve(double Rp, void *P){
 	convolve_struct *p = (convolve_struct*)P;
 	// we use the log extrapolation in grid (second true, first is
 	// log interpolation).
-	return (*p->gm)(Rp,p->t,true,true)*(*p->rm)(p->R,Rp,p->dt);
+	// added the R'/R factor so Sigma(R)2piR = int dR' 2piR' Sigma(R')
+	return (Rp/p->R)*(*p->gm)(Rp,p->t,true,true)*(*p->rm)(p->R,Rp,p->dt);
 }
 double RadialMigration::convolve(Grid*gas_mass, unsigned nR, unsigned nt){
 	integrator GL(200000);
