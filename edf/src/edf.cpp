@@ -143,8 +143,8 @@ sb15_edf::sb15_edf(Potential_JS *Pot, Actions_AxisymmetricFudge_InterpTables *Ac
 	,thickd(new thick_disc_edf(Pot,Act,mr,sfr,rm,{Params[4],Params[5],Params[6],Params[7],tau_T,tau_m},order))
 	,halod(new halo_edf(Pot,Act,{Params[14],FHALO,SIGFHALO}))
 {
-	StandardSolar[3]=Pot->Vc(StandardSolar[0])+conv::SunPeculiar[1];
-	std::cout<<"Vc(Rsolar)="<<Pot->Vc(StandardSolar[0])<<std::endl;
+	StandardSolar[3]=Pot->Vc(StandardSolar[0])+StandardSolarInput[3];
+	std::cout<<"Vc(Rsolar="<<StandardSolar[0]<<")="<<Pot->Vc(StandardSolar[0])<<std::endl;
 	thind->setStandardSolar(StandardSolar);
 	thickd->setStandardSolar(StandardSolar);
 	rm->reset({Params[9],tau_m,GAMMAT,Params[0]},pot,StandardSolar[0],(Params.size()>15)?Params[15]:0.,(Params.size()>16)?Params[16]:0.);

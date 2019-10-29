@@ -110,16 +110,17 @@ int Model::check_parameters(void){
             params.parameters["fundamentals"]["SolarRadius"]=1.;
             params.parameters["grids"]["MinimumRadius"]=0.;
             params.parameters["grids"]["MaximumRadius"]=2.;
-	    params.parameters["migration"]["Form"]="None";
-	    params.parameters["flows"]["radialflow"]="None";
-	    params.parameters["fundamentals"]["GasScaleLength"]=1;
+		    params.parameters["migration"]["Form"]="None";
+		    params.parameters["flows"]["radialflow"]["Form"]="None";
+		    params.parameters["fundamentals"]["GasScaleLength"]=1;
         }
 	auto F = params.parameters["fundamentals"];
 	if (F.find("IMF") == F.end()) {
 		LOG(INFO)<<"No IMF found in parameters file\n";
 		return 1;
 	}
-	if(imf_types.count(params.parameters["fundamentals"]["IMF"])!=1){		std::string types = "";
+	if(imf_types.count(params.parameters["fundamentals"]["IMF"])!=1){
+		std::string types = "";
 		for(auto i:imf_types) types+=i.first+",";
 		LOG(INFO)<<"Invalid IMF:"<<params.parameters["fundamentals"]["IMF"]<<std::endl<<"Options are:"<<types;
 		return 1;
@@ -179,7 +180,7 @@ int Model::check_parameters(void){
 		LOG(INFO)<<"Invalid Outflow:"<<params.parameters["flows"]["outflow"]["Form"]<<std::endl<<"Options are:"<<types;
 		return 1;
 	}
-        if(!single_zone)
+    if(!single_zone)
 	if(radialflow_types.count(params.parameters["flows"]["radialflow"]["Form"])!=1){
 		std::string types = "";
 		for(auto i:radialflow_types) types+=i.first+",";
@@ -192,7 +193,7 @@ int Model::check_parameters(void){
 			LOG(INFO)<<"Element "<<f<<" not valid."<<std::endl;
 		}
 	F = params.parameters["flows"];
-        if (F.find("gasdump") != F.end()){
+    if (F.find("gasdump") != F.end()){
 		gasdump=true;
 		gasdumptime=F["gasdump"]["time"];
 		gasdumpsurfacedensity=F["gasdump"]["surfacedensity"];
@@ -222,7 +223,13 @@ int Model::step(unsigned nt, double dt){
 		// we set the metallicity to that of the previous time step so small
 		// age interpolation works (i.e. doesn't use zero)
 		metallicity->set(Z(R,t-dt),nR,nt);
-		if(Z(R,t)<0.){ err=1; std::cerr<<"Returning here: "<<" "<<nR<<" "<<Z(gas_mass->grid_radial()[nR],t)<<" "<<Z(gas_mass->grid_radial()[nR],t-dt)<<std::endl;continue;}
+		if(Z(R,t)<0.){
+			err=1;
+			std::cerr<<"Returning here: "<<" "<<nR<<" ";
+			std::cerr<<Z(gas_mass->grid_radial()[nR],t)<<" ";
+			std::cerr<<Z(gas_mass->grid_radial()[nR],t-dt)<<std::endl;
+			continue;
+		}
 		double starformrate = SFR(R,t);
 		double gas_return = (1.-OutflowFraction(R,t))*GasReturnRate(R,t);
 		reducedSFR->set(starformrate-gas_return,nR,nt);
@@ -260,10 +267,10 @@ int Model::step(unsigned nt, double dt){
 		else
 			outer_gas_mass=gas_mass->log_extrapolate_high(Rup,nt-1);
 			// outer_gas_mass=exp(log((*gas_mass)(NR-1,nt-1))+(log((*gas_mass)(NR-1,nt-1))-log((*gas_mass)(NR-2,nt-1)))/(gas_mass->grid_radial()[NR-1]-gas_mass->grid_radial()[NR-2])*(Rup-gas_mass->grid_radial()[NR-1]));
-		
+
 		rad_flow_dm=RadialFlowRate(gm_prev,outer_gas_mass,R,Rdown,Rup,tp,dt,&err);
 		}
-                dmdt += -starformrate;
+        dmdt += -starformrate;
 		dmdt += gas_return;
 		dmdt += inflowrate;
 		dmdt += rad_flow_dm;
@@ -276,7 +283,7 @@ int Model::step(unsigned nt, double dt){
 		}
 		gm = gm_prev+dmdt*dt;
                 if(gm<0.){starformrate=0.;rad_flow_dm=0.;dmdt=gas_return+inflowrate;gm=gm_prev+dmdt*dt;}
-		
+
 		if(migration)
 			gm += rad_mig->convolve(gas_mass.get(),nR,nt)-gm_prev;
 		/*if(gm<0.)
@@ -307,8 +314,8 @@ int Model::step(unsigned nt, double dt){
 		// 		std::cout<<rmlower<<" "<<rmupper<<" "<<rmlower_1<<" "<<rmupper_1<<" "<<gmprev_d<<" "<<outer_gas_mass<<" "<<gm_prev<<" "<<Rdown<<" "<<Rup<<" "<<gas_mass->annulus_area(nR)<<" ";
 		// }
 
-		std::cerr<<R<<" "<<t<<" "<<gm<<" "<<starformrate<<" "<<gas_return<<" "<<inflowrate<<" ";
-		std::cerr<<rad_flow_dm<<" "<<reducedSFR->t_gradient(R,tp)<<" "<<outer_gas_mass<<" ";
+		// std::cerr<<R<<" "<<t<<" "<<gm<<" "<<starformrate<<" "<<gas_return<<" "<<inflowrate<<" ";
+		// std::cerr<<rad_flow_dm<<" "<<reducedSFR->t_gradient(R,tp)<<" "<<outer_gas_mass<<" ";
 		//std::cerr<<radialflow->gamma_g(R,Rdown,Rup,tp,dt,reducedSFR.get())<<" "<<radialflow->beta_g(R,Rdown,Rup,tp,dt,reducedSFR.get());
 		//std::cerr<<" "<<radialflow->flow_rate((R+Rdown)*.5,tp,reducedSFR.get())<<" "<<radialflow->flow_rate((R+Rup)*.5,tp,reducedSFR.get());
 
@@ -325,7 +332,7 @@ int Model::step(unsigned nt, double dt){
 			           "More stars being formed than gas available in ring R="
 			           +std::to_string(R));
 		*/
-		
+
 		gas_mass->set(gm,nR,nt);
 		stellar_mass->set(sm,nR,nt);
 
@@ -381,13 +388,16 @@ int Model::step(unsigned nt, double dt){
 		}
 		metallicity->set(1.-X(R,t)-Y(R,t),nR,nt);
 		if(Z(R,t)<0.) {
-			metallicity->set(Z(R,t-dt),nR,nt); 
-			mass_fraction[element_index["H"]].set(mass_fraction[element_index["H"]](nR,nt-1),nR,nt);
-			mass_fraction[element_index["He"]].set(mass_fraction[element_index["He"]](nR,nt-1),nR,nt);
-			err=1;std::cout<<"Problem "<<Z(R,t-dt)<<" "<<Z(R,t)<<std::endl;
+			metallicity->set(Z(R,t-dt),nR,nt);
+			mass_fraction[element_index["H"]].set(
+			              mass_fraction[element_index["H"]](nR,nt-1),nR,nt);
+			mass_fraction[element_index["He"]].set(
+			              mass_fraction[element_index["He"]](nR,nt-1),nR,nt);
+			err=1;
+			std::cerr<<"Problem "<<Z(R,t-dt)<<" "<<Z(R,t)<<std::endl;
 		}
 		// std::cout<<R<<" "<<t<<" "<<gm<<" "<<Z(R,t)<<std::endl;
-		std::cerr<<" "<<X(R,t)<<" "<<Y(R,t)<<" "<<Z(R,t)<<std::endl;
+		// std::cerr<<" "<<X(R,t)<<" "<<Y(R,t)<<" "<<Z(R,t)<<std::endl;
 	}
 	if(err) return err;
 	int iteratemax=1; auto gm_it=gas_mass->grid_fixed_t(nt);
@@ -449,7 +459,7 @@ int Model::step(unsigned nt, double dt){
 				dmdt+=gasdumpsurfacedensity/dt*exp(-.5*pow((gas_mass->grid_radial()[nR]-mid)/std,2.));
 			}
 			gm = gm_prev+dmdt*dt;
-                        
+
                         if(gm<0.){starformrate=0.;rad_flow_dm=0.;dmdt=gas_return+inflowrate;gm=gm_prev+dmdt*dt;}
 
 			// if(migration){
@@ -472,8 +482,8 @@ int Model::step(unsigned nt, double dt){
 			// 	std::cout<<rmlower<<" "<<rmupper<<" "<<rmlower_1<<" "<<rmupper_1<<" "<<gmprev_d<<" "<<outer_gas_mass<<" "<<gm_prev<<" "<<Rdown<<" "<<Rup<<" "<<gas_mass->annulus_area(nR)<<" ";
 			// }
 
-			std::cerr<<R<<" "<<t<<" "<<gm<<" "<<starformrate<<" "<<gas_return<<" "<<inflowrate<<" ";
-			std::cerr<<rad_flow_dm<<" "<<reducedSFR->t_gradient(R,tp)<<" "<<outer_gas_mass<<" ";
+			// std::cerr<<R<<" "<<t<<" "<<gm<<" "<<starformrate<<" "<<gas_return<<" "<<inflowrate<<" ";
+			// std::cerr<<rad_flow_dm<<" "<<reducedSFR->t_gradient(R,tp)<<" "<<outer_gas_mass<<" ";
 			//std::cerr<<radialflow->gamma_g(R,Rdown,Rup,tp,dt,reducedSFR.get())<<" "<<radialflow->beta_g(R,Rdown,Rup,tp,dt,reducedSFR.get())<<" ";
 			//std::cerr<<radialflow->flow_rate((R+Rdown)*.5,tp,reducedSFR.get())<<" "<<radialflow->flow_rate((R+Rup)*.5,tp,reducedSFR.get());
 
@@ -541,7 +551,7 @@ int Model::step(unsigned nt, double dt){
 			        mass_fraction[element_index["He"]].set(mass_fraction[element_index["He"]](nR,nt-1),nR,nt);
 			}
 
-			std::cerr<<" "<<X(R,t)<<" "<<Y(R,t)<<" "<<Z(R,t)<<std::endl;
+			// std::cerr<<" "<<X(R,t)<<" "<<Y(R,t)<<" "<<Z(R,t)<<std::endl;
 			if(fabs((gm-gm_it[nR])/gm)<0.005) not_done[nR]=0;
 			else not_done[nR]=1;
 		}

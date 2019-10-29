@@ -4,7 +4,8 @@ import numpy as np
 from astropy.table import Table
 from login import wsdbpassword
 import os
-import cPickle as pickle
+#import cPickle as pickle
+import _pickle as pickle
 import sys
 sys.path.append('/data/jls/astrolibpy/utils')
 import sqlutil
@@ -75,8 +76,8 @@ def crossmatch_2MASS(ra, dec, dist_max=5.):
         Cross match list of ra,dec of stars with 2MASS.
     """
     data = sqlutil.local_join("""
-        select j_m as J,j_cmsig as eJ,h_m as H,h_cmsig as eH,
-               k_m as K,k_cmsig as eK, j_psfchi, h_psfchi, k_psfchi,
+        select j_m as J,j_msigcom as eJ,h_m as H,h_msigcom as eH,
+               k_m as K,k_msigcom as eK, j_psfchi, h_psfchi, k_psfchi,
                ph_qual, rd_flg, cc_flg from mytable as m
         left join lateral (select * from twomass.psc as s
         where q3c_join(m.ra, m.dec,s.ra,s.decl,%0.5f/3600)

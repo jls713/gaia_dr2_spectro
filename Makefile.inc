@@ -74,7 +74,8 @@ HEALPIX_LIB = -L$(HEALPIXPATH)lib/ \
 			  -Wl,-rpath=$(HEALPIXPATH)src/cxx/optimized_gcc/lib/ \
 			  -lhealpix_cxx -lchealpix -lcxxsupport -lcfitsio
 
-HDF5PATH=/data/jls/hdf5-1.8.16/
+HDF5PATH=/data/jls/hdf5-1.10.5/
+#HDF5PATH=/opt/ioa/
 HDF5INCPATH=$(HDF5PATH)include/
 HDF5LIBPATH=-L$(HDF5PATH)lib/ -Wl,-rpath=$(HDF5PATH)lib/
 

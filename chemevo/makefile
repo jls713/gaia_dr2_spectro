@@ -8,9 +8,9 @@ clean: rm obj/*.o
 include ../Makefile.inc
 
 ## ============================================================================
-INC = -I$(PYTHONINCPATH) -I$(BOOSTINCPATH) -I$(POTPATH) -I$(JSONINC) -I$(LOGGINC) -Iinc/ -I$(GTESTINC) -I$(HDF5INCPATH) $(CUBAINCPATH) -I$(GENERALPATH) \
-    -I$(LOGGINC) -I$(JSONINC) -I../isochrone/inc/ -I$(GSLPATH)include/
-LIB = $(PYTHONLIBPATH) $(BOOSTLIBPATH) $(POTLIBPATH) $(HDF5LIBPATH) $(CUBALIBPATH) -L$(GSLPATH)lib/
+INC = -I$(GSLPATH)include/ -I$(POTPATH) -I$(JSONINC) -I$(LOGGINC) -Iinc/ -I$(GTESTINC) -I$(HDF5INCPATH) $(CUBAINCPATH) -I$(GENERALPATH) \
+    -I$(LOGGINC) -I$(JSONINC) -I../isochrone/inc/
+LIB = -L$(GSLPATH)lib/ $(POTLIBPATH) $(HDF5LIBPATH) $(CUBALIBPATH)
 LIBS = -lcuba -lhdf5_cpp -lhdf5 -lgsl -lgslcblas -lgomp
 ## ============================================================================
 OBJ = obj

@@ -5,14 +5,14 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import h5py
 import seaborn as sns
-from scipy.interpolate import RectBivariateSpline
+from scipy.interpolate import RectBivariateSpline, CubicSpline
 import sys
 from numpy.lib.recfunctions import append_fields
 ##=============================================================================
 
 def andy_OK(data):
-    non_fucked = (data.TEFF_ASPCAP>3500.)&(data.TEFF_ASPCAP<5500.)&(data.LOGG_ASPCAP>0.)&(data.LOGG_ASPCAP<3.9)
-    data = data[non_fucked].reset_index(drop=True)
+    non_broken = (data.TEFF_ASPCAP>3500.)&(data.TEFF_ASPCAP<5500.)&(data.LOGG_ASPCAP>0.)&(data.LOGG_ASPCAP<3.9)
+    data = data[non_broken].reset_index(drop=True)
     return data
 
 def read_fits_to_pandas(data_file):
@@ -55,10 +55,11 @@ class chem_evo_data:
         for e in self.elements:
             if e in Alpha_Elements:
                 self.elements += [u'alpha']
-                print self.elements
+                print(self.elements)
                 break
+        ## in python2 this should be (i.encode('ascii','ignore'), np.float)
         self.abund = np.recarray((len(self.R),len(self.t)),
-                                  dtype=[(i.encode('ascii','ignore'),np.float)
+                                  dtype=[(i,np.float)
                                     for i in self.elements])
         Nalpha=0
         for e in self.elements[:-1]:
@@ -107,15 +108,19 @@ class chem_evo_data:
         dat = self.abund[el]
         if(el2):
             dat=dat-self.abund[el2]
-        rbs = RectBivariateSpline(self.R,self.t,dat)
         t = np.linspace(self.t[0],self.t[-1],100)
-        a = rbs(radius,t)
+        if len(self.R)>1:
+            rbs = RectBivariateSpline(self.R,self.t,dat)
+            a = rbs(radius,t)
+        else:
+            rbs = CubicSpline(self.t,dat[0])
+            a = rbs(t)
         plt.plot(t,a.T,color=color)
         plt.xlabel(r'$t/\mathrm{Gyr}$')
         if(el2):
             plt.ylabel(r'$[\mathrm{%s}/\mathrm{%s}]$'%(el,el2))
         else:
-            plt.ylabel(r'$[\mathrm{%s}]$'%(el))
+            plt.ylabel(r'$[\mathrm{%s}/\mathrm{H}]$'%(el))
         plt.tight_layout()
 
     def plot_time_range(self,el,radiusrange=np.arange(1.,15.,1.),el2=None):
@@ -133,23 +138,31 @@ class chem_evo_data:
         dat = self.abund[el]
         if(el_u):
             dat=dat-self.abund[el_u]
-        rbs = RectBivariateSpline(self.R,self.t,dat)
         t = np.linspace(self.t[0],self.t[-1],100)
-        a = rbs(radius,t)
+        if len(self.R)>1:
+            rbs = RectBivariateSpline(self.R,self.t,dat)
+            a = rbs(radius,t)
+        else:
+            rbs = CubicSpline(self.t,dat[0])
+            a = rbs(t)
         dat = self.abund[el2]
         if(el_u2):
             dat=dat-self.abund[el_u2]
-        rbs = RectBivariateSpline(self.R,self.t,dat)
-        b = rbs(radius,t)
-        plt.plot(a[0],b[0],color=color)
+        if len(self.R)>1:
+            rbs = RectBivariateSpline(self.R,self.t,dat)
+            b = rbs(radius,t)
+        else:
+            rbs = CubicSpline(self.t,dat[0])
+            b = rbs(t)
+        plt.plot(a,b,color=color)
         if(el_u2):
             plt.ylabel(r'$[\mathrm{%s}/\mathrm{%s}]$'%(el2,el_u2))
         else:
-            plt.ylabel(r'$[\mathrm{%s}]$'%(el2))
+            plt.ylabel(r'$[\mathrm{%s}/\mathrm{H}]$'%(el2))
         if(el_u):
             plt.xlabel(r'$[\mathrm{%s}/\mathrm{%s}]$'%(el,el_u))
         else:
-            plt.xlabel(r'$[\mathrm{%s}]$'%(el))
+            plt.xlabel(r'$[\mathrm{%s}/\mathrm{H}]$'%(el))
         plt.tight_layout()
 
     def plot_element_range(self,el,el2,el_u=None,el_u2=None,radiusrange=np.arange(1.,15.,1.)):
@@ -164,9 +177,9 @@ class chem_evo_data:
     def plot_abundance_matrix(self):
         ''' Plot the APOGEE data for each element with the chemical evolution
             tracks overplotted '''
-	data_file = '/data/arc/research/apogee/regularized-results/tc-cse-regularized-apogee-catalog.fits.gz'
-	apogee_data = read_fits_to_pandas(data_file)
-	apogee_data = andy_OK(apogee_data)
+        data_file = '/data/arc/research/apogee/regularized-results/tc-cse-regularized-apogee-catalog.fits.gz'
+        apogee_data = read_fits_to_pandas(data_file)
+        apogee_data = andy_OK(apogee_data)
         elts = [i for i in self.elements if i not in ['H','He']]
         f=plt.figure(figsize=[10.,10.])
         n_plts=len(elts)

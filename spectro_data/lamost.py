@@ -1,4 +1,5 @@
 from utils import *
+import sys
 sys.path.append('../')
 import cross_match
 
@@ -14,9 +15,9 @@ def format_columns(data):
     return data
 
 
-def load_data():
+def load_data(add_masses=True):
 
-    data = sqlutil.get("""select * from lamost_dr3.stellar as l""",
+    data = sqlutil.get("""select * from lamost_dr5.stellar as l""",
                        host='cappc127', user='jason_sanders',
                        password=wsdbpassword,
                        preamb='set enable_seqscan to off; ' +
@@ -26,6 +27,23 @@ def load_data():
     df = pd.DataFrame(columns=data.keys())
     for k in data.keys():
         df[k] = data[k]
+
+    df['matchid']=df['obsdate'].str.replace('-','')+'-'+df['planid']+'-'+\
+	df['spid'].astype(str)+'-'+df['fiberid'].astype(str)
+    
+    data_VAC = sqlutil.get("""select * from lamost_dr4.vac as l""",
+                       host='cappc127', user='jason_sanders',
+                       password=wsdbpassword,
+                       preamb='set enable_seqscan to off; ' +
+                       'set enable_mergejoin to off; ' +
+                       'set enable_hashjoin to off;', asDict=True,
+                       strLength=30)
+    df_VAC = pd.DataFrame(columns=data_VAC.keys())
+    for k in data_VAC.keys():
+        df_VAC[k] = data_VAC[k]
+    df_VAC['matchid'] = df_VAC['date']+'-'+df_VAC['plate']+'-'+\
+        df_VAC['sp_id'].astype(str)+'-'+df_VAC['fibre_id'].astype(str)
+    df = df.merge(df_VAC,on='matchid',how='left',suffixes=('','_vac'))
 
     cm2MASS = crossmatch_2MASS(df.ra.values, df.dec.values)
     cm2MASS = quality_2MASS_phot(cm2MASS)
@@ -41,6 +59,9 @@ def load_data():
     df['rho_Tg'] = 0.
     df['rho_TZ'] = 0.
     df['rho_gZ'] = 0.
+
+    if not add_masses:
+        return df
 
     output_file = '/data/jls/GaiaDR2/spectro/lamost_cannon/LAMOST_results.hdf5'
     t = pd.read_hdf(output_file)
@@ -61,7 +82,7 @@ def load_and_match(output_file='/data/jls/GaiaDR2/spectro/LAMOST_input.hdf5',
                    use_dr1=False):
 
     loaded, data = check_and_load(
-        output_file, 'LAMOST DR3 A, F, G, K catalogue')
+        output_file, 'LAMOST DR5 A, F, G, K catalogue')
     if loaded:
         return data
 
@@ -74,6 +95,6 @@ def load_and_match(output_file='/data/jls/GaiaDR2/spectro/LAMOST_input.hdf5',
         data.loc[fltr]=rx.loc[fltr]
     data = data.reset_index(drop=True)
 
-    write_input_file(data, output_file, 'LAMOST DR3 A,F,G,K catalogue')
+    write_input_file(data, output_file, 'LAMOST DR5 A,F,G,K catalogue')
 
     return data

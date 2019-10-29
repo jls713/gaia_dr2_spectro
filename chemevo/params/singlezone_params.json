@@ -15,7 +15,7 @@
 	},
 "grids":{
 	"RadialGridPoints":1,
-	"AgeGridPoints":50
+	"AgeGridPoints":150
 },
 "yields":{
 	"typeIa":"Maeda",
@@ -33,7 +33,7 @@
 	"Min_typeII_SN_mass": 10.0
 },
 "flows":{
-	"inflow":{"Form":"None"},
+        "inflow":{"Form":"None"},
 	"outflow":{"Form":"None"}
 },
 "elements":["S","Si","Mg","O","Ca","Fe"],

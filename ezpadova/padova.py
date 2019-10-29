@@ -21,7 +21,7 @@ else:
     from urllib2 import urlopen
     import HTMLParser as parser
 
-
+import requests
 from io import StringIO, BytesIO
 import zlib
 import re
@@ -94,6 +94,7 @@ map_phot = {"2mass_spitzer": " 2MASS + Spitzer (IRAC+MIPS)",
             "decam_vista": "DECAM ugrizY (ABmags) + VISTA ZYJHK_s (Vegamags)",
             "gaia": "Gaia's DR1 G, G_BP and G_RP (Vegamags)",
             "gaiaDR2": "Gaia's DR2 G, G_BP and G_RP (Vegamags)",
+            "gaiaDR2maiz": "Gaia's DR2 G, G_BP and G_RP Maiz-Apellaniz and Weiler 2018 (Vegamags)",
             "wfc3_wideverywide": "HST/WFC3 all W+LP+X filters (UVIS1+IR, final throughputs)",
             "wfc3_verywide": "HST/WFC3 long-pass and extremely wide filters (UVIS1, final throughputs)",
             "wfc3_wide": "HST/WFC3 wide filters (UVIS1+IR, final throughputs)",
@@ -117,20 +118,28 @@ def help_phot():
 
 # available tracks
 map_models = {
-    'parsec12s_r14': ('parsec_CAF09_v1.2S_NOV13', 'PARSEC version 1.2S Bressan et al. (2012), Tang et al. (2014),  Chen et al. (2014) with COLIBRI TP-AGB Marigo et al. (2013), Rosenfield et al. (2014, 2016)'),
-    'parsec12s': ('parsec_CAF09_v1.2S', 'PARSEC version 1.2S,  Bressan et al. (2012), Tang et al. (2014),  Chen et al. (2014)'),
-    'parsec11': ('parsec_CAF09_v1.1', 'PARSEC version 1.1, With revised diffusion+overshooting in low-mass stars, and improvements in interpolation scheme.'),
-    'parsec10': ('parsec_CAF09_v1.0', 'PARSEC version 1.0'),
-    '2010': ('gi10a',  'Marigo et al. (2008) with the Girardi et al. (2010) Case A correction for low-mass, low-metallicity AGB tracks'),
-    '2010b': ('gi10b',  'Marigo et al. (2008) with the Girardi et al. (2010) Case B correction for low-mass, low-metallicity AGB tracks'),
-    '2008': ('ma08',   'Marigo et al. (2008): Girardi et al. (2000) up to early-AGB + detailed TP-AGB from Marigo & Girardi (2007) (for M <= 7 Msun) + Bertelli et al. (1994) (for M > 7 Msun) + additional Z=0.0001 and Z=0.001 tracks.'),
-    '2002': ('gi2000', 'Basic set of Girardi et al. (2002) : Girardi et al. (2000) + simplified TP-AGB (for M <= 7 Msun) + Bertelli et al. (1994) (for M > 7 Msun) + additional Z=0.0001 and Z=0.001 tracks.')
+    'parsec12s_s35': ('parsec_CAF09_v1.2S', 'parsec_CAF09_v1.2S_S35', 
+                      'PARSEC version 1.2S Bressan et al. (2012), Tang et al. (2014),  Chen et al. (2014) with COLIBRI TP-AGB Pastorelli (2019)'),
+    'parsec12s_s16': ('parsec_CAF09_v1.2S', 'parsec_CAF09_v1.2S_NOV13', 
+                      'PARSEC version 1.2S Bressan et al. (2012), Tang et al. (2014),  Chen et al. (2014) with COLIBRI TP-AGB Marigo et al. (2013), Rosenfield et al. (2014, 2016)'),
+    'parsec12s': ('parsec_CAF09_v1.2S', 'no',
+                  'PARSEC version 1.2S,  Bressan et al. (2012), Tang et al. (2014),  Chen et al. (2014)'),
+    'parsec11': ('parsec_CAF09_v1.1', '',
+                 'PARSEC version 1.1, With revised diffusion+overshooting in low-mass stars, and improvements in interpolation scheme.'),
+    'parsec10': ('parsec_CAF09_v1.0', '',
+                 'PARSEC version 1.0'),
+    #'2010': ('gi10a',  
+    #         'Marigo et al. (2008) with the Girardi et al. (2010) Case A correction for low-mass, low-metallicity AGB tracks'),
+    #'2010b': ('gi10b',  
+    #          'Marigo et al. (2008) with the Girardi et al. (2010) Case B correction for low-mass, low-metallicity AGB tracks'),
+    #'2008': ('ma08',   'Marigo et al. (2008): Girardi et al. (2000) up to early-AGB + detailed TP-AGB from Marigo & Girardi (2007) (for M <= 7 Msun) + Bertelli et al. (1994) (for M > 7 Msun) + additional Z=0.0001 and Z=0.001 tracks.'),
+    #'2002': ('gi2000', 'Basic set of Girardi et al. (2002) : Girardi et al. (2000) + simplified TP-AGB (for M <= 7 Msun) + Bertelli et al. (1994) (for M > 7 Msun) + additional Z=0.0001 and Z=0.001 tracks.')
 }
 
 
 def help_models():
     for k, v in map_models.items():
-        print('model "{0}":\n   {1}\n'.format(k, v[1]))
+        print('model "{0}":\n   {1}\n'.format(k, v[2]))
 
 
 map_carbon_stars = {
@@ -180,7 +189,8 @@ __def_args__ = {'binary_frac': 0.3,
                 'binary_kind': 1,
                 'binary_mrinf': 0.7,
                 'binary_mrsup': 1,
-                'cmd_version': 2.3,
+                'cmd_version': 3.3,
+                'track_postagb': 'no',
                 'dust_source': 'nodust',
                 'dust_sourceC': 'AMCSIC15',
                 'dust_sourceM': 'dpmod60alox40',
@@ -217,7 +227,44 @@ __def_args__ = {'binary_frac': 0.3,
                 'output_kind': 0,
                 'photsys_file': 'tab_mag_odfnew/tab_mag_bessell.dat',
                 'photsys_version': 'yang',
+                'track_parsec': map_models['parsec12s_s35'][0],
+                'track_colibri': map_models['parsec12s_s35'][1],
                 'submit_form': 'Submit'}
+
+__def_args__ = {
+                'cmd_version': 3.3,
+                'dust_sourceC': 'AMCSIC15',
+                'dust_sourceM': 'dpmod60alox40',
+                'eta_reimers': 0.2,
+                'extinction_av': 0,
+                'extinction_coeff': 'constant',
+                'extinction_curve': 'cardelli',
+                'imf_file': "tab_imf/imf_chabrier_lognormal.dat",
+                'isoc_lagelow': 6.6,
+                'isoc_lageupp': 10.13,
+                'isoc_dlage': 0.05,
+                'isoc_zlow': 0.0001,
+                'isoc_zupp': 0.03,
+                'isoc_dz': 0.0,
+                'kind_dust': 0,
+                'kind_interp': 1,
+                'kind_mag': 2,
+                'kind_postagb': -1,
+                'lf_deltamag': 0.2,
+                'lf_maginf': 20,
+                'lf_magsup': -20,
+                'n_TPC': 10,
+                'output_evstage': 1,
+                'output_gzip': 0,
+                'output_kind': 0,
+                'photsys_file': 'tab_mag_odfnew/tab_mag_bessell.dat',
+                'photsys_version': 'YBC',
+                'track_colibri': map_models['parsec12s_s35'][1],
+                'track_parsec': map_models['parsec12s_s35'][0],
+                'track_postagb': 'no',
+                'sim_mtot':1e4,
+                'submit_form': 'Submit',
+                }
 
 
 def file_type(filename, stream=False):
@@ -278,11 +325,9 @@ def __get_url_args(model=None, carbon=None, interp=None, Mstars=None,
 
     # overwrite some parameters
     if model is not None:
-        d['isoc_kind'] = map_models["%s" % model][0]
-        if 'parsec' in model.lower():
-            d['output_evstage'] = 1
-        else:
-            d['output_evstage'] = 0
+        d['track_parsec'] = map_models["%s" % model][0]
+        d['track_colibri'] = map_models["%s" % model][1]
+        d['output_evstage'] = 1
 
     if carbon is not None:
         d['kind_cspecmag'] = map_carbon_stars[carbon][0]
@@ -329,15 +374,23 @@ def __query_website(d):
     """ Communicate with the CMD website """
     webserver = 'http://stev.oapd.inaf.it'
     print('Interrogating {0}...'.format(webserver))
-    # url = webserver + '/cgi-bin/cmd_2.8'
-    url = webserver + '/cgi-bin/cmd'
+    url = webserver + '/cgi-bin/cmd/'
+    #print(d)
+    #q = urlencode(d)
+    #print(q)
+    #print('Query content: {0}'.format(q))
+    #if py3k:
+    #    req = request.Request(url, q.encode('utf8'))
+    #    c = urlopen(req).read().decode('utf8')
+    #else:
+    #    c = urlopen(url, q).read()
+    #print(d)
+    for ck in d.keys():
+        d[ck]=(None,str(d[ck]))
     q = urlencode(d)
-    # print('Query content: {0}'.format(q))
-    if py3k:
-        req = request.Request(url, q.encode('utf8'))
-        c = urlopen(req).read().decode('utf8')
-    else:
-        c = urlopen(url, q).read()
+    print(q)
+    c = requests.post(url,files=d).text
+    print(c)
     aa = re.compile('output\d+')
     fname = aa.findall(c)
     if len(fname) > 0:
@@ -351,7 +404,7 @@ def __query_website(d):
         return r
     else:
         # print(c)
-        print(url + q)
+        #print(url + q)
         if "errorwarning" in c:
             p = __CMD_Error_Parser()
             p.feed(c)
@@ -551,10 +604,10 @@ def get_t_isochrones(logt0, logt1, dlogt, metal, ret_table=True, **kwargs):
         else return the string content of the data
     """
     d = __get_url_args(**kwargs)
-    d['isoc_val'] = 1
-    d['isoc_zeta0'] = metal
-    d['isoc_lage0'] = logt0
-    d['isoc_lage1'] = logt1
+    #d['isoc_val'] = 1
+    d['isoc_zlow'] = metal
+    d['isoc_lagelow'] = logt0
+    d['isoc_lageupp'] = logt1
     d['isoc_dlage'] = dlogt
 
     r = __query_website(d)

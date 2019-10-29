@@ -6,6 +6,7 @@ import sys
 import os
 from astropy.coordinates import SkyCoord
 import astropy.units as u
+from lamost import load_data as load_lamost_data
 from apogee import load_data as load_apogee_data
 sys.path.append('/data/jls/cyanide/')
 from spec_utils import rebin_spectrum
@@ -14,11 +15,11 @@ from multiprocessing import Pool
 from functools import partial
 
 
-def download_spectrum(planid, lmjd, spid, fiberid):
+def download_spectrum(planid, lmjd, spid, fiberid, obsdate):
     spectrum = 'spec-%s-%s_sp%02d-%03d.fits.gz' % (lmjd, planid, spid, fiberid)
-    lamost_server = 'http://dr3.lamost.org/sas/fits/'
-    fldr = '%s/' % planid
-    local_location = '/media/Seagate Expansion Drive/dr3_spectra/'
+    lamost_server = 'http://dr5.lamost.org/v3/sas/fits/'
+    fldr = '%s/%s/' % (obsdate.replace('-',''),planid)
+    local_location = '/local/scratch_1/jls/lamost/dr5_spectra/'
     if not os.path.exists(local_location + fldr):
         os.makedirs(local_location + fldr)
     print local_location + fldr + spectrum
@@ -33,7 +34,8 @@ def download_spectrum_row(row):
     return download_spectrum(row['planid'],
                              row['lmjd'],
                              row['spid'],
-                             row['fiberid'])
+                             row['fiberid'],
+                             row['obsdate'])
 
 
 def download_spectra_loop(lb):
@@ -214,7 +216,7 @@ def run_cannon_model():
 
 def full_sample():
     # But need to cut out bad fits -- upper MS
-    data = pd.read_hdf('/data/jls/GaiaDR2/spectro/LAMOST_input.hdf5')
+    data = load_lamost_data(add_masses=False)
     return data[(data.teff<6000.)&(data.logg < 3.9)].reset_index(drop=True)
 
 

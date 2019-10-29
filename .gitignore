@@ -9,6 +9,7 @@
 *.swp
 *.png
 */.ipynb_checkpoints/*
+*/*/.ipynb_checkpoints/*
 *.poly
 *.acts0
 !isochrone/extinction_files/*.dat

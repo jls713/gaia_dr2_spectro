@@ -11,6 +11,7 @@ import pandas as pd
 from astropy.io import fits
 # =============================================================================
 from utils import *
+import sys
 sys.path.append('../')
 import cross_match
 sys.path.append('/data/jls/cyanide/comparisons/')
@@ -22,7 +23,7 @@ APOGEE_FOLDER = '/data/jls/apogee/apogee_data/'
 DR12_file = 'allStar-v603-nodups.fits'
 DR14_file = 'allStar-l31c.2.fits'
 
-print 'VSCATTER=0 stars need attention if needed'
+print('VSCATTER=0 stars need attention if needed')
 
 def format_columns(data):
     col_dict = {'J_ERR': 'eJ', 'H_ERR': 'eH', 'K_ERR': 'eK',
@@ -147,14 +148,14 @@ def load_data(calibrated=True, use_dr12=False, add_masses=True):
     # Add masses
     if(add_masses):
 	    with open('/data/jls/cyanide/comparisons/neural_network.pkl', 'r') as f:
-		nn = pickle.load(f)
+                nn = pickle.load(f)
 	    flds = ['C_M', 'N_M', 'ALPHA_M', 'TEFF', 'LOGG', 'M_H']
 	    inputData = apogee[flds].values
 	    inputErrData = apogee[[fld + '_ERR' for fld in flds]].values
 	    results = nn.label(inputData, inputErrData, samples=50)
 	    fltr = True
 	    for f in flds:
-		fltr &= (apogee[f] == apogee[f])
+                fltr &= (apogee[f] == apogee[f])
 	    fltr &= (apogee.TEFF>4000.)&(apogee.TEFF<5250.)&(apogee.LOGG>1.)&(apogee.LOGG<3.3)&(apogee.M_H>-1.5)&(apogee.M_H<0.5)
 	    apogee.loc[fltr, 'mass'], apogee.loc[fltr, 'mass_error'] = results[0][fltr], results[1][fltr]
 

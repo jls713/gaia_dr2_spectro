@@ -1,6 +1,6 @@
 import numpy as np
 import sys
-import sqlutil
+import sqlutilpy as sqlutil
 from login import wsdbpassword
 
 
@@ -41,7 +41,7 @@ def crossmatch_gaia(dataIN, dr1=False, epoch=2000,
         (select *, %s as dist from %s as s where %s %s order by %s  asc limit 1)
         as tt on  true  order by xid """ % \
         (dist_strng, gaia_catalogue, phot_g_strng, join_strng, dist_strng)
-    print rqst
+    print(rqst)
     add_data = sqlutil.local_join(rqst,
                                   'mytable',
                                   (ra, dec, np.arange(len(dec))),
@@ -110,7 +110,7 @@ def crossmatch_gaia_ids(data):
     rqst = """
         select tt.* from %s as tt, mytable as m where tt.source_id=m.source_id""" % \
         (gaia_catalogue)
-    print rqst
+    print(rqst)
     add_data = sqlutil.local_join(rqst,
                                   'mytable',
                                   (data.source_id.values,),
@@ -209,7 +209,7 @@ def crossmatch_2mass_gaia_sourceid(data):
     rqst = """
         select * from mytable as m left join %s as s on s.source_id=m.source_id""" % \
         (gaia_catalogue)
-    print rqst
+    print(rqst)
     add_data = sqlutil.local_join(rqst,
                                   'mytable',
                                   (data.source_id.values, ),
@@ -237,7 +237,7 @@ def crossmatch_2mass_ids_gaia(data, dist_max=2.):
         (select * from %s as s where %s order by %s  asc limit 1)
         as tt on  true  order by xid """ % \
         (gaia_catalogue, join_strng, dist_strng)
-    print rqst
+    print(rqst)
     add_data = sqlutil.local_join(rqst,
                                   'mytable',
                                   (ra, dec, np.arange(len(dec))),
@@ -267,7 +267,7 @@ def crossmatch_2mass_ids_gaia_version2(data, dist_max=10.):
         order by %s  asc limit 1)
         as tt on true order by xid""" % (join_strng, dist_strng)
     # and abs(s.j_m-m.j)<1e-3
-    print rqst
+    print(rqst)
     add_data = sqlutil.local_join(rqst,
                                   'mytable',
                                   (ra, dec, J, np.arange(len(dec))),
