@@ -9,10 +9,23 @@
 #include "utils.h"
 #include "cuba.h"
 #include "hdf5_reader.h"
-#include "utils_iso.h"
+//#include "utils_iso.h"
 //=============================================================================
 const int nproc = 1;
 const int SEED = time(0);
+/**
+ * @brief make unique pointer
+ *
+ * @param args constructor arguments
+ * @tparam T class type to make
+ * @tparam typename ...Args class types of constructor arguments
+ * @return unique pointer
+ */
+template<typename T, typename ...Args>
+std::unique_ptr<T> make_unique( Args&& ...args )
+{
+    return std::unique_ptr<T>( new T( std::forward<Args>(args)... ) );
+}
 /**
  * @brief integrate using cuba
  * @details integrate general function <integrand> using cuba algorithm of type

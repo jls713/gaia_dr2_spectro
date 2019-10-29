@@ -8,8 +8,8 @@ clean: rm obj/*.o
 include ../Makefile.inc
 
 ## ============================================================================
-INC = -I$(GSLPATH)include/ -I$(POTPATH) -I$(JSONINC) -I$(LOGGINC) -Iinc/ -I$(GTESTINC) -I$(HDF5INCPATH) $(CUBAINCPATH) -I$(GENERALPATH) \
-    -I$(LOGGINC) -I$(JSONINC) -I../isochrone/inc/
+INC = -I$(GSLPATH)include/ -I$(POTPATH) -I$(JSONINC) -I$(LOGGINC) -Iinc/ -I$(HDF5INCPATH) $(CUBAINCPATH) -I$(GENERALPATH) \
+    -I$(LOGGINC) -I$(JSONINC) #-I../isochrone/inc/
 LIB = -L$(GSLPATH)lib/ $(POTLIBPATH) $(HDF5LIBPATH) $(CUBALIBPATH)
 LIBS = -lcuba -lhdf5_cpp -lhdf5 -lgsl -lgslcblas -lgomp
 ## ============================================================================
@@ -27,6 +27,6 @@ $(OBJ)/%.o : $(SRC)/%.cpp
 $(MAIN)%.exe: $(OBJ)/%.o $(OBJECTS)
 	$(CCOMPILER) -g $(OBJECTS) $< $(LIB) $(LIBS) -o $@ -DGSL_2
 
-$(MAIN)test.exe: $(OBJ)/test.o
+$(MAIN)test.exe: $(OBJ)/test.o $(OBJECTS)
 	$(CCOMPILER) -g $(OPTS) $(OBJECTS) $(OBJ)/test.o $(LIB) -L$(GTESTLIB) -Wl,-R$(GTESTLIB) -lgtest $(LIBS) -o test.exe -DGSL_2
 ## ============================================================================

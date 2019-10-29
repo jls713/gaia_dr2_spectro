@@ -252,10 +252,6 @@ int Model::step(unsigned nt, double dt){
 		starformrate=SFR(R,tp);
 		gas_return=starformrate-(*reducedSFR)(R,tp);
 	        inflowrate = InflowRate(R,tp);
-		//double A = params.parameters["fundamentals"]["Kennicutt-Schmidt_A"];
-		//double K = params.parameters["fundamentals"]["Kennicutt-Schmidt_Coeff"];
-
-		//inflowrate = (pow(starformrate/A,K)-gm_prev-(-starformrate+gas_return)*dt)/dt;
 
 		auto outer_gas_mass=0.;
 		if(!single_zone){
@@ -266,7 +262,6 @@ int Model::step(unsigned nt, double dt){
 			outer_gas_mass=(*gas_mass)(nR+1,nt-1);
 		else
 			outer_gas_mass=gas_mass->log_extrapolate_high(Rup,nt-1);
-			// outer_gas_mass=exp(log((*gas_mass)(NR-1,nt-1))+(log((*gas_mass)(NR-1,nt-1))-log((*gas_mass)(NR-2,nt-1)))/(gas_mass->grid_radial()[NR-1]-gas_mass->grid_radial()[NR-2])*(Rup-gas_mass->grid_radial()[NR-1]));
 
 		rad_flow_dm=RadialFlowRate(gm_prev,outer_gas_mass,R,Rdown,Rup,tp,dt,&err);
 		}
@@ -286,38 +281,6 @@ int Model::step(unsigned nt, double dt){
 
 		if(migration)
 			gm += rad_mig->convolve(gas_mass.get(),nR,nt)-gm_prev;
-		/*if(gm<0.)
-			throw std::runtime_error(
-			           "More stars being formed than gas available in ring R="
-			           +std::to_string(R));
-		*/
-
-		// if(migration){
-		// 	area_up = gas_mass->annulus_area(nR+1);
-		// 	area = gas_mass->annulus_area(nR);
-		// 	area_down = gas_mass->annulus_area(nR-1);
-		// 	rmlower=RadialMigrationKernel(Rdown,R,dt); // leaving gas moving in
-		// 	rmupper=RadialMigrationKernel(Rup,R,dt); // leaving gas moving out
-		// 	rmlower_1=RadialMigrationKernel(R,Rdown,dt)*area_down/area; // entering gas moving in
-		// 	rmupper_1=RadialMigrationKernel(R,Rup,dt)*area_up/area; // entering gas moving out
-		// 	if(nR==0)
-		// 		gmprev_d=gas_mass->log_extrapolate_low(Rdown,nt-1);
-		// 		// gmprev_d=exp(log((*gas_mass)(0,nt-1))+(log((*gas_mass)(1,nt-1))-log((*gas_mass)(0,nt-1)))/(gas_mass->grid_radial()[1]-gas_mass->grid_radial()[0])*(Rdown-gas_mass->grid_radial()[0]));
-		// 	else
-		// 		gmprev_d=(*gas_mass)(nR-1,nt-1);
-		// 	// if(nR==0)
-		// 	// 	gm+=outer_gas_mass*rmupper_1-gm_prev*rmupper;
-		// 	// else
-		// 		if(nR>0)
-		// 		gm+=gmprev_d*rmlower_1+outer_gas_mass*rmupper_1-gm_prev*(rmupper+rmlower);
-		// 	// std::cout<<R<<" "<<t<<" "<<rmlower<<" "<<rmupper<<" "<<rmlower_1<<" "<<rmupper_1<<" "<<" "<<Rdown<<" "<<Rup<<" "<<gm_prev<<" "<<gmprev_d<<" "<<gm_prev+dmdt*dt<<" "<<gm<<std::endl;
-		// 		std::cout<<rmlower<<" "<<rmupper<<" "<<rmlower_1<<" "<<rmupper_1<<" "<<gmprev_d<<" "<<outer_gas_mass<<" "<<gm_prev<<" "<<Rdown<<" "<<Rup<<" "<<gas_mass->annulus_area(nR)<<" ";
-		// }
-
-		// std::cerr<<R<<" "<<t<<" "<<gm<<" "<<starformrate<<" "<<gas_return<<" "<<inflowrate<<" ";
-		// std::cerr<<rad_flow_dm<<" "<<reducedSFR->t_gradient(R,tp)<<" "<<outer_gas_mass<<" ";
-		//std::cerr<<radialflow->gamma_g(R,Rdown,Rup,tp,dt,reducedSFR.get())<<" "<<radialflow->beta_g(R,Rdown,Rup,tp,dt,reducedSFR.get());
-		//std::cerr<<" "<<radialflow->flow_rate((R+Rdown)*.5,tp,reducedSFR.get())<<" "<<radialflow->flow_rate((R+Rup)*.5,tp,reducedSFR.get());
 
 		sm_prev = (*stellar_mass)(nR,nt-1);
 		dmsdt = starformrate;
@@ -326,12 +289,6 @@ int Model::step(unsigned nt, double dt){
 
 		if(migration and nt>1)
 			sm += rad_mig->convolve(stellar_mass.get(),nR,nt)-sm_prev;
-
-		/*if(gm<0.)
-			throw std::runtime_error(
-			           "More stars being formed than gas available in ring R="
-			           +std::to_string(R));
-		*/
 
 		gas_mass->set(gm,nR,nt);
 		stellar_mass->set(sm,nR,nt);
@@ -364,21 +321,6 @@ int Model::step(unsigned nt, double dt){
 				else{mid=gas_mass->grid_radial()[NR-7]; std=gas_mass->grid_radial()[NR-5]-mid;}
 				dmdt+=gasdumpsurfacedensity*initial_abundance/dt*exp(-.5*pow((gas_mass->grid_radial()[nR]-mid)/std,2.));
         		}
-			// else dmdt=inflowrate*mass_fraction[e.first](nR0,nt0);
-			// updated mass of element e
-			// if(nR==NR-1) mass_fraction[e.first].set(Xi,nR,nt);
-
-			// double mig=0., lowerXi=0.;
-			// if(migration){
-			// 	if(nR==0)
-			// 		lowerXi=mass_fraction[e.first](0,nt-1);
-			// 	else
-			// 		lowerXi=mass_fraction[e.first](nR-1,nt-1);
-			// 	if(nR>0)
-			// 	mig=gmprev_d*lowerXi*rmlower_1+e_outer_gas_mass*rmupper_1-gm_prev*(rmupper+rmlower)*Xi;
-			// 	// if(nR==0)
-			// 	// 	mig=e_outer_gas_mass*rmupper_1-gm_prev*rmupper*Xi;
-			// }
 
 			double mass_now = Xi*gm_prev+dmdt*dt;
 			if(migration)
@@ -396,8 +338,6 @@ int Model::step(unsigned nt, double dt){
 			err=1;
 			std::cerr<<"Problem "<<Z(R,t-dt)<<" "<<Z(R,t)<<std::endl;
 		}
-		// std::cout<<R<<" "<<t<<" "<<gm<<" "<<Z(R,t)<<std::endl;
-		// std::cerr<<" "<<X(R,t)<<" "<<Y(R,t)<<" "<<Z(R,t)<<std::endl;
 	}
 	if(err) return err;
 	int iteratemax=1; auto gm_it=gas_mass->grid_fixed_t(nt);
@@ -430,10 +370,7 @@ int Model::step(unsigned nt, double dt){
 			starformrate=SFR(R,tp);
 			gas_return=starformrate-(*reducedSFR)(R,tp);
 			inflowrate = InflowRate(R,tp);
-		//double A = params.parameters["fundamentals"]["Kennicutt-Schmidt_A"];
-		//double K = params.parameters["fundamentals"]["Kennicutt-Schmidt_Coeff"];
 
-		//inflowrate = (pow(starformrate/A,K)-gm_prev-(-starformrate+gas_return)*dt)/dt;
 			auto outer_gas_mass=0.;
 			if(!single_zone){
 			Rdown=gas_mass->Rdown(nR);
@@ -462,31 +399,6 @@ int Model::step(unsigned nt, double dt){
 
                         if(gm<0.){starformrate=0.;rad_flow_dm=0.;dmdt=gas_return+inflowrate;gm=gm_prev+dmdt*dt;}
 
-			// if(migration){
-			// 	area_up = gas_mass->annulus_area(nR+1);
-			// 	area = gas_mass->annulus_area(nR);
-			// 	area_down = gas_mass->annulus_area(nR-1);
-			// 	rmlower=RadialMigrationKernel(Rdown,R,dt); // leaving gas moving in
-			// 	rmupper=RadialMigrationKernel(Rup,R,dt); // leaving gas moving out
-			// 	rmlower_1=RadialMigrationKernel(R,Rdown,dt)*area_down/area; // entering gas moving in
-			// 	rmupper_1=RadialMigrationKernel(R,Rup,dt)*area_up/area; // entering gas moving out
-			// 	if(nR==0)
-			// 		gmprev_d=gas_mass->log_extrapolate_low(Rdown,tp);
-			// 	else
-			// 		gmprev_d=(*gas_mass)(Rdown,tp);
-			// 	// if(nR==0)
-			// 	// 	gm+=outer_gas_mass*rmupper_1-gm_prev*rmupper;
-			// 	// else
-			// 	if(nR>0)
-			// 		gm+=gmprev_d*rmlower_1+outer_gas_mass*rmupper_1-gmhere*(rmupper+rmlower);
-			// 	std::cout<<rmlower<<" "<<rmupper<<" "<<rmlower_1<<" "<<rmupper_1<<" "<<gmprev_d<<" "<<outer_gas_mass<<" "<<gm_prev<<" "<<Rdown<<" "<<Rup<<" "<<gas_mass->annulus_area(nR)<<" ";
-			// }
-
-			// std::cerr<<R<<" "<<t<<" "<<gm<<" "<<starformrate<<" "<<gas_return<<" "<<inflowrate<<" ";
-			// std::cerr<<rad_flow_dm<<" "<<reducedSFR->t_gradient(R,tp)<<" "<<outer_gas_mass<<" ";
-			//std::cerr<<radialflow->gamma_g(R,Rdown,Rup,tp,dt,reducedSFR.get())<<" "<<radialflow->beta_g(R,Rdown,Rup,tp,dt,reducedSFR.get())<<" ";
-			//std::cerr<<radialflow->flow_rate((R+Rdown)*.5,tp,reducedSFR.get())<<" "<<radialflow->flow_rate((R+Rup)*.5,tp,reducedSFR.get());
-
 			sm_prev = (*stellar_mass)(nR,nt-1);
 			dmsdt = starformrate;
 			dmsdt -= gas_return/(1.-OutflowFraction(R,tp));
@@ -494,16 +406,9 @@ int Model::step(unsigned nt, double dt){
 
 			if(migration){
 				gm += rad_mig->convolve(gas_mass.get(),nR,nt)-gm_prev;
-				// std::cout<<gm-dmdt*dt-gm_prev<<" ";
 				if(nt>1) sm += rad_mig->convolve(stellar_mass.get(),nR,nt)-sm_prev;
 			}
 
-			/*if(gm<0.)
-				throw std::runtime_error(
-				           "More stars being formed than gas available in ring R="
-				           +std::to_string(R));
-			*/
-		        //if(gm<0.) gm=0.;
 			gas_mass->set(gm,nR,nt);
 			stellar_mass->set(sm,nR,nt);
 
@@ -539,7 +444,6 @@ int Model::step(unsigned nt, double dt){
 				double mass_now = Xi*gm_prev+dmdt*dt;
 				if(migration){
 					mass_now+=rad_mig->convolve_massfrac(gas_mass.get(),&mass_fraction[e.first],nR,nt)-Xi*gm_prev;
-					// std::cout<<mass_now-dmdt*dt-Xi*gm_prev<<" ";
 				}
 				mass_fraction[e.first].set(mass_now/gm,nR,nt);
 			}
@@ -551,7 +455,6 @@ int Model::step(unsigned nt, double dt){
 			        mass_fraction[element_index["He"]].set(mass_fraction[element_index["He"]](nR,nt-1),nR,nt);
 			}
 
-			// std::cerr<<" "<<X(R,t)<<" "<<Y(R,t)<<" "<<Z(R,t)<<std::endl;
 			if(fabs((gm-gm_it[nR])/gm)<0.005) not_done[nR]=0;
 			else not_done[nR]=1;
 		}
