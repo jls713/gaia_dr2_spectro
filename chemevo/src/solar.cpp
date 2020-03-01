@@ -77,7 +77,7 @@ AndersSolarAbundances::AndersSolarAbundances(ModelParameters M){
 	std::ifstream inFile(data_folder+data_file);
 	if(!inFile.good()){
 		LOG(ERROR)<<"Could not open file "+data_folder+data_file<<std::endl;
-		throw std::invalid_argument("Anders & Grevsse (1989) data file not valid\n");
+		throw std::invalid_argument("Anders & Grevesse (1989) data file not valid\n");
 	}
 	std::string line;
 	for(auto i=0;i<6;++i) std::getline(inFile,line);

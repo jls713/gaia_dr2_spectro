@@ -25,7 +25,8 @@ class Model{
 private:
 	//=========================================================================
 	ModelParameters params;
-	AsplundSolarAbundances solar;
+	// AsplundSolarAbundances solar;
+	AndersSolarAbundances solar;
 	//=========================================================================
 	std::shared_ptr<StarFormationRate> sfr;
 	std::shared_ptr<InitialMassFunction> imf;

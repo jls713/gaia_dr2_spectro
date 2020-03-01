@@ -1,6 +1,6 @@
 ##=============================================================================
 import numpy as np
-import fitsio
+# import fitsio
 import pandas as pd
 import matplotlib.pyplot as plt
 import h5py
@@ -265,11 +265,11 @@ class chem_evo_data:
 
     def paint(self,R,t,el):
         ''' Returns the abundances in list el at a range of R and t '''
-        results = []
+        results = {}
         rbs_h = RectBivariateSpline(self.R,self.t,self.abund['H'])
         for e in el:
             rbs = RectBivariateSpline(self.R,self.t,self.abund[e])
-            results+=[rbs(R,t,grid=False)-rbs_h(R,t,grid=False)]
+            results[e+'_H']=rbs(R,t,grid=False)-rbs_h(R,t,grid=False)
         return results
 
 

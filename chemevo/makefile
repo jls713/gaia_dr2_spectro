@@ -23,10 +23,13 @@ OBJECTS = $(OBJ)/params.o $(OBJ)/solar.o $(OBJ)/yields.o $(OBJ)/sfr.o $(OBJ)/imf
 
 $(OBJ)/%.o : $(SRC)/%.cpp
 	$(CCOMPILER) $(OPTS) -c $< -o $@ $(INC) -g -DGSL_2
-## ============================================================================
-$(MAIN)%.exe: $(OBJ)/%.o $(OBJECTS)
-	$(CCOMPILER) -g $(OBJECTS) $< $(LIB) $(LIBS) -o $@ -DGSL_2
 
+$(OBJ)/test.o : $(SRC)/test.cpp
+	$(CCOMPILER) $(OPTS) -c $< -o $@ $(INC) -I$(GTESTINC) -g -DGSL_2
+## ============================================================================
 $(MAIN)test.exe: $(OBJ)/test.o $(OBJECTS)
 	$(CCOMPILER) -g $(OPTS) $(OBJECTS) $(OBJ)/test.o $(LIB) -L$(GTESTLIB) -Wl,-R$(GTESTLIB) -lgtest $(LIBS) -o test.exe -DGSL_2
+
+$(MAIN)%.exe: $(OBJ)/%.o $(OBJECTS)
+	$(CCOMPILER) -g $(OBJECTS) $< $(LIB) $(LIBS) -o $@ -DGSL_2
 ## ============================================================================

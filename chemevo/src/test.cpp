@@ -179,13 +179,14 @@ TEST(TypeIaRates,BinaryMass){
 //=============================================================================
 
 TEST(Yields,YieldsSet){
-    ModelParameters M("example_params.json");
+    ModelParameters M("params/example_params.json");
     M.parameters["yields"]["AGB"]="Karakas";
     M.parameters["yields"]["typeIa"]="Maeda";
     M.parameters["yields"]["typeII"]="Kobayashi";
     YieldsSet Y(M);
     AGBYieldsKarakas agb(M);TypeIIKobayashi2006 typeII(M);TypeIaYields typeIa(M);
     EXPECT_NEAR(Y.mass("B",1.9,0.02),2.55e-25,1e-27);
+    EXPECT_NEAR(Y.mass("Li",3.5,0.02),1.6e-10,1e-15);
     EXPECT_NEAR(Y.mass_remnant(1.,0.02),0.564,1e-10);
     EXPECT_NEAR(Y.mass_ejected(1.,0.02),1.-0.564,1e-10);
     EXPECT_NEAR(Y.mass("Ge",40.,0.02),0.002412,1e-14);
@@ -196,7 +197,7 @@ TEST(Yields,YieldsSet){
         std::cout<<mm<<" "<<Y.mass_ejected(mm,0.001)<<" "<<Y.mass("H",mm,0.001)<<std::endl;
 }
 TEST(Yields,ChieffiLimongi){
-    ModelParameters M("example_params.json");
+    ModelParameters M("params/example_params.json");
     M.parameters["yields"]["typeII"]="ChieffiLimongi";
     M.parameters["yields"]["AGB"]="Karakas";
     M.parameters["yields"]["typeIa"]="Maeda";
@@ -205,11 +206,17 @@ TEST(Yields,ChieffiLimongi){
 }
 
 TEST(Yields,AGBYields){
-    ModelParameters M("example_params.json");
+    ModelParameters M("params/example_params.json");
     M.parameters["yields"]["AGB"]="Karakas";
     AGBYieldsKarakas agb(M);
-    for(double mm=1.;mm<13.;mm+=0.4)
-        std::cout<<mm<<" "<<agb.mass_ejected(mm,0.001)<<" "<<agb.mass_ejected(mm,0.01)<<" "<<agb.mass_ejected(mm,0.1)<<std::endl;
+    for(double mm=0.4;mm<8.;mm+=0.2)
+        std::cerr<<mm<<" "
+                 <<agb.mass_ejected(mm,0.001)<<" "
+                 <<agb.mass_ejected(mm,0.01)<<" "
+                 <<agb.mass_ejected(mm,0.1)<<" "
+                 <<agb.mass("He",mm,0.001)<<" "
+                 <<agb.mass("He",mm,0.01)<<" "
+                 <<agb.mass("He",mm,0.1)<<std::endl;
 }
 //=============================================================================
 

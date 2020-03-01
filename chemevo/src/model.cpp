@@ -59,7 +59,7 @@ void Model::fill_initial_grids(void){
 	double Zinit = params.parameters["fundamentals"]["InitialMetallicity"];
 	double AlphaInit = params.parameters["fundamentals"]["InitialAlpha"];
 	Zinit *= solar.Z();
-        metallicity->set_fixed_t_const(Zinit,0);
+    metallicity->set_fixed_t_const(Zinit,0);
 	for(auto i=0u;i<mass_fraction.size();++i){
 		auto initial_abundance = solar.scaled_solar_mass_frac(elements[i],Zinit);
 		if(is_alpha_element[elements[i]])
@@ -74,7 +74,8 @@ void Model::fill_initial_grids(void){
 	double ts = params.parameters["fundamentals"]["GalaxyAge"];
 	double KSN = params.parameters["fundamentals"]["Kennicutt-Schmidt_Coeff"];
 	auto F = params.parameters["fundamentals"];
-        double A;
+    double A;
+
 	if (F.find("Kennicutt-Schmidt_A") != F.end())
 		A = F["Kennicutt-Schmidt_A"];
 	else{
@@ -857,11 +858,12 @@ int _gasreturn_rate_2D(const int ndim[],const double y[], const int*fdim, double
 
 double Model::SwitchGasReturnRate(double R, double t, double tmin, double tmax,std::string which){
 	double mthresh = params.parameters["typeII"]["Min_typeII_SN_mass"];
+	double integral = 0.;
 	if(params.parameters["migration"]["Form"]=="None"){
 		Rate_st P({this,R,t,which,mthresh});
 		//GaussLegendreIntegrator GL(300);
 		integrator GL(iterMAX_integral);
-		return GL.integrate(&_gasreturn_rate,tmin,tmax,1e-4,&P);
+		integral = GL.integrate(&_gasreturn_rate,tmin,tmax,1e-4,&P);
 	}
 	else{
 		double Rmin=0.,Rmax=30.;
@@ -872,9 +874,10 @@ double Model::SwitchGasReturnRate(double R, double t, double tmin, double tmax,s
 		// }
 		Rate_st_2D P(this,R,t,{tmin,Rmin},{tmax,Rmax},which,mthresh);
 		double err;
-		return integrate(&_gasreturn_rate_2D,&P,1e-3,0,"Divonne",&err,
+		integral = integrate(&_gasreturn_rate_2D,&P,1e-3,0,"Divonne",&err,
 		                 "GasReturn "+which);
 	}
+	return integral;
 }
 double Model::TypeIIGasReturnRate(double R, double t){
 	auto tmin = t-Lifetime(params.parameters["typeII"]["Min_typeII_SN_mass"],
