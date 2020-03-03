@@ -78,7 +78,7 @@ TEST(Galaxy,grid){
 //=============================================================================
 
 TEST(Parameters,params){
-    ModelParameters M("example_params.json");
+    ModelParameters M("params/example_params.json");
     M.print();
     M.pretty_print();
 }
@@ -87,7 +87,7 @@ TEST(Parameters,params){
 
 TEST(StellarAges,Portinari){
 
-    ModelParameters MM("example_params.json");
+    ModelParameters MM("params/example_params.json");
     Portinari1998 lifetime(MM);
     EXPECT_NEAR(lifetime(1.1,0.004),4.93,1e-3);
     EXPECT_NEAR(lifetime(40.,0.02),5.12/1000.,1e-8);
@@ -107,7 +107,7 @@ TEST(StellarAges,Portinari){
 
 }
 TEST(StellarAges,PadovaniMatteucci){
-    ModelParameters MM("example_params.json");
+    ModelParameters MM("params/example_params.json");
     PadovaniMatteucci1993 lifetime(MM);
 
     EXPECT_NEAR(lifetime.mass_star_dying_now(lifetime(40.,0.02),0.02),40.,1e-2);
@@ -123,7 +123,7 @@ TEST(StellarAges,PadovaniMatteucci){
 
 }
 TEST(StellarAges,Kodama1997){
-    ModelParameters MM("example_params.json");
+    ModelParameters MM("params/example_params.json");
     Kodama1997 lifetime(MM);
 
     EXPECT_NEAR(lifetime.mass_star_dying_now(lifetime(40.,0.02),0.02),40.,1e-2);
@@ -138,7 +138,7 @@ TEST(StellarAges,Kodama1997){
     EXPECT_NEAR(lifetime.dlogMdlogt(0.02,0.002)*M/0.02,(Mup-Mdo)/0.0002,1e-2);
 }
 TEST(StellarAges,MaederMeynet1989){
-    ModelParameters MM("example_params.json");
+    ModelParameters MM("params/example_params.json");
     MaederMeynet1989 lifetime(MM);
 
     EXPECT_NEAR(lifetime.mass_star_dying_now(lifetime(40.,0.02),0.02),40.,1e-2);
@@ -157,7 +157,7 @@ TEST(StellarAges,MaederMeynet1989){
 TEST(TypeIaRates,MVP06){
     SFR_SB15 sfr_sb15;
     ChabrierIMF cimf;
-    ModelParameters M("example_params.json");
+    ModelParameters M("params/example_params.json");
     NoneRadialMigration rm(M);
     MVP06_TypeIaRate tia(M,std::make_shared<ChabrierIMF>(cimf),
                               std::make_shared<SFR_SB15>(sfr_sb15),
@@ -167,7 +167,7 @@ TEST(TypeIaRates,MVP06){
 TEST(TypeIaRates,BinaryMass){
     SFR_SB15 sfr_sb15;
     ChabrierIMF cimf;
-    ModelParameters M("example_params.json");
+    ModelParameters M("params/example_params.json");
     NoneRadialMigration rm(M);
     Portinari1998 lifetime(M);
     TypeIaRate_BinaryMass tia(M,std::make_shared<ChabrierIMF>(cimf),
@@ -179,7 +179,7 @@ TEST(TypeIaRates,BinaryMass){
 //=============================================================================
 
 TEST(Yields,YieldsSet){
-    ModelParameters M("params/example_params.json");
+    ModelParameters M("params/params/example_params.json");
     M.parameters["yields"]["AGB"]="Karakas";
     M.parameters["yields"]["typeIa"]="Maeda";
     M.parameters["yields"]["typeII"]="Kobayashi";
@@ -197,7 +197,7 @@ TEST(Yields,YieldsSet){
         std::cout<<mm<<" "<<Y.mass_ejected(mm,0.001)<<" "<<Y.mass("H",mm,0.001)<<std::endl;
 }
 TEST(Yields,ChieffiLimongi){
-    ModelParameters M("params/example_params.json");
+    ModelParameters M("params/params/example_params.json");
     M.parameters["yields"]["typeII"]="ChieffiLimongi";
     M.parameters["yields"]["AGB"]="Karakas";
     M.parameters["yields"]["typeIa"]="Maeda";
@@ -206,7 +206,7 @@ TEST(Yields,ChieffiLimongi){
 }
 
 TEST(Yields,AGBYields){
-    ModelParameters M("params/example_params.json");
+    ModelParameters M("params/params/example_params.json");
     M.parameters["yields"]["AGB"]="Karakas";
     AGBYieldsKarakas agb(M);
     for(double mm=0.4;mm<8.;mm+=0.2)
@@ -221,7 +221,7 @@ TEST(Yields,AGBYields){
 //=============================================================================
 
 TEST(Flows, flows){
-    ModelParameters M("example_params.json");
+    ModelParameters M("params/example_params.json");
     DoubleInfallInflow I(M);
     SimpleGalacticFountain G(M);
     LinearRadialFlow L(M);
@@ -268,7 +268,7 @@ TEST(Flows, PezzulliReducedSFRFlows){
 //=============================================================================
 
 TEST(Maps, maps){
-    ModelParameters M("example_params.json");
+    ModelParameters M("params/example_params.json");
     std::shared_ptr<StarFormationRate> sfr = sfr_types["SB15"](M);
     std::shared_ptr<InitialMassFunction> imf = imf_types["Chabrier"](M);
     std::shared_ptr<StellarLifetime> sl = life_types["Portinari1998"](M);
@@ -276,7 +276,7 @@ TEST(Maps, maps){
     std::unique_ptr<TypeIaRate> tia = tia_types["Matteucci2006"](M,imf,sfr,rm,sl);
 }
 TEST(Model, Model){
-    ModelParameters P("example_params.json");
+    ModelParameters P("params/example_params.json");
     Model M(P);
     P.parameters["fundamentals"]["IMF"]="WTF";
     try{Model M2(P);}
@@ -286,7 +286,7 @@ TEST(Model, Model){
     }
 }
 TEST(Parameters,Parameters){
-    ModelParameters P("example_params.json");
+    ModelParameters P("params/example_params.json");
     try {double t = P.parameters["fundamentals"]["IM"];}
     catch(std::exception const & err){
         std::cerr<<err.what()<<std::endl;
@@ -294,7 +294,7 @@ TEST(Parameters,Parameters){
     }
 }
 TEST(SolarAbundance,SolarAbundance){
-    ModelParameters P("example_params.json");
+    ModelParameters P("params/example_params.json");
     AsplundSolarAbundances S(P);
     EXPECT_NEAR(S.Z(),0.0134,1e-4);
     AndersSolarAbundances S2(P);
@@ -302,7 +302,7 @@ TEST(SolarAbundance,SolarAbundance){
 }
 //=============================================================================
 TEST(RadialMigration, Rates){
-    ModelParameters M("example_params.json");
+    ModelParameters M("params/example_params.json");
     M.parameters["migration"]["Form"]="None";
     Model model(M);
     auto s1 = model.DeathRate(8.3,12.);

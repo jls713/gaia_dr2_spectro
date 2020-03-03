@@ -67,11 +67,10 @@ public:
 	 t_s(t_s),
 	 Rd(Rdx),
      Rb(Rbx){
-    	auto F = M.parameters["fundamentals"];
-    	if (F.find("StarScaleLength") != F.end())
-    		Rd=M.parameters["fundamentals"]["StarScaleLength"];
-        if (F.find("TruncationRadius") != F.end())
-            Rb=M.parameters["fundamentals"]["TruncationRadius"];
+        Rd=extract_param(M.parameters["fundamentals"],
+                         "StarScaleLength", Rdx);
+        Rb=extract_param(M.parameters["fundamentals"],
+                         "TruncationRadius", Rbx);
         presentSFR=1.;
         presentSFR=(double)M.parameters["fundamentals"]["PresentSFR"]/(
                 (*this)(M.parameters["fundamentals"]["SolarRadius"],
@@ -93,13 +92,12 @@ public:
      t_d(t_dx),
      Rd(Rdx),
      Rb(Rbx){
-        auto F = M.parameters["fundamentals"];
-        if (F.find("SFR_decay_scale") != F.end())
-            t_d=M.parameters["fundamentals"]["SFR_decay_scale"];
-        if (F.find("StarScaleLength") != F.end())
-            Rd=M.parameters["fundamentals"]["StarScaleLength"];
-        if (F.find("TruncationRadius") != F.end())
-            Rb=M.parameters["fundamentals"]["TruncationRadius"];
+        Rd=extract_param(M.parameters["fundamentals"],
+                         "StarScaleLength", Rdx);
+        Rb=extract_param(M.parameters["fundamentals"],
+                         "TruncationRadius", Rbx);
+        t_d=extract_param(M.parameters["fundamentals"],
+                         "SFR_decay_scale", t_dx);
         presentSFR=1.;
         presentSFR=(double)M.parameters["fundamentals"]["PresentSFR"]/(
                 (*this)(M.parameters["fundamentals"]["SolarRadius"],

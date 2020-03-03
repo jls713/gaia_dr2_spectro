@@ -66,9 +66,12 @@ public:
                    std::shared_ptr<RadialMigration> RM,
                    std::shared_ptr<StellarLifetime> SL=nullptr)
         :TypeIaRate(imf,sfr,SL,RM){
-            ABinary=M.parameters["typeIa"]["BinaryFraction"];
-            double MB_min=M.parameters["typeIa"]["MinimumIaBinaryMass"];
-            double MB_max=M.parameters["typeIa"]["MaximumIaBinaryMass"];
+            ABinary=extract_param(M.parameters["typeIa"],
+                                   "BinaryFraction", 0.035);
+            double MB_min=extract_param(M.parameters["typeIa"],
+                                   "MinimumIaBinaryMass", 0.8);
+            double MB_max=extract_param(M.parameters["typeIa"],
+                                   "MaximumIaBinaryMass", 8.0);
             tau_min=(*SL)(MB_max,0.02);
             tau_max=(*SL)(MB_min,0.02);
             ABinary*=imf->norm();
@@ -98,6 +101,36 @@ public:
 class MVP06_TypeIaRate:public TypeIaRate_DTD{
 public:
     MVP06_TypeIaRate(ModelParameters M,
+                     std::shared_ptr<InitialMassFunction> imf,
+                     std::shared_ptr<StarFormationRate> sfr,
+                     std::shared_ptr<RadialMigration> RM,
+                     std::shared_ptr<StellarLifetime> SL=nullptr);
+    double DTD(double t);
+};
+//=============================================================================
+/**
+ * @brief Exponential delay time distribution
+ */
+class Exponential_TypeIaRate:public TypeIaRate_DTD{
+private:
+    double timescale;
+public:
+    Exponential_TypeIaRate(ModelParameters M,
+                     std::shared_ptr<InitialMassFunction> imf,
+                     std::shared_ptr<StarFormationRate> sfr,
+                     std::shared_ptr<RadialMigration> RM,
+                     std::shared_ptr<StellarLifetime> SL=nullptr);
+    double DTD(double t);
+};
+//=============================================================================
+/**
+ * @brief PowerLaw delay time distribution
+ */
+class PowerLaw_TypeIaRate:public TypeIaRate_DTD{
+private:
+    double exponent;
+public:
+    PowerLaw_TypeIaRate(ModelParameters M,
                      std::shared_ptr<InitialMassFunction> imf,
                      std::shared_ptr<StarFormationRate> sfr,
                      std::shared_ptr<RadialMigration> RM,
@@ -142,9 +175,12 @@ public:
                           std::shared_ptr<RadialMigration> RM,
                           std::shared_ptr<StellarLifetime> SL)
         :TypeIaRate(imf,sfr,SL,RM){
-        ABinary=M.parameters["typeIa"]["BinaryFraction"];
-        MB_min=M.parameters["typeIa"]["MinimumIaBinaryMass"];
-        MB_max=M.parameters["typeIa"]["MaximumIaBinaryMass"];
+        ABinary=extract_param(M.parameters["typeIa"],
+                               "BinaryFraction", 0.035);
+        double MB_min=extract_param(M.parameters["typeIa"],
+                               "MinimumIaBinaryMass", 0.8);
+        double MB_max=extract_param(M.parameters["typeIa"],
+                               "MaximumIaBinaryMass", 8.0);
         tau_min=(*SL)(MB_max,0.02);
     }
     double lifetime(double m){return (*stellar_lifetime)(m,0.02);}

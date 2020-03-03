@@ -75,13 +75,7 @@ double RadialMigration::convolve_massfrac(Grid*gas_mass, Grid*mass_fraction, uns
 }
 //=============================================================================
 GaussianRadialMigration::GaussianRadialMigration(ModelParameters M){
-	auto F = M.parameters["migration"];
-	std::string vars = "sigmaR";
-	if (F.find(vars) == F.end()) {
-        LOG(INFO)<<vars<<" not found in parameters file\n";
-        throw std::invalid_argument(vars+" not found in parameters file");
-    }
-	sigmaR0 = M.parameters["migration"]["sigmaR"];
+	sigmaR0 = extract_param(M.parameters["migration"],"sigmaR",3.);
 }
 
 double GaussianRadialMigration::operator()(double R, double Rp, double t){
@@ -92,14 +86,8 @@ double GaussianRadialMigration::operator()(double R, double Rp, double t){
 }
 //=============================================================================
 GaussianRadialMigration_Drift::GaussianRadialMigration_Drift(ModelParameters M){
-	auto F = M.parameters["migration"];
-	std::string vars = "sigmaR";
-	if (F.find(vars) == F.end()) {
-        LOG(INFO)<<vars<<" not found in parameters file\n";
-        throw std::invalid_argument(vars+" not found in parameters file");
-    }
     double galaxy_age = M.parameters["fundamentals"]["GalaxyAge"];
-	sigmaR0 = (double)M.parameters["migration"]["sigmaR"]/sqrt(galaxy_age);
+	sigmaR0 = sigmaR0 = extract_param(M.parameters["migration"],"sigmaR",3.)/sqrt(galaxy_age);
 	Rd = M.parameters["fundamentals"]["StarScaleLength"];
 	drift_term = -sigmaR0*sigmaR0*.5/Rd;
 }

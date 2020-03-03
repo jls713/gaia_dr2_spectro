@@ -1,0 +1,169 @@
+//=============================================================================
+// ALL OPTIONS FOR CHEMICAL EVOLUTION MODELS
+//=============================================================================
+// Parameters marked with a * are required
+//
+// Radial and time units are those corresponding to the radial grid and GalaxyAge required. Mass units are in solar masses (as this is linked to the yields tables)
+//
+//=============================================================================
+"fundamentals":{
+//============================================================================
+	"MinimumMass": 0.5,            // Minimum mass to produce stars at *
+	"MaximumMass": 50.0,           // Maximum mass to produce stars at *
+	"GalaxyAge": 10.0,             // Time to run simulation for *
+ 	"SolarRadius": 8.3,            // Galactocentric Radius of the Sun *
+
+	"PresentSFR":2.4,              // SFR at the end of the simulation
+
+    "InitialMetallicity":0.001,    // Initial metallicity of the ISM *
+	"InitialAlpha":-1.0,           // Initial Alpha enhancement of the ISM *
+
+	// Either specify PresentGasDensitySun or Kennicutt-Schmidt params *
+	"PresentGasDensitySun":10.0,   // Gas Density at the Sun at the final time
+	"Kennicutt-Schmidt_Coeff":1.4, // KS law: SFR = A * Mgas**Coeff
+	"Kennicutt-Schmidt_A":0.067,
+
+	// Warm Gas phase
+	"warm_cold_ratio": 0.0,   // The fraction of gas that goes into a warm phase vs. cold (if 0, ignore Warm phase completely)
+	"warm_cooling_time": 1.0, // Gas cools out of warm phase as exp(-t/warm_cooling_time)
+ 	//=========================================================================
+	// IMF *
+		"IMF": "Salpeter",
+		"IMF": "Tinsley",
+		"IMF": "Scalo",
+		"IMF": "KroupaToutGilmore",
+		"IMF": "Kroupa",
+		"IMF": "Chabrier",
+	//=========================================================================
+	// Star formation rate (SFR) *
+	//=========================================================================
+		"SFR": "ExpDecay", // exp(-R/StarScaleLength)exp(-t/SFR_decay_scale) with truncation (see code) -- needs PresentSFR, SolarRadius,GalaxyAge
+			"StarScaleLength":3.0,
+			"TruncationRadius":3.0,
+			"SFR_decay_scale":8.0,
+		"SFR": "SB15", // exp(-R/StarScaleLength)exp(-t/SFR_decay_scale - 0.5/t) with truncation (see code) -- needs PresentSFR, SolarRadius,GalaxyAge
+			"StarScaleLength":3.0,
+			"TruncationRadius":3.0,
+			"SFR_decay_scale":8.0,
+	//=========================================================================
+	// Stellar lifetimes *
+	//=========================================================================
+		"lifetimes": "MaederMeynet1989",
+		"lifetimes": "Kodama1997",
+		"lifetimes": "PadovaniMatteucci1993",
+		"lifetimes": "Portinari1998",
+		"lifetimes": "PadovaIsochrones",
+	},
+//=============================================================================
+"grids":{
+	"RadialGridPoints":50, // Number of radial grid points (if 1, use single zone) *
+	"MinimumRadius":0.2,   // Minimum radius to simulate (* if RadialGridPoints>1)
+	"MaximumRadius":15.0,  // Maximum radius to simulate (* if RadialGridPoints>1)
+	"AgeGridPoints":80,    // Number of age points to use (subdivided if accuracy is poor) *
+    "LogAgeGrid":true      // Use log-spaced grid if true (else linear)
+},
+//=============================================================================
+"yields":{
+	//=========================================================================
+	// Type Ia *
+	//=========================================================================
+		"typeIa":"Maeda",
+	//=========================================================================
+	// Type II *
+	//=========================================================================
+		"typeII":"ChieffiLimongi",
+		"typeII":"Kobayashi",
+	//=========================================================================
+	// AGB *
+	//=========================================================================
+		"AGB":"None",
+		"AGB":"Karakas",
+	//=========================================================================
+	// Super AGB *
+	//=========================================================================
+	"SuperAGB":"None"
+},
+//=============================================================================
+"typeIa":{
+	// *
+	//=========================================================================
+	// Binary model
+	//=========================================================================
+	// Integrates over binary parameters as in Matteucci & Greggio 1986
+	"Form": "Binary",
+	//=========================================================================
+	// Delay time distributions
+	//=========================================================================
+	// Delay time distribution produces Type Ia by assigning a probability (DTD) that a star will form a Type Ia after time t (between a minimum and maximum single star mass -- note here we reuse the keywords but they refer to single stars -- and with amplitude BinaryFraction)
+	"MinimumIaBinaryMass": 1.0,
+	"MaximumIaBinaryMass": 5.0,
+	"BinaryFraction": 0.0035,
+	"Form": "Exponential", // DTD(t) = exp(-(t-tau_min)/timescale)
+		"timescale":1.5,
+	"Form": "PowerLaw", // DTD(t) = t**exponent
+		"exponent":-1.0,
+	"Form": "Matteucci2006",
+},
+//=============================================================================
+"typeII":{
+	"Min_typeII_SN_mass": 10.0 // Minimum Type II Supernova mass -- below this, use AGB yields *
+},
+"flows":{
+	//=========================================================================
+	"inflow":{ //  *
+		"Form": "None", // no parameters
+		"Form":"Double", // Double infall = PresentInfallRate * (Weight * exp(-t/FastTimeScale)+(1-Weight)*exp(-t/SlowTimeScale)) -- also needs GasScaleLength, SolarRadius and GalaxyAge specified in fundamentals
+			"PresentInfallRate": 1.0,
+			"FastTimeScale": 0.5,
+			"SlowTimeScale": 5.5,
+			"Weight": 0.5,
+		"Form":"Pezzulli" // Linked to radialflow (see below)
+	},
+	//=========================================================================
+	"outflow":{// *
+		"Form": "None", // no parameters
+		"Form":"SimpleGalacticFountain", // Only products in outflow (Schoenrich & Binney,2008 -- Feject is fraction of products expelled, in is inside TransitionRadius, out out)
+			"Feject_in":0.15,
+			"Feject_out":0.05,
+			"TransitionRadius":3.5,
+		"Form":"EntrainedWind", // Cold ISM is outflowing (as per Andrews et al. 2007 with an Mdot = eta_wind SFR)
+			"eta_wind":1.0,
+	},
+	//=========================================================================
+	"radialflow":{// * -- assumed None if RadialGridPoints=1
+		"Form":"None", // no parameters
+		"Form": "Linear", // simple radial flow = -Gradient * R
+			"Gradient": 0.0,
+		"Form":"Pezzulli", // Form from Pezzulli & Fraternali 2015 (gas enters disc with angular momentum lag, PezzulliAlpha)
+			"PezzulliAlpha":0.5,
+	},
+	//=========================================================================
+	"gasdump":{
+		"Form": "None", // no parameters
+		"Form":"SimpleGasDump", // dump gas in gaussian packet (mean central_radius, std radial width, amplitude surfacedensity) at time with abundances alpha and metallicity
+			"surfacedensity":100.0,
+			"time":2.0,
+			"central_radius":15.0,
+			"radial_width":1.0,
+			"alpha":0.0,
+			"metallicity":-1.2
+	}
+	//=========================================================================
+},
+//=============================================================================
+"migration":{// * -- assumed None if RadialGridPoints=1
+	"Form": "None", // no parameters
+	"Form": "Gaussian", // Gaussian blur in radius with std sigmaR
+		"sigmaR": 3.0,
+	"Form": "GaussianDrift", // Gaussian blur in radius with std sigmaR plus inwards drift term
+		"sigmaR": 3.0,
+},
+//=============================================================================
+"elements":
+// H and He automatically computed
+["Li","Be","B","C","N","O","F","Ne","Na","Mg","Al","Si","P","S","Cl","Ar",
+ "K","Ca","Sc","Ti","V","Cr","Mn","Fe","Co","Ni","Cu","Zn","Ga","Ge","As",
+ "Se","Br","Kr","Rb","Sr","Y","Zr","Nb","Mo"]
+//=============================================================================
+"data_folder":"/data/jls/chem_evo/" // *
+//=============================================================================

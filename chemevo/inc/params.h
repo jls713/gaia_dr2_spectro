@@ -39,6 +39,73 @@ public:
 		return parameters["fundamentals"]["MinimumMass"];}
 };
 //=============================================================================
+template<typename T, typename T2>
+std::vector<T2> extract_params(T F, std::vector<std::string> vars,
+                               std::vector<T2> defaults){
+    std::vector<T2> rslt;
+    if(defaults.size()!=vars.size()){
+        std::string varst="";
+        std::string dst="";
+        for(auto d:defaults) dst+=std::to_string(d);
+        for(auto v:vars) varst+=v;
+        LOG(INFO)<<varst<<" "<<dst<<" different length\n";
+        throw std::invalid_argument("Mismatching lengths "+varst+" "+dst);
+    }
+    for(unsigned ii=0;ii<vars.size();++ii){
+        if (F.find(vars[ii]) == F.end()) {
+            LOG(INFO)<<vars[ii]<<" not found in parameters file\n";
+            LOG(INFO)<<"Setting default for "<<vars[ii]<<" = "<<defaults[ii]<<std::endl;
+	        rslt.push_back(defaults[ii]);
+            // throw std::invalid_argument(v+" not found in parameters file");
+        }
+        else
+	        rslt.push_back(F[vars[ii]]);
+    }
+    return rslt;
+}
+template<typename T, typename T2>
+T2 extract_param(T F, std::string var,
+                  T2 defaultP){
+	std::vector<std::string> vars={var};
+	std::vector<T2> defaults={defaultP};
+    return extract_params(F, vars, defaults)[0];
+}
+template<typename T>
+int check_param_given(T F, std::string entry){
+	if (F.find(entry) == F.end()) {
+		LOG(INFO)<<"No "<<entry<<" parameter found in parameters file\n";
+		return 1;
+	}
+	return 0;
+}
+template<typename T1, typename T2>
+int check_param_matches_list(T1 F, T2 types_dict, std::string varname){
+	if(types_dict.count(F)!=1){
+		std::string types = "";
+		for(auto i:types_dict) types+=i.first+",";
+		LOG(INFO)<<"Invalid "<<varname<<": "<<F<<std::endl;
+		LOG(INFO)<<"Options are:"<<types<<std::endl;
+		return 1;
+	}
+	return 0;
+}
+template<typename T1, typename T2>
+int check_param_given_matches_list(T1 F, T2 types_dict, std::string varname){
+	if(check_param_given(F, varname)){
+		return 1;
+	}
+	else return check_param_matches_list(F[varname], types_dict, varname);
+}
+template<typename T1, typename T2>
+int check_param_given_matches_list_form(T1 F, T2 types_dict,
+                                        std::string varname){
+	if(check_param_given(F, varname)){
+		return 1;
+	}
+	else return check_param_matches_list(F[varname]["Form"],
+	                                     types_dict, varname);
+}
+//=============================================================================
 /**
  * @brief Unique pointer creator
  * @details Create a unique pointer of base class T and derived class C using arguments Args

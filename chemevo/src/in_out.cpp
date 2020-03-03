@@ -1,24 +1,10 @@
 #include "in_out.h"
 //=============================================================================
 DoubleInfallInflow::DoubleInfallInflow(ModelParameters M,double present_rSFR){
-	auto F = M.parameters["flows"]["inflow"];
-    std::vector<std::string> vars = {"FastTimeScale","SlowTimeScale","Weight"};
-    for(auto v:vars)
-        if (F.find(v) == F.end()) {
-            LOG(INFO)<<v<<" not found in parameters file\n";
-            throw std::invalid_argument(v+" not found in parameters file");
-        }
-    F = M.parameters["fundamentals"];
-    vars = {"GasScaleLength"};
-    for(auto v:vars)
-        if (F.find(v) == F.end()) {
-            LOG(INFO)<<v<<" not found in parameters file\n";
-            throw std::invalid_argument(v+" not found in parameters file");
-        }
-	tf = M.parameters["flows"]["inflow"]["FastTimeScale"];
-	ts = M.parameters["flows"]["inflow"]["SlowTimeScale"];
-	weight = M.parameters["flows"]["inflow"]["Weight"];
-	Rd = M.parameters["fundamentals"]["GasScaleLength"];
+	tf = extract_param(M.parameters["flows"]["inflow"],"FastTimeScale",0.5);
+	ts = extract_param(M.parameters["flows"]["inflow"],"SlowTimeScale",8.);
+	weight = extract_param(M.parameters["flows"]["inflow"],"Weight",1.);
+	Rd = extract_param(M.parameters["fundamentals"],"GasScaleLength",5.);
 	pif=1.;
 	double pif0 = (*this)(M.parameters["fundamentals"]["SolarRadius"],
 	                      M.parameters["fundamentals"]["GalaxyAge"]);
@@ -29,22 +15,25 @@ double DoubleInfallInflow::operator()(double R, double t, Grid *rSFR){
 }
 //=============================================================================
 SimpleGalacticFountain::SimpleGalacticFountain(ModelParameters M){
-	auto F = M.parameters["flows"]["outflow"];
+    auto F = M.parameters["flows"]["outflow"];
     std::vector<std::string> vars = {"Feject_in","Feject_out","TransitionRadius"};
-    for(auto v:vars)
-        if (F.find(v) == F.end()) {
-            LOG(INFO)<<v<<" not found in parameters file\n";
-            throw std::invalid_argument(v+" not found in parameters file");
-        }
-	feject_in=M.parameters["flows"]["outflow"]["Feject_in"];
-	feject_out=M.parameters["flows"]["outflow"]["Feject_out"];
-	transR = M.parameters["flows"]["outflow"]["TransitionRadius"];
-	A=.5*(feject_out+feject_in);
-	B=.5*(feject_out-feject_in);
-	dR = 0.2;
+    VecDoub defaults = {0.,0.,3.};
+    auto params = extract_params(F, vars, defaults);
+    feject_in=params[0];
+    feject_out=params[1];
+    transR = params[2];
+    A=.5*(feject_out+feject_in);
+    B=.5*(feject_out-feject_in);
+    dR = 0.2;
 }
-double SimpleGalacticFountain::operator()(double R, double t){
-	return A+B*tanh((R-transR)/dR);
+double SimpleGalacticFountain::operator()(double R, double t, double SFR, double GasReturn){
+	return (A+B*tanh((R-transR)/dR))*GasReturn;
+}
+EntrainedWind::EntrainedWind(ModelParameters M){
+    eta_wind = extract_param(M.parameters["flows"]["outflow"], "eta_wind", 0.);
+}
+double EntrainedWind::operator()(double R, double t, double SFR, double GasReturn){
+    return eta_wind*SFR;
 }
 //=============================================================================
 double RadialFlow::beta_g(double R, double Rdown, double Rup, double t, double dt, Grid *rSFR, int*err){
@@ -92,13 +81,7 @@ double RadialFlow::dMdt(double mass, double massup, double R, double Rdown, doub
 }
 //=============================================================================
 LinearRadialFlow::LinearRadialFlow(ModelParameters M,double present_rSFR){
-	auto F = M.parameters["flows"]["radialflow"];
-	std::string vars = "Gradient";
-	if (F.find(vars) == F.end()) {
-        LOG(INFO)<<vars<<" not found in parameters file\n";
-        throw std::invalid_argument(vars+" not found in parameters file");
-    }
-	VGrad = M.parameters["flows"]["radialflow"]["Gradient"];
+	VGrad = extract_param(M.parameters["flows"]["radialflow"],"Gradient",0.);
 }
 //=============================================================================
 // PezzulliInflowRadialFlow::PezzulliInflowRadialFlow(ModelParameters M,std::shared_ptr<StarFormationRate> sfr):SFR(sfr){
@@ -149,13 +132,8 @@ LinearRadialFlow::LinearRadialFlow(ModelParameters M,double present_rSFR){
 //=============================================================================
 template<class T>
 PezzulliInflowRadialFlow_rSFR<T>::PezzulliInflowRadialFlow_rSFR(ModelParameters M,double present_rSFR){
-	auto F = M.parameters["flows"]["radialflow"];
-	std::string vars = "PezzulliAlpha";
-	if (F.find(vars) == F.end()) {
-		LOG(INFO)<<vars<<" not found in parameters file\n";
-		throw std::invalid_argument(vars+" not found in parameters file");
-    }
-	Alpha = M.parameters["flows"]["radialflow"]["PezzulliAlpha"];
+	Alpha = extract_param(M.parameters["flows"]["radialflow"],
+	                      "PezzulliAlpha",0.);
 	KSN = M.parameters["fundamentals"]["Kennicutt-Schmidt_Coeff"];
 	double PresentGasDensity = M.parameters["fundamentals"]["PresentGasDensitySun"];
 	A = present_rSFR/pow(PresentGasDensity,KSN);
@@ -244,6 +222,50 @@ double PezzulliInflowRadialFlow_rSFR<T>::operator()(double R, double t, Grid* rS
 template class PezzulliInflowRadialFlow_rSFR<Inflow>;
 template class PezzulliInflowRadialFlow_rSFR<RadialFlow>;
 //=============================================================================
+GasDumpSimple::GasDumpSimple(ModelParameters M){
+	check_param_given(M.parameters["flows"],"gasdump");
+	std::vector<std::string> var = {
+		"surfacedensity","time","central_radius",
+		"radial_width","metallicity","alpha"
+	};
+	VecDoub defaults = {0., 1., 8.3, 1., -1., 0.};
+	auto dd = extract_params(M.parameters["flows"]["gasdump"],var,defaults);
+	surfacedensity=dd[0];time=dd[1];central_radius=dd[2];
+	radial_width=dd[3];metallicity=dd[4];alpha=dd[5];
+
+	// Put the time near a gridpoint
+	double mint=100000., tt;
+	auto gas_mass = make_unique<Grid>(M);
+	for(int i=0;i<gas_mass->grid_time().size();++i){
+		if(fabs(gas_mass->grid_time()[i]-time)<mint){
+			tt = gas_mass->grid_time()[i];
+			mint = fabs(gas_mass->grid_time()[i]-time);
+		}
+		time=tt;
+	}
+}
+double GasDumpSimple::operator()(double R, double t, double dt){
+	if (abs(t-time)<1e-8)
+	    return surfacedensity/dt*exp(-.5*pow((R-central_radius)/radial_width,2.));
+	else
+		return 0.;
+}
+
+double GasDumpSimple::elements(Element E, double R, double t, double dt,
+                               SolarAbundances solar){
+	if (abs(t-time)<1e-8){
+		double metal = solar.Z()*pow(10.,metallicity);
+		// Fill each element accounting for initial non-zero alpha enrichment
+		auto initial_abundance=solar.scaled_solar_mass_frac(E,metal);
+		if(is_alpha_element[E])
+			initial_abundance*=pow(10.,alpha);
+
+	    return (*this)(R, t, dt) * initial_abundance;
+	}
+	else
+		return 0.;
+}
+//=============================================================================
 // Map for creating shared pointer instances of RadialFlow from string of class name
 unique_map< RadialFlow,
             ModelParameters,
@@ -264,6 +286,13 @@ unique_map< Inflow,
 unique_map< Outflow,
             ModelParameters> outflow_types ={
     {"None",&createInstance<Outflow,OutflowNone>},
-    {"SimpleGalacticFountain",&createInstance<Outflow,SimpleGalacticFountain>}
+    {"SimpleGalacticFountain",&createInstance<Outflow,SimpleGalacticFountain>},
+    {"EntrainedWind",&createInstance<Outflow,EntrainedWind>}
+};
+// Map for creating shared pointer instances of GasDump from string of class name
+unique_map< GasDump,
+            ModelParameters> gasdump_types ={
+    {"None",&createInstance<GasDump,GasDumpNone>},
+    {"SimpleGasDump",&createInstance<GasDump,GasDumpSimple>}
 };
 //=============================================================================

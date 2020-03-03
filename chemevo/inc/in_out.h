@@ -2,6 +2,7 @@
 #define IN_OUT_H
 //=============================================================================
 #include "params.h"
+#include "solar.h"
 #include "sfr.h"
 #include "grid.h"
 //=============================================================================
@@ -51,14 +52,14 @@ public:
 class Outflow{
 public:
 	/**
-	 * @brief outflow fraction at radius R and time t
+	 * @brief outflow at radius R and time t
 	 *
 	 * @param R radius
 	 * @param t time t
 	 *
 	 * @return outflow fraction at radius R and time t
 	 */
-	virtual double operator()(double R, double t)=0;
+	virtual double operator()(double R, double t, double SFR, double GasReturn)=0;
 };
 /**
  * @brief No outflow model
@@ -66,7 +67,7 @@ public:
 class OutflowNone: public Outflow{
 public:
 	OutflowNone(ModelParameters M, double prSFR=0.){}
-	double operator()(double R, double t){return 0.;}
+	double operator()(double R, double t, double SFR, double GasReturn){return 0.;}
 };
 /**
  * @brief Simple Galactic Fountain
@@ -75,14 +76,25 @@ public:
  */
 class SimpleGalacticFountain: public Outflow{
 private:
-	double feject_in; // Fraction ejected for R<transR
-	double feject_out;// Fraction ejected for R>transR
+	double feject_in; // Fraction of products ejected for R<transR
+	double feject_out;// Fraction of products ejected for R>transR
 	double transR;    // Transition radius
-	double dR;		  // Radial range over which change occurs
+	double dR;        // Radial range over which change occurs
 	double A, B; 	  // = (1/2)(fout+fin), (1/2)(fout-fin)
 public:
 	SimpleGalacticFountain(ModelParameters M);
-	double operator()(double R, double t);
+	double operator()(double R, double t, double SFR, double GasReturn);
+};
+/**
+ * @brief Entrained wind
+ * @details simple outflow model for cold gas: outflow = eta_wind SFR
+ */
+class EntrainedWind: public Outflow{
+private:
+	double eta_wind;
+public:
+	EntrainedWind(ModelParameters M);
+	double operator()(double R, double t, double SFR, double GasReturn);
 };
 
 //=============================================================================
@@ -222,11 +234,44 @@ struct mu_rSFR_st{
     Grid *rSFR;
 };
 //=============================================================================
+class GasDump{
+public:
+	/**
+	 * @brief gas dump at radius R and time t
+	 *
+	 * @param R radius
+	 * @param t time t
+	 *
+	 * @return surface density of gas dumped at radius R, time t
+	 */
+	virtual double operator()(double R, double t, double dt)=0;
+	virtual double elements(Element E, double R, double t, double dt,
+	                        SolarAbundances solar) = 0;
+};
+class GasDumpNone: public GasDump{
+public:
+	GasDumpNone(ModelParameters M){}
+	double operator()(double R, double t, double dt){ return 0.;}
+	double elements(Element E, double R, double t, double dt,
+	                SolarAbundances solar){ return 0.;}
+};
+class GasDumpSimple: public GasDump{
+private:
+	double surfacedensity, time, central_radius, radial_width;
+	double metallicity, alpha;
+public:
+	GasDumpSimple(ModelParameters M);
+	double operator()(double R, double t, double dt);
+	double elements(Element E, double R, double t,
+	                double dt, SolarAbundances solar);
+};
+//=============================================================================
 // Maps for creating unique pointers to flow rate classes using string of
 // class name
 extern unique_map<Inflow,ModelParameters,double> inflow_types;
 extern unique_map<Outflow,ModelParameters> outflow_types;
 extern unique_map<RadialFlow,ModelParameters,double> radialflow_types;
+extern unique_map<GasDump,ModelParameters> gasdump_types;
 //=============================================================================
 #endif
 

@@ -11,11 +11,13 @@
         "InitialMetallicity":0.001,
 	"InitialAlpha":-0.5,
 	"Kennicutt-Schmidt_Coeff":1.4,
-	"Kennicutt-Schmidt_A":0.037
+	"Kennicutt-Schmidt_A":0.037,
+	"warm_cold_ratio":0.95,
+        "warm_cooling_time":0.25
 	},
 "grids":{
 	"RadialGridPoints":1,
-	"AgeGridPoints":150
+	"AgeGridPoints":100
 },
 "yields":{
 	"typeIa":"Maeda",

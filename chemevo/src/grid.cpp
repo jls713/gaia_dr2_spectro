@@ -9,35 +9,24 @@ Grid::Grid(unsigned NR, unsigned NT,double Rmin, double Rmax, double MaxAge){
 	grid = std::vector<VecDoub>(NR,VecDoub(NT,0.));
 }
 Grid::Grid(ModelParameters params){
-	// 1. Error-check
-	auto F = params.parameters["grids"];
-    std::vector<std::string> vars = {"MinimumRadius","MaximumRadius","RadialGridPoints","AgeGridPoints"};
-    for(auto v:vars)
-        if (F.find(v) == F.end()) {
-            LOG(INFO)<<v<<" not found in parameters file\n";
-            throw std::invalid_argument(v+" not found in parameters file");
-        }
-    F = params.parameters["fundamentals"];
-    if (F.find("GalaxyAge") == F.end()) {
-        LOG(INFO)<<"No Galaxy age found in parameters file\n";
-        throw std::invalid_argument("No Galaxy age found in parameters file");
-    }
-    // 2. Loadd variables
-	MaxAge = params.parameters["fundamentals"]["GalaxyAge"];
-	double Rmin = params.parameters["grids"]["MinimumRadius"];
-	double Rmax = params.parameters["grids"]["MaximumRadius"];
-	int NR = params.parameters["grids"]["RadialGridPoints"];
-	int NT = params.parameters["grids"]["AgeGridPoints"];
+	MaxAge = extract_param(params.parameters["fundamentals"],"GalaxyAge", 13.7);
+	double Rmin = extract_param(params.parameters["grids"],
+	                            "MinimumRadius", 0.1);
+	double Rmax = extract_param(params.parameters["grids"],
+	                            "MaximumRadius", 15.);
+	int NR = extract_param(params.parameters["grids"], "RadialGridPoints", 50);
+	int NT = extract_param(params.parameters["grids"], "AgeGridPoints", 50);
 	radial_grid = create_range(Rmin,Rmax,NR);
 	if(NR==1)
 		radial_grid=VecDoub(1,.5*(Rmax+Rmin));
-	time_grid = create_range(0.,MaxAge,NT);
-	F = params.parameters["grids"];
-	if (F.find("LogAgeGrid") != F.end())
-		if(F["LogAgeGrid"]){
-			time_grid = create_log_range(3e-3,MaxAge,NT);
-			time_grid[0]=0.;
+	bool LAGrid = extract_param(params.parameters["grids"],
+	                            "LogAgeGrid", true);
+	if(LAGrid){
+		time_grid = create_log_range(3e-3,MaxAge,NT);
+		time_grid[0]=0.;
 		}
+	else
+		time_grid = create_range(0.,MaxAge,NT);
 	age_grid = time_grid;
 	for(int i=0; i<NT; ++i) age_grid[i]=MaxAge-age_grid[i];
 	grid = std::vector<VecDoub>(NR,VecDoub(NT,0.));

@@ -25,8 +25,8 @@ class Model{
 private:
 	//=========================================================================
 	ModelParameters params;
-	// AsplundSolarAbundances solar;
-	AndersSolarAbundances solar;
+	AsplundSolarAbundances solar;
+	// AndersSolarAbundances solar;
 	//=========================================================================
 	std::shared_ptr<StarFormationRate> sfr;
 	std::shared_ptr<InitialMassFunction> imf;
@@ -38,19 +38,25 @@ private:
 	std::unique_ptr<Inflow> inflow;
 	std::unique_ptr<Outflow> outflow;
 	std::unique_ptr<RadialFlow> radialflow;
+	std::unique_ptr<GasDump> gasdumpflow;
 	//=========================================================================
 	std::unique_ptr<Grid> gas_mass; // total gas mass
+	std::unique_ptr<Grid> warm_gas_mass; // total warm gas mass
 	std::unique_ptr<Grid> stellar_mass; // total stellar mass
 	std::unique_ptr<Grid> reducedSFR; // SFR-DeathRate
 	std::vector<Grid> mass_fraction; // First two elements H and He, then all other required elements
+	std::vector<Grid> mass_fraction_warm; // First two elements H and He, then all other required elements
 	std::unique_ptr<Grid> metallicity; // Z = 1-X-Y = 1-first two entries of mass_fraction
 	//=========================================================================
 	std::map<int,Element> elements;
 	std::map<Element,int> elements_r;
 	//=========================================================================
 	bool agb_yields, typeII_yields, typeIa_yields, migration;
-        bool single_zone, gasdump=false;
-        double gasdumptime, gasdumpsurfacedensity,gasdumpMetal,gasdumpAlpha;
+        bool single_zone, gasdump=false, use_warm_phase, logspace;
+        double warm_cold_ratio, warm_cooling_time;
+        //=========================================================================
+   	// Grid-points to get inflowing gas properties from
+	unsigned nR0=0,nt0=0;
 protected:
 public:
 	// Constructors
@@ -73,6 +79,7 @@ public:
 	void write(std::string filename);
 	void write_properties(H5::H5File &fout);
 	void expand_grids(unsigned nt, double t);
+        int check_metallicity(double R, double t, double dt, unsigned nR, unsigned NR, unsigned nt);
 	//=========================================================================
 	ModelParameters &parameters(void){return params;}
 	//=========================================================================
@@ -114,9 +121,20 @@ public:
 	double Mass_Star_Dying_Now(double age,double Z);
 	double dMdt(double M, double age, double Z);
 	double InflowRate(double R, double t);
-	double OutflowFraction(double R, double t);
-	double RadialFlowRate(double m, double mup, double R, double Rdown, double Rup, double t, double dt, int*err);
+	double OutflowRate(double R, double t, double SFR, double GasReturn);
+	double RadialFlowRate(double m, double mup, double R, double Rdown,
+	                      double Rup, double t, double dt, int*err);
+	double RadialFlowRateFromGrid(double R, double t, double dt,
+	                              double gm_prev, unsigned nR, unsigned nt,
+	                              unsigned NR, int*err);
+	double EnrichRadialFlowRateFromGrid(unsigned Ne, double R, double t,
+	                                    double dt, double e_gm_prev,
+	                                    unsigned nR, unsigned nt,
+	                                    unsigned NR, int*err);
 	double RadialMigrationKernel(double R, double Rp, double t);
+	double GasDumpRate(double R, double t, double dt);
+	double EnrichGasDumpRate(Element E, double R, double t, double dt,
+	                         SolarAbundances solar);
 	//=========================================================================
 	// Printing functions
 	void print_abundance_grid(std::ostream &out,Element E);

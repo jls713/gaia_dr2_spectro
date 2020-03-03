@@ -15,18 +15,6 @@ double _gas_consumed(double R, void *p){
 //=============================================================================
 // Constructor
 StarFormationRate::StarFormationRate(ModelParameters M){
-    auto F = M.parameters["grids"];
-    std::vector<std::string> vars = {"MinimumRadius","MaximumRadius"};
-    for(auto v:vars)
-        if (F.find(v) == F.end()) {
-            LOG(INFO)<<v<<" not found in parameters file\n";
-            throw std::invalid_argument(v+" not found in parameters file");
-        }
-    F = M.parameters["fundamentals"];
-    if (F.find("GalaxyAge") == F.end()) {
-        LOG(INFO)<<"No Galaxy age found in parameters file\n";
-        throw std::invalid_argument("No Galaxy age found in parameters file");
-    }
     Rmin=M.parameters["grids"]["MinimumRadius"];
     Rmax=M.parameters["grids"]["MaximumRadius"];
     GalaxyAge=M.parameters["fundamentals"]["GalaxyAge"];

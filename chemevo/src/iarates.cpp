@@ -119,12 +119,38 @@ double MVP06_TypeIaRate::DTD(double t){
     else return pow(10.,-0.8-0.9*pow(lt+9.-8.7,2.))/Norm;
 }
 //=============================================================================
+Exponential_TypeIaRate::Exponential_TypeIaRate(ModelParameters M,std::shared_ptr<InitialMassFunction> imf, std::shared_ptr<StarFormationRate> sfr,std::shared_ptr<RadialMigration> RM, std::shared_ptr<StellarLifetime> SL):TypeIaRate_DTD(M,imf,sfr,RM,SL){
+    timescale = extract_param(M.parameters["typeIa"],"timescale",1.5);
+    GaussLegendreIntegrator GL(50);
+    Norm=1.;
+    Norm = GL.integrate(&norm,tau_min,tau_max,this);
+}
+
+double Exponential_TypeIaRate::DTD(double t){
+    if(t==0.) return 0.;
+    return exp(-(t-tau_min)/timescale);
+}
+//=============================================================================
+PowerLaw_TypeIaRate::PowerLaw_TypeIaRate(ModelParameters M,std::shared_ptr<InitialMassFunction> imf, std::shared_ptr<StarFormationRate> sfr,std::shared_ptr<RadialMigration> RM, std::shared_ptr<StellarLifetime> SL):TypeIaRate_DTD(M,imf,sfr,RM,SL){
+    exponent = extract_param(M.parameters["typeIa"],"exponent",-1);
+    GaussLegendreIntegrator GL(50);
+    Norm=1.;
+    Norm = GL.integrate(&norm,tau_min,tau_max,this);
+}
+
+double PowerLaw_TypeIaRate::DTD(double t){
+    if(t==0.) return 0.;
+    return pow(t,exponent);
+}
+//=============================================================================
 unique_map< TypeIaRate,ModelParameters,
             std::shared_ptr<InitialMassFunction>,
             std::shared_ptr<StarFormationRate>,
             std::shared_ptr<RadialMigration>,
             std::shared_ptr<StellarLifetime>> tia_types ={
     {"Binary",&createInstance<TypeIaRate,TypeIaRate_BinaryMass>},
-    {"Matteucci2006",&createInstance<TypeIaRate,MVP06_TypeIaRate>}
+    {"Matteucci2006",&createInstance<TypeIaRate,MVP06_TypeIaRate>},
+    {"Exponential",&createInstance<TypeIaRate,Exponential_TypeIaRate>},
+    {"PowerLaw",&createInstance<TypeIaRate,PowerLaw_TypeIaRate>}
 };
 //=============================================================================

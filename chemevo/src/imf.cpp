@@ -16,15 +16,10 @@ double _imf_m(double m, void *p){
 }
 
 InitialMassFunction::InitialMassFunction(ModelParameters M){
-    auto F = M.parameters["fundamentals"];
-    std::vector<std::string> vars = {"MinimumMass","MaximumMass"};
-    for(auto v:vars)
-        if (F.find(v) == F.end()) {
-            LOG(INFO)<<v<<" not found in parameters file\n";
-            throw std::invalid_argument(v+" not found in parameters file");
-        }
-    MinimumMass = M.parameters["fundamentals"]["MinimumMass"];
-    MaximumMass = M.parameters["fundamentals"]["MaximumMass"];
+    MinimumMass = extract_param(M.parameters["fundamentals"],
+                                "MinimumMass", 0.5);
+    MaximumMass = extract_param(M.parameters["fundamentals"],
+                                "MaximumMass", 50.);
 }
 
 double InitialMassFunction::mean_mass(void){
