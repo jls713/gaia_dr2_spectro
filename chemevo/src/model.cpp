@@ -261,7 +261,8 @@ int Model::step(unsigned nt, double dt){
 		outflowrate = OutflowRate(R,tp,starformrate,gas_return);
 		rad_flow_dm = RadialFlowRateFromGrid(R, tp, dt, gm_prev,
 		                                     nR, nt, NR, &err);
-		gas_dump_dm = GasDumpRate(R, tp, dt);
+		// Gas dump evaluated at t (not tp)
+		gas_dump_dm = GasDumpRate(R, t, dt);
 
 		dmdt += -starformrate+gas_return*(1-warm_cold_ratio);
 		dmdt += inflowrate-outflowrate+rad_flow_dm+gas_dump_dm;

@@ -239,10 +239,10 @@ GasDumpSimple::GasDumpSimple(ModelParameters M){
 	for(int i=0;i<gas_mass->grid_time().size();++i){
 		if(fabs(gas_mass->grid_time()[i]-time)<mint){
 			tt = gas_mass->grid_time()[i];
-			mint = fabs(gas_mass->grid_time()[i]-time);
+			mint = fabs(tt-time);
 		}
-		time=tt;
 	}
+	time=tt;
 }
 double GasDumpSimple::operator()(double R, double t, double dt){
 	if (abs(t-time)<1e-8)
