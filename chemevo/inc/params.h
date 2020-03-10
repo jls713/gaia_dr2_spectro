@@ -71,9 +71,10 @@ T2 extract_param(T F, std::string var,
     return extract_params(F, vars, defaults)[0];
 }
 template<typename T>
-int check_param_given(T F, std::string entry){
+int check_param_given(T F, std::string entry, bool log=true){
 	if (F.find(entry) == F.end()) {
-		LOG(INFO)<<"No "<<entry<<" parameter found in parameters file\n";
+		if (log)
+			LOG(INFO)<<"No "<<entry<<" parameter found in parameters file\n";
 		return 1;
 	}
 	return 0;

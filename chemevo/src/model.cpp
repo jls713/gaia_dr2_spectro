@@ -66,11 +66,29 @@ void Model::setup(void){
 
 	//=========================================================================
 	// 4. Initialise flows
+
 	outflow = outflow_types[params.parameters["flows"]["outflow"]["Form"]](params);
+
+	// For inflow/radial flow we require rSFR
 	double Rs = params.parameters["fundamentals"]["SolarRadius"];
 	double ts = params.parameters["fundamentals"]["GalaxyAge"];
 	double outflowrate_present = OutflowRate(Rs,ts,SFR(Rs,ts),GasReturnRate(Rs,ts));
 	double prSFR=SFR(Rs,ts)-GasReturnRate(Rs,ts)+outflowrate_present;
+	if(prSFR<0.)
+		throw std::runtime_error("Reduced SFR<0 at R0 at final time\n");
+
+	double K= params.parameters["fundamentals"]["Kennicutt-Schmidt_Coeff"];
+
+	if (!check_param_given(params.parameters["fundamentals"],"Kennicutt-Schmidt_A",false)){
+		double A = params.parameters["fundamentals"]["Kennicutt-Schmidt_A"];
+		params.parameters["fundamentals"]["PresentGasDensitySun"]=pow(prSFR/A,1./K);
+	}
+	else{
+		double PSG = params.parameters["fundamentals"]["PresentGasDensitySun"];
+		params.parameters["fundamentals"]["Kennicutt-Schmidt_A"]=prSFR/pow(PSG,K);
+	}
+
+
 	inflow = inflow_types[params.parameters["flows"]["inflow"]["Form"]](params,prSFR);
 	radialflow = radialflow_types[params.parameters["flows"]["radialflow"]["Form"]](params,prSFR);
 	if(gasdump)
@@ -95,30 +113,13 @@ void Model::fill_initial_grids(void){
 	VecDoub gas_radial_dist=gas_mass->grid_radial();
 	VecDoub star_radial_dist=gas_mass->grid_radial();
 
-	double Rs = params.parameters["fundamentals"]["SolarRadius"];
-	double ts = params.parameters["fundamentals"]["GalaxyAge"];
-	double KSN = params.parameters["fundamentals"]["Kennicutt-Schmidt_Coeff"];
-	auto F = params.parameters["fundamentals"];
-	double A;
-	double outflowrate_present = OutflowRate(Rs,ts,SFR(Rs,ts),GasReturnRate(Rs,ts));
-	double rSFR=SFR(Rs,ts)-GasReturnRate(Rs,ts)+outflowrate_present;
-	double PresentGasDensitySun = 0.;
-	if(rSFR<0.)
-		throw std::runtime_error("Reduced SFR<0 at R0 at final time\n");
-
-	if (F.find("Kennicutt-Schmidt_A") != F.end()){
-		A = F["Kennicutt-Schmidt_A"];
-		PresentGasDensitySun = pow(A/rSFR,1./KSN);
-		params.parameters["fundamentals"]["PresentGasDensitySun"]=PresentGasDensitySun;
-	}
-	else{
-		PresentGasDensitySun = params.parameters["fundamentals"]["PresentGasDensitySun"];
-		A=rSFR/pow(PresentGasDensitySun,KSN);
-		params.parameters["fundamentals"]["Kennicutt-Schmidt_A"]=A;
-	}
+	double K = params.parameters["fundamentals"]["Kennicutt-Schmidt_Coeff"];
+	double A = params.parameters["fundamentals"]["Kennicutt-Schmidt_A"];
 	for(auto i=0u;i<gas_radial_dist.size();++i){
 		star_radial_dist[i]=SFR(gas_mass->grid_radial()[i],0.);
-		gas_radial_dist[i]=pow(star_radial_dist[i]/A,1./KSN);
+		star_radial_dist[i]+=OutflowRate(gas_mass->grid_radial()[i],0.,
+		                                 star_radial_dist[i],0.);
+		gas_radial_dist[i]=pow(star_radial_dist[i]/A, 1./K);
 	}
 	reducedSFR->set_fixed_t(star_radial_dist,0);
 	gas_mass->set_fixed_t(gas_radial_dist,0);
@@ -174,7 +175,7 @@ int Model::check_parameters(void){
 		                                         "radialflow");
 	}
 	F = params.parameters["flows"];
-	if (F.find("gasdump") == F.end())
+	if (check_param_given(F, "gasdump", false))
 		gasdump=false;
 	else{
 		gasdump=true;
@@ -203,14 +204,12 @@ int Model::check_parameters(void){
 	}
 	err+=check_param_given(params.parameters["fundamentals"],
 	                       "Kennicutt-Schmidt_Coeff");
-	if(!(params.parameters["fundamentals"].find("PresentGasDensitySun") == params.parameters["fundamentals"].end())){
+	if(check_param_given(params.parameters["fundamentals"],"PresentGasDensitySun",false)){
 		err+=check_param_given(params.parameters["fundamentals"],
 		                       "Kennicutt-Schmidt_A");
 	}
-	if(check_param_given(params.parameters["fundamentals"],
-		                       "Kennicutt-Schmidt_A") and
-		check_param_given(params.parameters["fundamentals"],
-		                       "PresentGasDensitySun"))
+	if(!check_param_given(params.parameters["fundamentals"],"Kennicutt-Schmidt_A",false) and
+		!check_param_given(params.parameters["fundamentals"],"PresentGasDensitySun",false))
 		LOG(INFO)<<"Both PresentGasDensitySun and Kennicutt-Schmidt_A given -- using Kennicutt-Schmidt_A"<<std::endl;
 	return err;
 }
