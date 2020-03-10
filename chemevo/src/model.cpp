@@ -100,17 +100,21 @@ void Model::fill_initial_grids(void){
 	double KSN = params.parameters["fundamentals"]["Kennicutt-Schmidt_Coeff"];
 	auto F = params.parameters["fundamentals"];
 	double A;
+	double outflowrate_present = OutflowRate(Rs,ts,SFR(Rs,ts),GasReturnRate(Rs,ts));
+	double rSFR=SFR(Rs,ts)-GasReturnRate(Rs,ts)+outflowrate_present;
+	double PresentGasDensitySun = 0.;
+	if(rSFR<0.)
+		throw std::runtime_error("Reduced SFR<0 at R0 at final time\n");
 
-	if (F.find("Kennicutt-Schmidt_A") != F.end())
+	if (F.find("Kennicutt-Schmidt_A") != F.end()){
 		A = F["Kennicutt-Schmidt_A"];
+		PresentGasDensitySun = pow(A/rSFR,1./KSN);
+		params.parameters["fundamentals"]["PresentGasDensitySun"]=PresentGasDensitySun;
+	}
 	else{
-		double PresentGasDensity = params.parameters["fundamentals"]["PresentGasDensitySun"];
-		double outflowrate_present = OutflowRate(Rs,ts,SFR(Rs,ts),GasReturnRate(Rs,ts));
-		double rSFR=SFR(Rs,ts)-GasReturnRate(Rs,ts)-outflowrate_present;
-		if(rSFR<0.)
-			throw std::runtime_error("Reduced SFR<0 at R0 at final time\n");
-
-		A=rSFR/pow(PresentGasDensity,KSN);
+		PresentGasDensitySun = params.parameters["fundamentals"]["PresentGasDensitySun"];
+		A=rSFR/pow(PresentGasDensitySun,KSN);
+		params.parameters["fundamentals"]["Kennicutt-Schmidt_A"]=A;
 	}
 	for(auto i=0u;i<gas_radial_dist.size();++i){
 		star_radial_dist[i]=SFR(gas_mass->grid_radial()[i],0.);
@@ -119,7 +123,7 @@ void Model::fill_initial_grids(void){
 	reducedSFR->set_fixed_t(star_radial_dist,0);
 	gas_mass->set_fixed_t(gas_radial_dist,0);
 	if(warm_gas_mass)
-		warm_gas_mass->set_fixed_t(gas_radial_dist*1e-5,0);
+		warm_gas_mass->set_fixed_t(gas_radial_dist,0);
 	LOG(INFO)<<"Grids filled\n";
 }
 
@@ -197,12 +201,17 @@ int Model::check_parameters(void){
 		err += check_param_given(params.parameters["grids"],"MinimumRadius");
 		err += check_param_given(params.parameters["grids"],"MaximumRadius");
 	}
+	err+=check_param_given(params.parameters["fundamentals"],
+	                       "Kennicutt-Schmidt_Coeff");
 	if(!(params.parameters["fundamentals"].find("PresentGasDensitySun") == params.parameters["fundamentals"].end())){
 		err+=check_param_given(params.parameters["fundamentals"],
 		                       "Kennicutt-Schmidt_A");
-		err+=check_param_given(params.parameters["fundamentals"],
-		                       "Kennicutt-Schmidt_Coeff");
 	}
+	if(check_param_given(params.parameters["fundamentals"],
+		                       "Kennicutt-Schmidt_A") and
+		check_param_given(params.parameters["fundamentals"],
+		                       "PresentGasDensitySun"))
+		LOG(INFO)<<"Both PresentGasDensitySun and Kennicutt-Schmidt_A given -- using Kennicutt-Schmidt_A"<<std::endl;
 	return err;
 }
 
@@ -237,7 +246,12 @@ int Model::step(unsigned nt, double dt){
 		auto starformrate = SFR(R,t);
 		auto gas_return = GasReturnRate(R,t)*(1-warm_cold_ratio);
 		auto outflowrate = OutflowRate(R,t,starformrate,gas_return);
-		reducedSFR->set(starformrate-gas_return+outflowrate,nR,nt);
+		auto warmgasrate = 0.;
+		// if(warm_cold_ratio>0.)
+		// 	warmgasrate=(*warm_gas_mass)(nR,nt-1)/warm_cooling_time;
+		reducedSFR->set(starformrate-gas_return
+		                +outflowrate+warmgasrate,
+		                nR,nt);
 	}
 	if(err){return err;}
 	#pragma omp parallel for schedule(dynamic)
@@ -255,7 +269,7 @@ int Model::step(unsigned nt, double dt){
 
 		// 1. Cold Gas
 		gm_prev = (*gas_mass)(nR,nt-1);
-		starformrate=SFR(R,tp);
+		starformrate = SFR(R,tp);
 		gas_return = GasReturnRate(R,tp);
 		inflowrate = InflowRate(R,tp);
 		outflowrate = OutflowRate(R,tp,starformrate,gas_return);
@@ -265,7 +279,8 @@ int Model::step(unsigned nt, double dt){
 		gas_dump_dm = GasDumpRate(R, t, dt);
 
 		dmdt += -starformrate+gas_return*(1-warm_cold_ratio);
-		dmdt += inflowrate-outflowrate+rad_flow_dm+gas_dump_dm;
+		dmdt += inflowrate;
+		dmdt += -outflowrate+rad_flow_dm+gas_dump_dm;
 
 		gm = gm_prev+dmdt*dt;
 
@@ -317,7 +332,9 @@ int Model::step(unsigned nt, double dt){
 				Xiwarm = mass_fraction_warm[e.first](nR,nt-1);
 				warm_mass_now = Xiwarm*warm_gm_prev;
 				warm_mass_now += enrichrate*warm_cold_ratio*dt;
-                mass_now += Xiwarm*warm_gm_prev*dt/warm_cooling_time;
+                                mass_now += Xiwarm*warm_gm_prev*dt/warm_cooling_time;
+				//warm_mass_now += dt*inflowrate*mass_fraction[e.first](nR0,nt0); // inflow
+                                //mass_now += dt*inflowrate*(Xiwarm-mass_fraction[e.first](nR0,nt0));
 				warm_mass_now -= Xiwarm*warm_gm_prev*dt/warm_cooling_time;
 				mass_fraction_warm[e.first].set(warm_mass_now/warm_gm,nR,nt);
 			}
@@ -435,7 +452,8 @@ void Model::write(std::string filename){
 	gas_mass->write_hdf5(fout,"Mgas");
 	if(use_warm_phase)
 		warm_gas_mass->write_hdf5(fout,"Mgas_warm");
-	stellar_mass->write_hdf5(fout,"Mstar");
+	reducedSFR->write_hdf5(fout,"rSFR");
+        stellar_mass->write_hdf5(fout,"Mstar");
 	write_properties(fout);
 	metallicity->write_hdf5(fout,"Z");
 	for(auto i=0u;i<elements.size();++i)

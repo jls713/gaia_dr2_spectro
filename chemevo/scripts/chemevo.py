@@ -47,13 +47,15 @@ class chem_evo_data:
         self.Mgas = np.dstack(data['Mgas'][()])[0]
         if 'Mgas_warm' in data.keys():
             self.Mgas_warm = np.dstack(data['Mgas_warm'][()])[0]
+        if 'rSFR' in data.keys():
+            self.rSFR = np.dstack(data['rSFR'][()])[0]
         self.Mstar = np.dstack(data['Mstar'][()])[0]
         self.Z = np.dstack(data['Z'][()])[0]
         self.SFR = data['SFR'][()][0].T
         self.Inflow = data['Inflow'][()][0].T
         self.SNIa = data['SNIa'][()][0].T
         self.SNII = data['SNII'][()][0].T
-        self.elements = [i for i in data.keys() if i not in ['R','t','Mgas','Z','parameters','SFR','Inflow','SNIa','SNII','Mstar','Mgas_warm']]
+        self.elements = [i for i in data.keys() if i not in ['R','t','Mgas','Z','parameters','SFR','Inflow','SNIa','SNII','Mstar','Mgas_warm','rSFR']]
         for e in self.elements:
             if e in Alpha_Elements:
                 self.elements += [u'alpha']

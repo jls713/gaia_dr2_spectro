@@ -12,8 +12,8 @@
 	"InitialAlpha":-0.5,
 	"Kennicutt-Schmidt_Coeff":1.4,
 	"Kennicutt-Schmidt_A":0.037,
-	"warm_cold_ratio":0.95,
-        "warm_cooling_time":0.25
+	"warm_cold_ratio":0.0,
+        "warm_cooling_time":1.1
 	},
 "grids":{
 	"RadialGridPoints":1,

@@ -41,18 +41,6 @@ double RadialFlow::beta_g(double R, double Rdown, double Rup, double t, double d
 	auto vd=flow_rate(rhd,t,rSFR);
 	if(fabs(vd)>(R-Rdown)/dt)
 		*err=1;
-		// throw std::runtime_error("Courant condition not satisfied: v="
-		//                          +std::to_string(vd)
-		//                          +", DeltaR="+std::to_string(R-Rdown)
-		//                          +", DeltaT="
-		//                          +std::to_string(dt)
-		//                          +", DeltaR/DeltaT="
-		//                          +std::to_string((R-Rdown)/dt)
-		//                          +"\n");
-	// if(vd>0.)
-	// 	LOG(INFO)<<"Outflows (v="<<std::to_string(vd)<<") at R="
-	// 	                         <<std::to_string(R)<<",t="
-	// 	                         <<std::to_string(t)<<"\n";
 	return -2.*vd*(Rdown+R)/(Rup-Rdown)/(R+.5*(Rdown+Rup));
 }
 
@@ -61,18 +49,6 @@ double RadialFlow::gamma_g(double R, double Rdown, double Rup, double t, double 
 	auto vu=flow_rate(rhu,t,rSFR);
 	if(fabs(vu)>(Rup-R)/dt)
 		*err=1;
-		// throw std::runtime_error("Courant condition not satisfied: v="
-		//                          +std::to_string(vu)
-		//                          +", DeltaR="+std::to_string(Rup-R)
-		//                          +", DeltaT="
-		//                          +std::to_string(dt)
-		//                          +", DeltaR/DeltaT="
-		//                          +std::to_string((Rup-R)/dt)
-		//                          +"\n");
-	// if(vu>0.)
-	// 	LOG(INFO)<<"Outflows (v="<<std::to_string(vu)<<") at R="
-	// 	                         <<std::to_string(R)<<",t="
-	// 	                         <<std::to_string(t)<<"\n";
 	return -2.*vu*(Rup+R)/(Rup-Rdown)/(R+.5*(Rdown+Rup));
 }
 
@@ -84,56 +60,12 @@ LinearRadialFlow::LinearRadialFlow(ModelParameters M,double present_rSFR){
 	VGrad = extract_param(M.parameters["flows"]["radialflow"],"Gradient",0.);
 }
 //=============================================================================
-// PezzulliInflowRadialFlow::PezzulliInflowRadialFlow(ModelParameters M,std::shared_ptr<StarFormationRate> sfr):SFR(sfr){
-// 	auto F = M.parameters["flows"]["radialflow"];
-// 	std::string vars = "PezzulliAlpha";
-// 	if (F.find(vars) == F.end()) {
-// 		LOG(INFO)<<vars<<" not found in parameters file\n";
-// 		throw std::invalid_argument(vars+" not found in parameters file");
-//     }
-// 	Alpha = M.parameters["flows"]["radialflow"]["PezzulliAlpha"];
-// 	KSN = M.parameters["fundamentals"]["Kennicutt-Schmidt_Coeff"];
-// 	double PresentGasDensity = M.parameters["fundamentals"]["PresentGasDensitySun"];
-// 	double PresentSFR = M.parameters["fundamentals"]["PresentSFR"];
-// 	A = PresentSFR/pow(PresentGasDensity,KSN);
-// }
-// double PezzulliInflowRadialFlow::sigmagas(double R, double t){
-// 	return pow((*SFR)(R,t)/A,1./KSN);
-// }
-// double PezzulliInflowRadialFlow::sigmaeffdot(double R, double t){
-// 	double sfr = (*SFR)(R,t);
-// 	double dsfr = ((*SFR)(R,t+0.005)-(*SFR)(R,t-0.005))/0.01;
-// 	if(t<0.005) dsfr = ((*SFR)(R,t+0.01)-(*SFR)(R,t))/0.01;
-// 	return sfr*(1.+pow(sfr,1./KSN-2.)*dsfr/pow(A,1./KSN)/KSN);
-// }
-// double mu_integrand(double R, void *p){
-// 	mu_st *P=(mu_st *) p;
-//     return pow(R,1.+1./P->P->alpha())*P->P->sigmaeffdot(R,P->t);
-// }
-// double PezzulliInflowRadialFlow::mu(double R, double t){
-// 	// radial mass flow rate in units M_sun Gyr^-1
-// 	if(R==0.) return 0.;
-// 	GaussLegendreIntegrator GL(150);
-//     mu_st Q = {this,t};
-//     return -2.*PI*pow(R,-1./Alpha)*GL.integrate(&mu_integrand,0.,R,&Q);
-// }
-// double PezzulliInflowRadialFlow::acc_rate(double R, double t){
-// 	// surface accretion rate in units M_sun kpc^-2 Gyr^-1
-// 	return -mu(R,t)/(2.*PI*Alpha*R*R);
-// }
-// double PezzulliInflowRadialFlow::flow_rate(double R, double t, Grid *rSFR){
-// 	// radial flow rate in units kpc Gyr^-1
-// 	if(R==0.) return 0.;
-// 	return mu(R,t)/sigmagas(R,t)/(2.*PI*R);
-// }
-// double PezzulliInflowRadialFlow::operator()(double R, double t, Grid *rSFR){
-// 	return acc_rate(R,t);
-// }
-//=============================================================================
 template<class T>
 PezzulliInflowRadialFlow_rSFR<T>::PezzulliInflowRadialFlow_rSFR(ModelParameters M,double present_rSFR){
 	Alpha = extract_param(M.parameters["flows"]["radialflow"],
 	                      "PezzulliAlpha",0.);
+	AlphaGrad = extract_param(M.parameters["flows"]["radialflow"],
+	                      "PezzulliAlphaGrad",0.);
 	KSN = M.parameters["fundamentals"]["Kennicutt-Schmidt_Coeff"];
 	double PresentGasDensity = M.parameters["fundamentals"]["PresentGasDensitySun"];
 	A = present_rSFR/pow(PresentGasDensity,KSN);
@@ -142,23 +74,17 @@ double find_SFR(double R, double t, Grid* rSFR){
 	// Extrapolate off edge of grid if necessary
 	double sfr=0.;
 	// Extrapolate off edge of grid
-	if(R>rSFR->grid_radial().back()){
-		// return 0.;
+	if(R>rSFR->grid_radial().back())
 		sfr = rSFR->log_extrapolate_high(R,t);
-		// auto NR = rSFR->grid_radial().size();
-		// double rmax = rSFR->grid_radial()[NR-1];
-		// double rmaxm = rSFR->grid_radial()[NR-2];
-		// sfr = exp(log((*rSFR)(rmax,t))+(log((*rSFR)(rmax,t))-log((*rSFR)(rmaxm,t)))/(rmax-rmaxm)*(R-rmax));
-	}
-	else if(R<rSFR->grid_radial().front()){
+	else if(R<rSFR->grid_radial().front())
 		sfr = rSFR->log_extrapolate_low(R,t);
-		// double rmax = rSFR->grid_radial()[1];
-		// double rmaxm = rSFR->grid_radial()[0];
-		// sfr = exp(log((*rSFR)(rmaxm,t))+(log((*rSFR)(rmax,t))-log((*rSFR)(rmaxm,t)))/(rmax-rmaxm)*(R-rmaxm));
-	}
 	else
 		sfr = (*rSFR)(R,t);
 	return sfr;
+}
+template<class T>
+double PezzulliInflowRadialFlow_rSFR<T>::alpha_fn(double R){
+	return alpha()+alphagrad()*R;
 }
 template<class T>
 double PezzulliInflowRadialFlow_rSFR<T>::KSCoeff(double sfr){
@@ -177,31 +103,35 @@ double PezzulliInflowRadialFlow_rSFR<T>::sigmaeffdot(double R, double t, Grid* r
 	if(sfr*(1.+pow(sfr,1./KS-2.)*dsfr/pow(A,1./KS)/KS)<0.) return 0.;
 	return sfr*(1.+pow(sfr,1./KS-2.)*dsfr/pow(A,1./KS)/KS);
 }
+double X(double R, double alpha){
+    return pow(R,2.+1./alpha)/(2.+1./alpha);
+}
+double RfromX(double X, double alpha){
+    return pow(X*(2.+1./alpha),1./(2.+1./alpha));
+}
 template<class T>
-double mu_P_integrand(double R, void *p){
+double mu_P_integrand(double X, void *p){
 	mu_rSFR_st<T> *P=(mu_rSFR_st<T> *) p;
-	R = exp(R);
-    return pow(R,2.+1./P->P->alpha())*P->P->sigmaeffdot(R,P->t,P->rSFR);
+	double R = RfromX(X, P->P->alpha());
+    return P->P->sigmaeffdot(R,P->t,P->rSFR)*pow(P->P->alpha_fn(R),-1./P->P->alpha());;
 }
 template<class T>
 double PezzulliInflowRadialFlow_rSFR<T>::mu(double R, double t, Grid* rSFR){
 	// radial mass flow rate in units M_sun Gyr^-1
 	if(R==0.) return 0.;
 	integrator GL(5000);
-	// GaussLegendreIntegrator GL2(50);
     mu_rSFR_st<T> Q = {this,t,rSFR};
-    // std::cout<<R<<" "<<t<<" "<<" "<<-2.*PI*pow(R,-1./Alpha)*GL.integrate(&mu_P_integrand<T>,log(0.01),log(R),1e-4,&Q)<<" "<<-2.*PI*pow(R,-1./Alpha)*GL2.integrate(&mu_P_integrand<T>,log(0.01),log(R),&Q)<<std::endl;
-    return -2.*PI*pow(R,-1./Alpha)*GL.integrate(&mu_P_integrand<T>,log(0.01),log(R),1e-4,&Q);
+    return -2.*PI*pow(alpha_fn(R)/R,1./Alpha)*GL.integrate(&mu_P_integrand<T>,X(0.01,Alpha),X(R,Alpha),1e-3,&Q);
 }
 template<class T>
 double PezzulliInflowRadialFlow_rSFR<T>::dmudR(double R, double t, Grid* rSFR){
 	if(R==0.) return 0.;
-	return -mu(R,t,rSFR)/(Alpha*R)-2.*PI*R*sigmaeffdot(R,t,rSFR);
+	return -mu(R,t,rSFR)/(alpha_fn(R)*R)-2.*PI*R*sigmaeffdot(R,t,rSFR);
 }
 template<class T>
 double PezzulliInflowRadialFlow_rSFR<T>::acc_rate(double R, double t, Grid* rSFR){
 	// surface accretion rate in units M_sun kpc^-2 Gyr^-1
-	return -mu(R,t,rSFR)/(2.*PI*Alpha*R*R);
+	return -mu(R,t,rSFR)/(2.*PI*alpha_fn(R)*R*R);
 }
 template<class T>
 double PezzulliInflowRadialFlow_rSFR<T>::flow_rate(double R, double t, Grid* rSFR){

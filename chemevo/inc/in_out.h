@@ -180,29 +180,6 @@ public:
 		return -VGrad*R;
 	}
 };
-// /**
-//  * @brief Pezzulli radial flow
-//  */
-// class PezzulliInflowRadialFlow:public RadialFlow, public Inflow{
-// private:
-// 	std::shared_ptr<StarFormationRate> SFR;
-// 	double Alpha; // Dimensionless angular momentum lag of infalling material w.r.t. disc
-// 	double KSN; // Kennicutt-Schmidt power
-// 	double A; // Kennicutt-Schmidt coefficient -- sfr = A \sigma_g^KSN
-// public:
-// 	PezzulliInflowRadialFlow(ModelParameters M,std::shared_ptr<StarFormationRate> sfr);
-// 	double flow_rate(double R, double t, Grid *rSFR=nullptr);
-// 	double alpha(void){return Alpha;}
-// 	double sigmagas(double R, double t);
-// 	double sigmaeffdot(double R, double t);
-// 	double acc_rate(double R, double t);
-// 	double mu(double R, double t);
-// 	double operator()(double R, double t, Grid *rSFR=nullptr);
-// };
-// struct mu_st{
-//     PezzulliInflowRadialFlow *P;
-//     double t;
-// };
 /**
  * @brief Pezzulli radial flow reduced SFR -- templated such that it can be
  * used as either an inflow or a radial flow (as both use the same code)
@@ -211,6 +188,7 @@ template<class T>
 class PezzulliInflowRadialFlow_rSFR:public T{
 private:
 	double Alpha; // Dimensionless angular momentum lag of infalling material w.r.t. disc
+	double AlphaGrad; // Gradient of the angular momentum lag with radius
 	double KSN;   // Kennicutt-Schmidt power
 	double A;     // Kennicutt-Schmidt coefficient -- sfr = A \sigma_g^KSN
 public:
@@ -219,7 +197,9 @@ public:
 	double KSCoeff(double sfr);
 	double flow_rate(double R, double t, Grid *rSFR);
 	double radial_flow_rate(double R, double t, Grid *rSFR);
-	double alpha(void){return Alpha;}
+	double alpha(){return Alpha;}
+	double alphagrad(){return AlphaGrad;}
+	double alpha_fn(double R);
 	double sigmagas(double R, double t, Grid *rSFR);
 	double sigmaeffdot(double R, double t, Grid *rSFR);
 	double acc_rate(double R, double t, Grid *rSFR);
