@@ -25,8 +25,7 @@ class Model{
 private:
 	//=========================================================================
 	ModelParameters params;
-	AsplundSolarAbundances solar;
-	// AndersSolarAbundances solar;
+	std::shared_ptr<SolarAbundances> solar;
 	//=========================================================================
 	std::shared_ptr<StarFormationRate> sfr;
 	std::shared_ptr<InitialMassFunction> imf;
@@ -52,19 +51,19 @@ private:
 	std::map<Element,int> elements_r;
 	//=========================================================================
 	bool agb_yields, typeII_yields, typeIa_yields, migration;
-        bool single_zone, gasdump=false, use_warm_phase, logspace;
-        double warm_cold_ratio, warm_cooling_time;
-        //=========================================================================
-   	// Grid-points to get inflowing gas properties from
-	unsigned nR0=0,nt0=0;
+    bool single_zone, gasdump=false, use_warm_phase, logspace;
+    double warm_cold_ratio, warm_cooling_time;
+    //=========================================================================
+	unsigned iteratemax; // maximum number of iterations to perform per step
+	double tol;          // target relative accuracy between iterations
 protected:
 public:
 	// Constructors
-	Model(std::string params_file):params(params_file),solar(params){
+	Model(std::string params_file):params(params_file){
 		setup();
 		fill_initial_grids();
 	}
-	Model(ModelParameters &params):params(params),solar(params){
+	Model(ModelParameters &params):params(params){
 		setup();
 		fill_initial_grids();
 	}
@@ -127,14 +126,13 @@ public:
 	double RadialFlowRateFromGrid(double R, double t, double dt,
 	                              double gm_prev, unsigned nR, unsigned nt,
 	                              unsigned NR, int*err);
-	double EnrichRadialFlowRateFromGrid(unsigned Ne, double R, double t,
+	double EnrichRadialFlowRateFromGrid(Element E, double R, double t,
 	                                    double dt, double e_gm_prev,
 	                                    unsigned nR, unsigned nt,
 	                                    unsigned NR, int*err);
 	double RadialMigrationKernel(double R, double Rp, double t);
 	double GasDumpRate(double R, double t, double dt);
-	double EnrichGasDumpRate(Element E, double R, double t, double dt,
-	                         SolarAbundances solar);
+	double EnrichGasDumpRate(Element E, double R, double t, double dt);
 	//=========================================================================
 	// Printing functions
 	void print_abundance_grid(std::ostream &out,Element E);

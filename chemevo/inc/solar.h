@@ -23,6 +23,9 @@ protected:
 	VecDoub mfracs;			// Mass fractions in sun
 	double X_, Y_, Z_;		// Hydrogen, Helium and Metals mass fraction
 public:
+
+	// SolarAbundances(ModelParameters M){}
+
 	double mass_fraction(unsigned e){
 		return mfracs[e];
 	}
@@ -44,10 +47,14 @@ public:
 	 *
 	 * @return scale solar abundance
 	 */
-    double scaled_solar_mass_frac(Element E, double z){
-		if(E=="H") return X_p-(X_p-X())/Z()*z;
-		else if(E=="He") return Y_p+(Y()-Y_p)/Z()*z;
-		else return mass_fraction(E)*z/Z();
+    double scaled_solar_mass_frac(Element E, double z, double alpha_enhance=0.){
+    	double out=0.;
+		if(E=="H") out= X_p-(X_p-X())/Z()*z;
+		else if(E=="He") out= Y_p+(Y()-Y_p)/Z()*z;
+		else out = mass_fraction(E)*z/Z();
+		if(is_alpha_element[E])
+			out*=pow(10., alpha_enhance);
+		return out;
 	}
 	/**
 	 * @brief Scaled solar mass fraction
@@ -58,10 +65,14 @@ public:
 	 *
 	 * @return scale solar abundance
 	 */
-    double scaled_solar_mass_frac(unsigned e, double z){
-		if(e==0) return X_p-(X_p-X())/Z()*z;
-		else if(e==0) return Y_p+(Y()-Y_p)/Z()*z;
-		else return mass_fraction(e)*z/Z();
+    double scaled_solar_mass_frac(unsigned e, double z, double alpha_enhance=0.){
+    	double out=0.;
+		if(e==0) out = X_p-(X_p-X())/Z()*z;
+		else if(e==1) out = Y_p+(Y()-Y_p)/Z()*z;
+		else out = mass_fraction(e)*z/Z();
+		if(is_alpha_element[element_index_reverse[e]])
+			out*=pow(10., alpha_enhance);
+		return out;
 	}
     inline double X(void){return X_;}
     inline double Y(void){return Y_;}
@@ -75,13 +86,31 @@ private:
 public:
 	AsplundSolarAbundances(ModelParameters M);
 };
-// Abundances from Anders & Grevesse 1989
-class AndersSolarAbundances: public SolarAbundances{
-private:
-	const std::string data_file = "anders1989_abundances.dat";
+// Generic loader for abundances for Grevesse & Noel (1993) and Anders & Grevesse 1989
+class AndersTypeSolarAbundances: public SolarAbundances{
 public:
-	AndersSolarAbundances(ModelParameters M);
+	AndersTypeSolarAbundances(ModelParameters M, std::string data_folder);
 };
+// Abundances from Anders & Grevesse 1989
+class AndersSolarAbundances: public AndersTypeSolarAbundances{
+public:
+	AndersSolarAbundances(ModelParameters M)
+		: AndersTypeSolarAbundances(M, "anders1989_abundances.dat"){}
+};
+// Abundances from Grevesse & Noel (1993) and Anders & Grevesse 1989
+class GrevesseNoelSolarAbundances: public AndersTypeSolarAbundances{
+public:
+	GrevesseNoelSolarAbundances(ModelParameters M)
+		: AndersTypeSolarAbundances(M, "grevesse_noel1993_abundances.dat"){}
+};
+// Abundances from Grevesse & Sauval (1998) and Anders & Grevesse 1989
+class GrevesseSauvalSolarAbundances: public AndersTypeSolarAbundances{
+public:
+	GrevesseSauvalSolarAbundances(ModelParameters M)
+		: AndersTypeSolarAbundances(M, "grevesse_sauval1998abundances.dat"){}
+};
+//=============================================================================
+extern shared_map<SolarAbundances,ModelParameters> solar_types;
 //=============================================================================
 #endif
 //=============================================================================

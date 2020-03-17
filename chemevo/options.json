@@ -8,6 +8,12 @@
 //=============================================================================
 "fundamentals":{
 //============================================================================
+	"iterate_max": 2,              // Maximum number of iterations per timestep
+	"tolerance": 0.005,            // target tolerance (perform iterations
+								   // until tolerance reached).
+//============================================================================
+	"solar": "Asplund",            // solar abundances to use (Asplund,Anders)
+//============================================================================
 	"MinimumMass": 0.5,            // Minimum mass to produce stars at *
 	"MaximumMass": 50.0,           // Maximum mass to produce stars at *
 	"GalaxyAge": 10.0,             // Time to run simulation for *
@@ -15,8 +21,8 @@
 
 	"PresentSFR":2.4,              // SFR at the end of the simulation
 
-    "InitialMetallicity":0.001,    // Initial metallicity of the ISM *
-	"InitialAlpha":-1.0,           // Initial Alpha enhancement of the ISM *
+        "InitialMetallicity":0.001,    // Initial metallicity of the ISM *
+	"InitialAlpha":-1.0,           // Initial Alpha enhancement of the ISM
 
 	// Either specify PresentGasDensitySun or Kennicutt-Schmidt params *
 	"PresentGasDensitySun":10.0,   // Gas Density at the Sun at the final time
@@ -68,20 +74,27 @@
 	// Type Ia *
 	//=========================================================================
 		"typeIa":"Maeda",
+		"typeIa":"Iwamoto",
+		"typeIa":"Seitenzahl",
+		"typeIa":"Thielemann",
 	//=========================================================================
 	// Type II *
 	//=========================================================================
-		"typeII":"ChieffiLimongi",
+		"typeII":"ChieffiLimongi2018",
+		"typeII":"ChieffiLimongi2004",
+		"typeII":"Nugrid",
 		"typeII":"Kobayashi",
 	//=========================================================================
 	// AGB *
 	//=========================================================================
 		"AGB":"None",
 		"AGB":"Karakas",
+		"AGB":"Ventura",
+		"AGB":"Nugrid",
 	//=========================================================================
-	// Super AGB *
+	// Super AGB
 	//=========================================================================
-	"SuperAGB":"None"
+	//"SuperAGB":"None"
 },
 //=============================================================================
 "typeIa":{
@@ -117,7 +130,9 @@
 			"FastTimeScale": 0.5,
 			"SlowTimeScale": 5.5,
 			"Weight": 0.5,
-		"Form":"Pezzulli" // Linked to radialflow (see below)
+		"Form":"Pezzulli", // Linked to radialflow (see below)
+		"inflow_metallicity": 0.001, // metallicity of inflowing gas
+		"inflow_alpha": 0.0          // alpha abundance of inflowing gas
 	},
 	//=========================================================================
 	"outflow":{// *

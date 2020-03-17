@@ -9,6 +9,7 @@
 #include "utils.h"
 #include "cuba.h"
 #include "hdf5_reader.h"
+#include "easylogging++.h"
 //#include "utils_iso.h"
 //=============================================================================
 const int nproc = 1;
@@ -70,8 +71,10 @@ double integrate(integrand_t integrand, c *P, double IE, double AE, std::string 
         NGIVEN, NSIZE, nullptr, NEXTRA, nullptr,STATEFILE,SPIN,
         &nregions, &neval, &fail, integral, error, prob);
     if(err)*err=prod*error[0];
-    if(fail!=0)
-        throw std::runtime_error("Error: Required accuracy not reached for "+str+".");
+    if(fail!=0){
+      // throw std::runtime_error("Error: Required accuracy not reached for "+str+".");
+      LOG(INFO)<<"Error: Required accuracy not reached for "+str+"."<<std::endl;
+    }
     return prod*integral[0];
 }
 //=============================================================================
@@ -93,6 +96,7 @@ void printProgBar( c percent ){
   std::cout.width( 3 );
   std::cout<< percent << "%     " << std::flush;
 }
+
 //=============================================================================
 #endif
 //=============================================================================

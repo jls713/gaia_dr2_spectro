@@ -39,24 +39,32 @@ public:
 		return parameters["fundamentals"]["MinimumMass"];}
 };
 //=============================================================================
+template<typename T>
+std::string toString(const T& t) {
+    return std::to_string(t);
+}
+std::string toString(const char* t);
+std::string toString(const std::string& t);
+//=============================================================================
 template<typename T, typename T2>
 std::vector<T2> extract_params(T F, std::vector<std::string> vars,
-                               std::vector<T2> defaults){
+                               std::vector<T2> defaults, bool log=true){
     std::vector<T2> rslt;
     if(defaults.size()!=vars.size()){
         std::string varst="";
         std::string dst="";
-        for(auto d:defaults) dst+=std::to_string(d);
+        for(auto d:defaults) dst+=toString(d);
         for(auto v:vars) varst+=v;
-        LOG(INFO)<<varst<<" "<<dst<<" different length\n";
+        LOG(INFO)<<varst<<" "<<dst<<" different length";
         throw std::invalid_argument("Mismatching lengths "+varst+" "+dst);
     }
     for(unsigned ii=0;ii<vars.size();++ii){
         if (F.find(vars[ii]) == F.end()) {
-            LOG(INFO)<<vars[ii]<<" not found in parameters file\n";
-            LOG(INFO)<<"Setting default for "<<vars[ii]<<" = "<<defaults[ii]<<std::endl;
+            if(log)
+            	LOG(INFO)<<"'"<<vars[ii]<<"'"
+	            <<" not found in parameters file. Setting default for '"
+	            <<vars[ii]<<"' = "<<defaults[ii];
 	        rslt.push_back(defaults[ii]);
-            // throw std::invalid_argument(v+" not found in parameters file");
         }
         else
 	        rslt.push_back(F[vars[ii]]);
@@ -65,10 +73,10 @@ std::vector<T2> extract_params(T F, std::vector<std::string> vars,
 }
 template<typename T, typename T2>
 T2 extract_param(T F, std::string var,
-                  T2 defaultP){
+                  T2 defaultP, bool log=true){
 	std::vector<std::string> vars={var};
 	std::vector<T2> defaults={defaultP};
-    return extract_params(F, vars, defaults)[0];
+    return extract_params(F, vars, defaults, log)[0];
 }
 template<typename T>
 int check_param_given(T F, std::string entry, bool log=true){

@@ -6,10 +6,20 @@ unsigned iterMAX_integral=50000;
 void Model::setup(void){
 	//=========================================================================
 	LOG(INFO)<<"Setting up model with parameters:"<<params.parameters.dump();
+	params.pretty_print(std::cout);
 	//=========================================================================
 	// 0. Check if parameter values are valid
 	if(check_parameters())
 		throw std::invalid_argument("Invalid parameters in parameter file\n");
+	// Initialize iteration number per step
+	iteratemax = extract_param(params.parameters["fundamentals"],
+	                           "max_iterations",2);
+	tol = extract_param(params.parameters["fundamentals"],
+	                           "tolerance",0.005);
+	std::string default_string = "Asplund";
+	std::string solar_string = extract_param(params.parameters["fundamentals"],"solar",default_string);
+	params.parameters["fundamentals"]["solar"]=solar_string;
+	solar = solar_types[solar_string](params);
 	//=========================================================================
 	// 1. Initialise Initial Mass Function, Star Formation Rate,
 	//    Stellar Ages, Type Ia Rates and Radial Migration.
@@ -89,42 +99,55 @@ void Model::setup(void){
 	}
 
 
-	inflow = inflow_types[params.parameters["flows"]["inflow"]["Form"]](params,prSFR);
-	radialflow = radialflow_types[params.parameters["flows"]["radialflow"]["Form"]](params,prSFR);
+	inflow = inflow_types[params.parameters["flows"]["inflow"]["Form"]](
+	            params,solar,prSFR);
+	radialflow = radialflow_types[params.parameters["flows"]["radialflow"]["Form"]](params,solar,prSFR);
 	if(gasdump)
-		gasdumpflow = gasdump_types[params.parameters["flows"]["gasdump"]["Form"]](params);
+		gasdumpflow = gasdump_types[params.parameters["flows"]["gasdump"]["Form"]](params,solar);
 	else
-		gasdumpflow = gasdump_types["None"](params);
+		gasdumpflow = gasdump_types["None"](params,solar);
 }
 void Model::fill_initial_grids(void){
+
 	double Zinit = params.parameters["fundamentals"]["InitialMetallicity"];
-	double AlphaInit = params.parameters["fundamentals"]["InitialAlpha"];
-	Zinit *= solar.Z();
+	double AlphaInit = extract_param(
+	                    params.parameters["fundamentals"],"InitialAlpha",0.);
+
+	Zinit *= solar->Z();
 	metallicity->set_fixed_t_const(Zinit,0);
+
 	for(auto i=0u;i<mass_fraction.size();++i){
-		auto initial_abundance = solar.scaled_solar_mass_frac(elements[i],Zinit);
-		if(is_alpha_element[elements[i]])
-			initial_abundance*=pow(10.,AlphaInit);
+		auto initial_abundance = solar->scaled_solar_mass_frac(elements[i],
+		                                                      Zinit,AlphaInit);
 		mass_fraction[i].set_fixed_t_const(initial_abundance,0);
 		if(use_warm_phase)
 			mass_fraction_warm[i].set_fixed_t_const(initial_abundance,0);
 	}
+
 	// Fill gas and star initial grid
 	VecDoub gas_radial_dist=gas_mass->grid_radial();
 	VecDoub star_radial_dist=gas_mass->grid_radial();
 
 	double K = params.parameters["fundamentals"]["Kennicutt-Schmidt_Coeff"];
 	double A = params.parameters["fundamentals"]["Kennicutt-Schmidt_A"];
+	double fracWarm=0.01;
 	for(auto i=0u;i<gas_radial_dist.size();++i){
 		star_radial_dist[i]=SFR(gas_mass->grid_radial()[i],0.);
 		star_radial_dist[i]+=OutflowRate(gas_mass->grid_radial()[i],0.,
 		                                 star_radial_dist[i],0.);
 		gas_radial_dist[i]=pow(star_radial_dist[i]/A, 1./K);
 	}
-	reducedSFR->set_fixed_t(star_radial_dist,0);
+	if(warm_gas_mass){
+		VecDoub warm_gas_radial_dist=gas_mass->grid_radial();
+		for(auto i=0u;i<warm_gas_radial_dist.size();++i){
+			warm_gas_radial_dist[i]=fracWarm*gas_radial_dist[i];
+			star_radial_dist[i]-=warm_gas_radial_dist[i]/warm_cooling_time;
+			gas_radial_dist[i]=pow(star_radial_dist[i]/A, 1./K);
+		}
+		warm_gas_mass->set_fixed_t(warm_gas_radial_dist,0);
+	}
 	gas_mass->set_fixed_t(gas_radial_dist,0);
-	if(warm_gas_mass)
-		warm_gas_mass->set_fixed_t(gas_radial_dist,0);
+	reducedSFR->set_fixed_t(star_radial_dist,0);
 	LOG(INFO)<<"Grids filled\n";
 }
 
@@ -144,8 +167,7 @@ int Model::check_parameters(void){
 											"MaximumMass",
 											"GalaxyAge",
 											"PresentSFR",
-											"InitialMetallicity",
-											"InitialAlpha"};
+											"InitialMetallicity"};
 	for(auto s: fund_blocks) err+=check_param_given(F["fundamentals"], s);
 	if(err) return err;
 	// Check grid parameters
@@ -164,7 +186,7 @@ int Model::check_parameters(void){
 	err+=check_param_given_matches_list(F["yields"], typeII_types, "typeII");
 	err+=check_param_given_matches_list(F["yields"], typeIa_types, "typeIa");
 	err+=check_param_given_matches_list(F["yields"], agb_types, "AGB");
-	err+=check_param_given_matches_list(F["yields"], sagb_types, "SuperAGB");
+	// err+=check_param_given_matches_list(F["yields"], sagb_types, "SuperAGB");
 	err+=check_param_given_matches_list_form(F["flows"], inflow_types,
 	                                         "inflow");
 	err+=check_param_given_matches_list_form(F["flows"], outflow_types,
@@ -174,9 +196,15 @@ int Model::check_parameters(void){
 		err+=check_param_given_matches_list_form(F["flows"], radialflow_types,
 		                                         "radialflow");
 	}
+	else{
+		params.parameters["flows"]["radialflow"]["Form"]="None";
+		params.parameters["migration"]["Form"]="None";
+	}
 	F = params.parameters["flows"];
-	if (check_param_given(F, "gasdump", false))
+	if (!check_param_given(F, "gasdump", false)){
 		gasdump=false;
+		params.parameters["flows"]["gasdump"]["Form"]="None";
+	}
 	else{
 		gasdump=true;
 		err+=check_param_given_matches_list_form(F, gasdump_types,
@@ -210,7 +238,7 @@ int Model::check_parameters(void){
 	}
 	if(!check_param_given(params.parameters["fundamentals"],"Kennicutt-Schmidt_A",false) and
 		!check_param_given(params.parameters["fundamentals"],"PresentGasDensitySun",false))
-		LOG(INFO)<<"Both PresentGasDensitySun and Kennicutt-Schmidt_A given -- using Kennicutt-Schmidt_A"<<std::endl;
+		LOG(INFO)<<"Both PresentGasDensitySun and Kennicutt-Schmidt_A given -- using Kennicutt-Schmidt_A";
 	return err;
 }
 
@@ -225,7 +253,6 @@ int Model::step(unsigned nt, double dt){
 	auto NR = gas_mass->grid_radial().size();
 	auto tp = t-.5*dt;
 
-	int iteratemax=2;
 	auto gm_it=gas_mass->grid_fixed_t(nt);
 	for(auto nR=0u;nR<NR;++nR) gm_it[nR]=1e90;
 	std::vector<int> not_done(gm_it.size(),true);
@@ -246,10 +273,10 @@ int Model::step(unsigned nt, double dt){
 		auto gas_return = GasReturnRate(R,t)*(1-warm_cold_ratio);
 		auto outflowrate = OutflowRate(R,t,starformrate,gas_return);
 		auto warmgasrate = 0.;
-		// if(warm_cold_ratio>0.)
-		// 	warmgasrate=(*warm_gas_mass)(nR,nt-1)/warm_cooling_time;
+		if(warm_cold_ratio>0.)
+			warmgasrate=(*warm_gas_mass)(nR,nt-1)/warm_cooling_time;
 		reducedSFR->set(starformrate-gas_return
-		                +outflowrate+warmgasrate,
+		                +outflowrate-warmgasrate,
 		                nR,nt);
 	}
 	if(err){return err;}
@@ -296,8 +323,11 @@ int Model::step(unsigned nt, double dt){
 			gm += warm_gm_prev*dt/warm_cooling_time;
 		}
 
-		if(migration)
-			gm += rad_mig->convolve(gas_mass.get(),nR,nt)-gm_prev;
+		gas_mass->set(gm,nR,nt);
+		if(migration and nt>1){
+			// gm += rad_mig->convolve(gas_mass.get(),nR,nt)-gm_prev;
+			gas_mass->set(gm,nR,nt);
+		}
 
 		// 3. Stars
 		sm_prev = (*stellar_mass)(nR,nt-1);
@@ -305,11 +335,12 @@ int Model::step(unsigned nt, double dt){
 		dmsdt -= gas_return;
 		sm = sm_prev+dmsdt*dt;
 
-		if(migration and nt>1)
-			sm += rad_mig->convolve(stellar_mass.get(),nR,nt)-sm_prev;
-
-		gas_mass->set(gm,nR,nt);
 		stellar_mass->set(sm,nR,nt);
+		if(migration and nt>1){
+			sm += rad_mig->convolve(stellar_mass.get(),nR,nt)-sm_prev;
+			stellar_mass->set(sm,nR,nt);
+		}
+
 		if (use_warm_phase) warm_gas_mass->set(warm_gm, nR, nt);
 
 		// 4. Enrichment
@@ -319,11 +350,11 @@ int Model::step(unsigned nt, double dt){
 			enrichrate=EnrichmentRate(e.second,R,tp);
 			dmdt += enrichrate*(1-warm_cold_ratio); // re-enrich
 			dmdt -= OutflowRate(R,tp,starformrate*Xi,enrichrate);
-			dmdt += inflowrate*mass_fraction[e.first](nR0,nt0); // inflow
-			dmdt += EnrichRadialFlowRateFromGrid(e.first, R, tp, dt,
+			dmdt += inflowrate*inflow->Xi_inflow(e.second); // inflow
+			dmdt += EnrichRadialFlowRateFromGrid(e.second, R, tp, dt,
 			                                     gm_prev*Xi,
 			                                     nR, nt, NR, &err);
-			dmdt += EnrichGasDumpRate(e.second, R, tp, dt, solar);
+			dmdt += gas_dump_dm*gasdumpflow->Xi_inflow(e.second);
 			double mass_now = Xi*gm_prev+dmdt*dt;
 			double warm_mass_now = 0., Xiwarm=0.;
 
@@ -331,21 +362,26 @@ int Model::step(unsigned nt, double dt){
 				Xiwarm = mass_fraction_warm[e.first](nR,nt-1);
 				warm_mass_now = Xiwarm*warm_gm_prev;
 				warm_mass_now += enrichrate*warm_cold_ratio*dt;
-                                mass_now += Xiwarm*warm_gm_prev*dt/warm_cooling_time;
-				//warm_mass_now += dt*inflowrate*mass_fraction[e.first](nR0,nt0); // inflow
-                                //mass_now += dt*inflowrate*(Xiwarm-mass_fraction[e.first](nR0,nt0));
+				// cooling
+                mass_now += Xiwarm*warm_gm_prev*dt/warm_cooling_time;
 				warm_mass_now -= Xiwarm*warm_gm_prev*dt/warm_cooling_time;
+                // inflow
+				warm_mass_now += dt*inflowrate*(inflow->Xi_inflow(e.second)-Xiwarm);
+                mass_now += dt*inflowrate*(Xiwarm-inflow->Xi_inflow(e.second));
 				mass_fraction_warm[e.first].set(warm_mass_now/warm_gm,nR,nt);
 			}
-			if(migration)
-				mass_now+=rad_mig->convolve_massfrac(gas_mass.get(),&mass_fraction[e.first],nR,nt)-Xi*gm_prev;
 
 			mass_fraction[e.first].set(mass_now/gm,nR,nt);
+
+			if(migration and nt>1){
+				// mass_now+=rad_mig->convolve_massfrac(gas_mass.get(),&mass_fraction[e.first],nR,nt)-Xi*gm_prev;
+				mass_fraction[e.first].set(mass_now/gm,nR,nt);
+			}
 		}
 		metallicity->set(1.-X(R,t)-Y(R,t),nR,nt);
 		err = check_metallicity(R, t, dt, nR, NR, nt);
 
-		if(fabs((gm-gm_it[nR])/gm)<0.005) not_done[nR]=0;
+		if(fabs((gm-gm_it[nR])/gm)<tol) not_done[nR]=0;
 		else not_done[nR]=1;
 		}
 	int done_sum=0;
@@ -412,9 +448,9 @@ void Model::run(void){
 	}
 	std::cout<<std::endl;
 	// now scale wrt solar
-	metallicity->log10scale(solar.Z());
+	metallicity->log10scale(solar->Z());
 	for(auto e:elements)
-		mass_fraction[e.first].log10scale(solar.mass_fraction(e.second));
+		mass_fraction[e.first].log10scale(solar->mass_fraction(e.second));
 }
 int Model::check_metallicity(double R, double t, double dt, unsigned nR, unsigned NR, unsigned nt){
     if(Z(R,t)<0){
@@ -473,10 +509,9 @@ double Model::OutflowRate(double R, double t, double SFR, double GasReturn){retu
 double Model::GasDumpRate(double R, double t, double dt){
 	return (*gasdumpflow)(R, t, dt);
 }
-double Model::EnrichGasDumpRate(Element E, double R, double t, double dt,
-                                SolarAbundances solar){
-	return gasdumpflow->elements(E, R, t, dt, solar);
-}
+// double Model::EnrichGasDumpRate(Element E, double R, double t, double dt){
+// 	return gasdumpflow->elements(E, R, t, dt);
+// }
 double Model::RadialFlowRateFromGrid(double R, double t,
                                      double dt, double gm_prev,
                                      unsigned nR, unsigned nt,
@@ -493,7 +528,7 @@ double Model::RadialFlowRateFromGrid(double R, double t,
 		outer_gas_mass=gas_mass->log_extrapolate_high(Rup,nt-1);
 	return RadialFlowRate(gm_prev,outer_gas_mass,R,Rdown,Rup,t,dt,err);
 }
-double Model::EnrichRadialFlowRateFromGrid(unsigned Ne, double R, double t,
+double Model::EnrichRadialFlowRateFromGrid(Element E, double R, double t,
                                            double dt, double e_gm_prev,
 		                                   unsigned nR, unsigned nt,
 		                                   unsigned NR, int*err){
@@ -504,9 +539,9 @@ double Model::EnrichRadialFlowRateFromGrid(unsigned Ne, double R, double t,
 	auto Rup=gas_mass->Rup(nR);
 
 	if(nR<NR-1)
-		e_outer_gas_mass=(*gas_mass)(nR+1,nt-1)*mass_fraction[Ne](nR+1,nt-1);
+		e_outer_gas_mass=(*gas_mass)(nR+1,nt-1)*mass_fraction[elements_r[E]](nR+1,nt-1);
 	else
-		e_outer_gas_mass=gas_mass->log_extrapolate_high(Rup,nt-1)*mass_fraction[Ne](nR0,nt0);
+		e_outer_gas_mass=gas_mass->log_extrapolate_high(Rup,nt-1)*inflow->Xi_inflow(E);
 	return RadialFlowRate(e_gm_prev,e_outer_gas_mass,R,Rdown,Rup,t,dt,err);
 }
 

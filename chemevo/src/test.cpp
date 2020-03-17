@@ -31,6 +31,15 @@ TEST(StarFormationRate,SB15){
     double rt = sfr_sb15.gas_consumed_per_unit_radius(8.);
     double t = sfr_sb15.gas_consumed();
 }
+TEST(StarFormationRate,Neige2020){
+    ModelParameters M("params/example_params.json");
+    SFR_Neige2020 neige20(M);
+    std::cout<<neige20(5.2,10.)<<std::endl;
+    std::cout<<neige20(8.2,10.)<<std::endl;
+    std::cout<<neige20(8.2,12.)<<std::endl;
+    double rt = neige20.gas_consumed_per_unit_radius(8.);
+    double t = neige20.gas_consumed();
+}
 //=============================================================================
 
 TEST(InitialMassFunction,Salpeter){
@@ -76,13 +85,108 @@ TEST(Galaxy,grid){
 	}
 }
 //=============================================================================
-
 TEST(Parameters,params){
     ModelParameters M("params/example_params.json");
     M.print();
     M.pretty_print();
 }
-
+//=============================================================================
+TEST(TypeIaYields, Maeda){
+    ModelParameters M("params/example_params.json");
+    Maeda_TypeIaYields I(M);
+    EXPECT_NEAR(I.mass("C"),0.0499,1e-7);
+}
+TEST(TypeIaYields, Iwamoto){
+    ModelParameters M("params/example_params.json");
+    Iwamoto_TypeIaYields I(M);
+    EXPECT_NEAR(I.mass("C"),0.0483014,1e-7);
+}
+TEST(TypeIaYields, Seitenzahl){
+    ModelParameters M("params/example_params.json");
+    Seitenzahl_TypeIaYields I(M);
+    EXPECT_NEAR(I.mass("C"),3.04e-3,1e-5);
+}
+TEST(TypeIaYields, Thielemann){
+    ModelParameters M("params/example_params.json");
+    Thielemann_TypeIaYields I(M);
+    EXPECT_NEAR(I.mass("C"),0.0504011,1e-7);
+}
+TEST(TypeIIYields, Nugrid){
+    ModelParameters M("params/example_params.json");
+    M.parameters["fundamentals"]["solar"]="GrevesseNoel";
+    NugridYields I(M);
+    EXPECT_NEAR(I.mass("Ce",20.,0.02),9.710E-08,1e-12);
+    VecDoub mm = create_range(1.,50.,50);
+    for(auto i: mm)
+        std::cout<<i<<" "<<I.mass("Fe",i,0.001)<<std::endl;
+}
+TEST(TypeIIYields, Kobayashi2006){
+    ModelParameters M("params/example_params.json");
+    M.parameters["fundamentals"]["solar"]="Anders";
+    TypeIIKobayashi2006 I(M);
+    EXPECT_NEAR(I.mass("C",15.,0.02),0.06625,1e-5);
+    VecDoub mm = create_range(8.,50.,50);
+    for(auto i: mm)
+        std::cout<<i<<" "<<I.mass("Fe",i,0.02)<<std::endl;
+}
+TEST(TypeIIYields, CompareYields){
+    ModelParameters M("params/example_params.json");
+    M.parameters["fundamentals"]["solar"]="Asplund";
+    TypeIIKobayashi2006 K(M);
+    TypeIIChieffiLimongi2004 CL04(M);
+    TypeIIChieffiLimongi2018 CL18(M);
+    NugridYields N(M);
+    VecDoub mm = create_range(8.,50.,50);
+    std::string el = "Fe";
+    double Z = pow(10,-1)*0.0198;
+    for(auto i: mm)
+        std::cout<<i<<" "
+        <<K.mass(el,i,Z)<<" "
+        <<CL04.mass(el,i,Z)<<" "
+        <<CL18.mass(el,i,Z)<<" "
+        <<N.mass(el,i,Z)<<
+        std::endl;
+}
+TEST(AGBYields, CompareYields){
+    ModelParameters M("params/example_params.json");
+    M.parameters["fundamentals"]["solar"]="Asplund";
+    AGBYieldsKarakas K(M);
+    AGBYieldsVentura V(M);
+    VecDoub mm = create_range(1.,6.,50);
+    std::string el = "He";
+    double Z = 0.02;
+    for(auto i: mm)
+        std::cout<<i<<" "
+        <<K.mass(el,i,Z)<<" "
+        <<V.mass(el,i,Z)<<
+        std::endl;
+}
+TEST(TypeIIYields, ChieffiLimongi2004){
+    ModelParameters M("params/example_params.json");
+    M.parameters["fundamentals"]["solar"]="Anders";
+    TypeIIChieffiLimongi2004 I(M);
+    EXPECT_NEAR(I.mass("C",15.,0.02),0.20631,1e-5);
+    EXPECT_NEAR(I.yield("C",15.,0.02),0.0096337751473700058,1e-5);
+}
+TEST(TypeIIYields, ChieffiLimongi2018){
+    ModelParameters M("params/example_params.json");
+    M.parameters["fundamentals"]["solar"]="Asplund";
+    TypeIIChieffiLimongi2018 I(M);
+    EXPECT_NEAR(I.mass("C",25.,1.345e-2),0.620690828,1e-5);
+}
+TEST(AGBYields, KarakasYields){
+    ModelParameters M("params/example_params.json");
+    M.parameters["fundamentals"]["solar"]="Anders";
+    AGBYieldsKarakas I(M);
+    EXPECT_NEAR(I.mass("C",1.,0.02),1.1907e-3,1e-7);
+    EXPECT_NEAR(I.yield("C",1.,0.02),-0.00082472786359013965,1e-7);
+}
+TEST(AGBYields, VenturaYields){
+    ModelParameters M("params/example_params.json");
+    M.parameters["fundamentals"]["solar"]="Asplund";//GrevesseSauval";
+    AGBYieldsVentura I(M);
+    EXPECT_NEAR(I.mass("H",2.5,0.02),7.32e-7,1e-9);
+}
 //=============================================================================
 
 TEST(StellarAges,Portinari){
@@ -179,12 +283,14 @@ TEST(TypeIaRates,BinaryMass){
 //=============================================================================
 
 TEST(Yields,YieldsSet){
-    ModelParameters M("params/params/example_params.json");
-    M.parameters["yields"]["AGB"]="Karakas";
+    ModelParameters M("params/example_params.json");
+    M.parameters["yields"]["AGB"]="Nugrid";
     M.parameters["yields"]["typeIa"]="Maeda";
     M.parameters["yields"]["typeII"]="Kobayashi";
-    YieldsSet Y(M);
-    AGBYieldsKarakas agb(M);TypeIIKobayashi2006 typeII(M);TypeIaYields typeIa(M);
+    YieldsSet Y(M);exit(1);
+    AGBYieldsKarakas agb(M);
+    TypeIIKobayashi2006 typeII(M);
+    Maeda_TypeIaYields typeIa(M);
     EXPECT_NEAR(Y.mass("B",1.9,0.02),2.55e-25,1e-27);
     EXPECT_NEAR(Y.mass("Li",3.5,0.02),1.6e-10,1e-15);
     EXPECT_NEAR(Y.mass_remnant(1.,0.02),0.564,1e-10);
@@ -192,12 +298,13 @@ TEST(Yields,YieldsSet){
     EXPECT_NEAR(Y.mass("Ge",40.,0.02),0.002412,1e-14);
     EXPECT_NEAR(Y.mass("H",2.,0.01),agb.mass("H",2.,0.01),test_err);
     EXPECT_NEAR(Y.mass("O",20.,0.01),typeII.mass("O",20.,0.01),test_err);
+    std::cout<<Y.typeIa_ejectedmass("Ni")<<std::endl;
     EXPECT_NEAR(Y.typeIa_ejectedmass("Ni"),typeIa.mass("Ni"),test_err);
     for(double mm=1.;mm<8.;mm+=0.4)
         std::cout<<mm<<" "<<Y.mass_ejected(mm,0.001)<<" "<<Y.mass("H",mm,0.001)<<std::endl;
 }
 TEST(Yields,ChieffiLimongi){
-    ModelParameters M("params/params/example_params.json");
+    ModelParameters M("params/example_params.json");
     M.parameters["yields"]["typeII"]="ChieffiLimongi";
     M.parameters["yields"]["AGB"]="Karakas";
     M.parameters["yields"]["typeIa"]="Maeda";
@@ -222,7 +329,8 @@ TEST(Yields,AGBYields){
 
 TEST(Flows, flows){
     ModelParameters M("params/example_params.json");
-    DoubleInfallInflow I(M);
+    std::shared_ptr<AndersSolarAbundances> solar;
+    DoubleInfallInflow I(M, solar);
     SimpleGalacticFountain G(M);
     LinearRadialFlow L(M);
 }
@@ -248,7 +356,8 @@ TEST(Flows, PezzulliReducedSFRFlows){
         for(unsigned r=0;r<rr.size();++r)
             grid.set(sfr_sb15(rr[r],tt[t]),r,t);
     }
-    PezzulliInflowRadialFlow_rSFR<RadialFlow> P(M,sfr_sb15(8.3,13.7));
+    std::shared_ptr<AndersSolarAbundances> solar;
+    PezzulliInflowRadialFlow_rSFR<RadialFlow> P(M,solar,sfr_sb15(8.3,13.7));
     std::shared_ptr<StarFormationRate> sfr = sfr_types["ExpDecay"](M);
     // PezzulliInflowRadialFlow P2(M,sfr);
 

@@ -10,6 +10,10 @@
  * @brief Base class for implementing inflows of gas
  */
 class Inflow{
+protected:
+	VecDoub mass_fraction; // store abundances of inflowing gas
+	std::map<Element, int> elements;
+	std::shared_ptr<SolarAbundances> solar;
 public:
 	/**
 	 * @brief inflow rate at radius R and time t
@@ -19,14 +23,20 @@ public:
 	 *
 	 * @return inflow rate at radius R and time t
 	 */
+	Inflow(ModelParameters M, std::shared_ptr<SolarAbundances> solar,
+	       double present_rSFR=0.);
 	virtual double operator()(double R, double t, Grid *rSFR=nullptr)=0;
+	double Xi_inflow(Element e) {return mass_fraction[elements[e]];};
 };
 /**
  * @brief No inflow model
 **/
 class InflowNone: public Inflow{
 public:
-	InflowNone(ModelParameters M, double prSFR=0.){}
+	InflowNone(ModelParameters M,
+	           std::shared_ptr<SolarAbundances> solar,
+		       double present_rSFR=0.)
+	: Inflow(M, solar, present_rSFR){}
 	double operator()(double R, double t, Grid *rSFR=nullptr){return 0.;}
 };
 /**
@@ -42,7 +52,9 @@ class DoubleInfallInflow: public Inflow{
 	double weight;// relative weight
 	double pif; // present infall rate
 public:
-	DoubleInfallInflow(ModelParameters M,double present_rSFR=0.);
+	DoubleInfallInflow(ModelParameters M,
+	                   std::shared_ptr<SolarAbundances> solar,
+	                   double present_rSFR=0.);
 	double operator()(double R, double t, Grid *rSFR=nullptr);
 };
 //=============================================================================
@@ -103,6 +115,9 @@ public:
  */
 class RadialFlow{
 public:
+	RadialFlow(ModelParameters M,
+               std::shared_ptr<SolarAbundances> solar=nullptr,
+               double pSFR=0.){}
 	/**
 	 * @brief flow rate of gas at radius R and time t
 	 *
@@ -158,7 +173,10 @@ public:
 class RadialFlowNone:public RadialFlow{
 private:
 public:
-	RadialFlowNone(ModelParameters M,double present_rSFR=0.){}
+	RadialFlowNone(ModelParameters M,
+	               std::shared_ptr<SolarAbundances> solar=nullptr,
+	               double present_rSFR=0.)
+		:RadialFlow(M,solar,present_rSFR){}
 	double flow_rate(double R, double t, Grid *rSFR=nullptr){
 		return 0.;
 	}
@@ -175,7 +193,9 @@ class LinearRadialFlow:public RadialFlow{
 private:
 	double VGrad; // Gradient of gas flow velocity wrt radius
 public:
-	LinearRadialFlow(ModelParameters M,double present_rSFR=0.);
+	LinearRadialFlow(ModelParameters M,
+	                 std::shared_ptr<SolarAbundances> solar=nullptr,
+	                 double present_rSFR=0.);
 	double flow_rate(double R, double t, Grid *rSFR=nullptr){
 		return -VGrad*R;
 	}
@@ -192,7 +212,9 @@ private:
 	double KSN;   // Kennicutt-Schmidt power
 	double A;     // Kennicutt-Schmidt coefficient -- sfr = A \sigma_g^KSN
 public:
-	PezzulliInflowRadialFlow_rSFR(ModelParameters M, double present_rSFR=0.);
+	PezzulliInflowRadialFlow_rSFR(ModelParameters M,
+	                              std::shared_ptr<SolarAbundances> solar,
+	                              double present_rSFR=0.);
 	~PezzulliInflowRadialFlow_rSFR(){}
 	double KSCoeff(double sfr);
 	double flow_rate(double R, double t, Grid *rSFR);
@@ -214,7 +236,7 @@ struct mu_rSFR_st{
     Grid *rSFR;
 };
 //=============================================================================
-class GasDump{
+class GasDump: public Inflow{
 public:
 	/**
 	 * @brief gas dump at radius R and time t
@@ -224,34 +246,39 @@ public:
 	 *
 	 * @return surface density of gas dumped at radius R, time t
 	 */
+	GasDump(ModelParameters M, std::shared_ptr<SolarAbundances> solar)
+	:Inflow(M, solar){}
+	// fudge so we can use inflow class
+	double operator()(double R, double t, Grid* rSFR=nullptr){return 0.;}
 	virtual double operator()(double R, double t, double dt)=0;
-	virtual double elements(Element E, double R, double t, double dt,
-	                        SolarAbundances solar) = 0;
+	// virtual double elements(Element E, double R, double t, double dt) = 0;
 };
 class GasDumpNone: public GasDump{
 public:
-	GasDumpNone(ModelParameters M){}
+	GasDumpNone(ModelParameters M, std::shared_ptr<SolarAbundances> solar)
+	: GasDump(M,solar){}
 	double operator()(double R, double t, double dt){ return 0.;}
-	double elements(Element E, double R, double t, double dt,
-	                SolarAbundances solar){ return 0.;}
+	// double elements(Element E, double R, double t, double dt){ return 0.;}
 };
 class GasDumpSimple: public GasDump{
 private:
 	double surfacedensity, time, central_radius, radial_width;
 	double metallicity, alpha;
 public:
-	GasDumpSimple(ModelParameters M);
+	GasDumpSimple(ModelParameters M, std::shared_ptr<SolarAbundances> solar);
 	double operator()(double R, double t, double dt);
-	double elements(Element E, double R, double t,
-	                double dt, SolarAbundances solar);
+	// double elements(Element E, double R, double t, double dt);
 };
 //=============================================================================
 // Maps for creating unique pointers to flow rate classes using string of
 // class name
-extern unique_map<Inflow,ModelParameters,double> inflow_types;
+extern unique_map<Inflow,ModelParameters,
+            std::shared_ptr<SolarAbundances>,double> inflow_types;
 extern unique_map<Outflow,ModelParameters> outflow_types;
-extern unique_map<RadialFlow,ModelParameters,double> radialflow_types;
-extern unique_map<GasDump,ModelParameters> gasdump_types;
+extern unique_map<RadialFlow,ModelParameters,
+            std::shared_ptr<SolarAbundances>,double> radialflow_types;
+extern unique_map<GasDump,ModelParameters,
+            std::shared_ptr<SolarAbundances>> gasdump_types;
 //=============================================================================
 #endif
 

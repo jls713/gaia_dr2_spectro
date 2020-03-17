@@ -16,9 +16,9 @@ void ModelParameters::print(void){
 }
 void ModelParameters::pretty_print(std::ostream& out){
 
-	out<<"\nModel Parameters\n==============\n";
+	out<<"\nModel Parameters\n==========================================\n";
 
-	out<<"Fundamentals\n-------------\n";
+	out<<"Fundamentals\n---------------------------------------\n";
 	out<<"Galaxy Age="
 	   <<parameters["fundamentals"]["GalaxyAge"]<<std::endl;
 	out<<"Minimum mass ="
@@ -31,9 +31,9 @@ void ModelParameters::pretty_print(std::ostream& out){
 	   <<parameters["fundamentals"]["SFR"]<<std::endl;
 	out<<"Stellar ages="
 	   <<parameters["fundamentals"]["lifetimes"]<<std::endl;
-	out<<"-------------\n";
+	out<<"---------------------------------------\n";
 
-	out<<"Grids\n-------------\n";
+	out<<"Grids\n---------------------------------------\n";
 	out<<"Minimum radius ="
 	   <<parameters["grids"]["MinimumRadius"]<<std::endl;
 	out<<"Maximum radius ="
@@ -42,36 +42,51 @@ void ModelParameters::pretty_print(std::ostream& out){
 	   <<parameters["grids"]["RadialGridPoints"]<<std::endl;
 	out<<"Number of time grid points="
 	   <<parameters["grids"]["AgeGridPoints"]<<std::endl;
-	out<<"-------------\n";
+	out<<"---------------------------------------\n";
 
-	out<<"Yields\n-------------\n";
+	out<<"Yields\n---------------------------------------\n";
 	out<<"AGB yields="
 	   <<parameters["yields"]["AGB"]<<std::endl;
-	out<<"Super AGB yields="
-	   <<parameters["yields"]["SuperAGB"]<<std::endl;
+	// out<<"Super AGB yields="
+	//    <<parameters["yields"]["SuperAGB"]<<std::endl;
 	out<<"Type II yields="
 	   <<parameters["yields"]["typeII"]<<std::endl;
 	out<<"Type Ia yields="
 	   <<parameters["yields"]["typeIa"]<<std::endl;
-	out<<"-------------\n";
+	out<<"---------------------------------------\n";
 
-	out<<"Type Ia Rates\n-------------\n";
+	out<<"Type Ia Rates\n---------------------------------------\n";
 	out<<"Form ="
 	   <<parameters["typeIa"]["Form"]<<std::endl;
 	out<<"Minimum Binary Mass ="
-	   <<parameters["typeIa"]["MinimumBinaryMass"]<<std::endl;
+	   <<parameters["typeIa"]["MinimumIaBinaryMass"]<<std::endl;
 	out<<"Maximum Binary Mass ="
-	   <<parameters["typeIa"]["MaximumBinaryMass"]<<std::endl;
+	   <<parameters["typeIa"]["MaximumIaBinaryMass"]<<std::endl;
 	out<<"Binary Fraction ="
 	   <<parameters["typeIa"]["BinaryFraction"]<<std::endl;
-	out<<"-------------\n";
+	out<<"---------------------------------------\n";
+
+	out<<"Flows\n---------------------------------------\n";
+	out<<"Inflow:"
+	   <<parameters["flows"]["inflow"]["Form"]<<std::endl;
+	out<<"Outflow:"
+	   <<parameters["flows"]["outflow"]["Form"]<<std::endl;
+	out<<"Radial flow:"
+	   <<parameters["flows"]["radialflow"]["Form"]<<std::endl;
+	out<<"Gas Dump:"
+	   <<parameters["flows"]["gasdump"]["Form"]<<std::endl;
+	out<<"---------------------------------------\n";
+
+	out<<"Migration\n---------------------------------------\n";
+	out<<parameters["migration"]["Form"]<<std::endl;
+	out<<"---------------------------------------\n";
 
 	out<<"Elements = {";
 	auto elements_list = parameters["elements"];
 	for(auto i:elements_list)
 		std::cout<<i<<",";
 	out<<"}\n";
-	out<<"-------------\n";
+	out<<"---------------------------------------\n";
 
 	out<<std::endl;
 }
@@ -84,4 +99,7 @@ void ModelParameters::write_hdf5(H5File &fout){
 	dataset.write(w,dtype);
 	return;
 }
+//=============================================================================
+std::string toString(const char* t) { return t;}
+std::string toString(const std::string& t) { return t;}
 //=============================================================================

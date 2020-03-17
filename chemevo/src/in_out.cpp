@@ -1,6 +1,38 @@
 #include "in_out.h"
 //=============================================================================
-DoubleInfallInflow::DoubleInfallInflow(ModelParameters M,double present_rSFR){
+Inflow::Inflow(ModelParameters M,
+	       std::shared_ptr<SolarAbundances> solar, double prSFR)
+: solar(solar){
+
+	double default_metallicity = M.parameters["fundamentals"]["InitialMetallicity"];
+	double Zinit = extract_param(M.parameters["flows"]["inflow"],
+	                             "inflow_metallicity",
+	                             default_metallicity);
+	Zinit *= solar->Z();
+	double default_alpha = extract_param(M.parameters["fundamentals"],
+	                                        "InitialAlpha",0.,false);
+	double Ainit = extract_param(M.parameters["flows"]["inflow"],
+	                             "inflow_alpha",
+	                             default_alpha);
+
+	elements.insert(std::make_pair("H",0));
+	mass_fraction.push_back(solar->scaled_solar_mass_frac("H",Zinit,Ainit));
+	elements.insert(std::make_pair("He",1));
+	mass_fraction.push_back(solar->scaled_solar_mass_frac("He",Zinit,Ainit));
+
+	auto i=2;
+	for(std::string e:M.parameters["elements"]){
+		elements.insert(std::make_pair(e,i));
+		++i;
+		mass_fraction.push_back(solar->scaled_solar_mass_frac(e,Zinit,Ainit));
+	}
+
+}
+//=============================================================================
+DoubleInfallInflow::DoubleInfallInflow(ModelParameters M,
+								       std::shared_ptr<SolarAbundances> solar,
+								       double present_rSFR)
+ : Inflow(M, solar, present_rSFR){
 	tf = extract_param(M.parameters["flows"]["inflow"],"FastTimeScale",0.5);
 	ts = extract_param(M.parameters["flows"]["inflow"],"SlowTimeScale",8.);
 	weight = extract_param(M.parameters["flows"]["inflow"],"Weight",1.);
@@ -8,7 +40,7 @@ DoubleInfallInflow::DoubleInfallInflow(ModelParameters M,double present_rSFR){
 	pif=1.;
 	double pif0 = (*this)(M.parameters["fundamentals"]["SolarRadius"],
 	                      M.parameters["fundamentals"]["GalaxyAge"]);
-	pif = (double)M.parameters["flows"]["inflow"]["PresentInfallRate"]/pif0;
+	pif = extract_param(M.parameters["flows"]["inflow"],"PresentInfallRate",1e-4)/pif0;
 }
 double DoubleInfallInflow::operator()(double R, double t, Grid *rSFR){
 	return (exp(-t/ts)*(1.-weight)+exp(-t/tf)*weight)*pif*exp(-R/Rd);
@@ -56,12 +88,18 @@ double RadialFlow::dMdt(double mass, double massup, double R, double Rdown, doub
 	return -beta_g(R,Rdown,Rup,t,dt,rSFR,err)*mass+gamma_g(R,Rdown,Rup,t,dt,rSFR,err)*massup;
 }
 //=============================================================================
-LinearRadialFlow::LinearRadialFlow(ModelParameters M,double present_rSFR){
+LinearRadialFlow::LinearRadialFlow(ModelParameters M,
+					               std::shared_ptr<SolarAbundances> solar,
+					               double present_rSFR)
+:RadialFlow(M,solar,present_rSFR){
 	VGrad = extract_param(M.parameters["flows"]["radialflow"],"Gradient",0.);
 }
 //=============================================================================
 template<class T>
-PezzulliInflowRadialFlow_rSFR<T>::PezzulliInflowRadialFlow_rSFR(ModelParameters M,double present_rSFR){
+PezzulliInflowRadialFlow_rSFR<T>::PezzulliInflowRadialFlow_rSFR(
+    ModelParameters M,
+    std::shared_ptr<SolarAbundances> solar,
+    double present_rSFR) : T(M, solar, present_rSFR){
 	Alpha = extract_param(M.parameters["flows"]["radialflow"],
 	                      "PezzulliAlpha",0.);
 	AlphaGrad = extract_param(M.parameters["flows"]["radialflow"],
@@ -152,7 +190,9 @@ double PezzulliInflowRadialFlow_rSFR<T>::operator()(double R, double t, Grid* rS
 template class PezzulliInflowRadialFlow_rSFR<Inflow>;
 template class PezzulliInflowRadialFlow_rSFR<RadialFlow>;
 //=============================================================================
-GasDumpSimple::GasDumpSimple(ModelParameters M){
+GasDumpSimple::GasDumpSimple(ModelParameters M,
+                             std::shared_ptr<SolarAbundances> solar)
+: GasDump(M, solar){
 	check_param_given(M.parameters["flows"],"gasdump");
 	std::vector<std::string> var = {
 		"surfacedensity","time","central_radius",
@@ -181,24 +221,19 @@ double GasDumpSimple::operator()(double R, double t, double dt){
 		return 0.;
 }
 
-double GasDumpSimple::elements(Element E, double R, double t, double dt,
-                               SolarAbundances solar){
-	if (abs(t-time)<1e-8){
-		double metal = solar.Z()*pow(10.,metallicity);
-		// Fill each element accounting for initial non-zero alpha enrichment
-		auto initial_abundance=solar.scaled_solar_mass_frac(E,metal);
-		if(is_alpha_element[E])
-			initial_abundance*=pow(10.,alpha);
-
-	    return (*this)(R, t, dt) * initial_abundance;
-	}
-	else
-		return 0.;
-}
+// double GasDumpSimple::elements(Element E, double R, double t, double dt){
+// 	if (abs(t-time)<1e-8){
+// 		double metal = solar->Z()*pow(10.,metallicity);
+// 	    return (*this)(R, t, dt) * solar->scaled_solar_mass_frac(E,metal,alpha);
+// 	}
+// 	else
+// 		return 0.;
+// }
 //=============================================================================
 // Map for creating shared pointer instances of RadialFlow from string of class name
 unique_map< RadialFlow,
             ModelParameters,
+            std::shared_ptr<SolarAbundances>,
             double> radialflow_types ={
     {"None",&createInstance<RadialFlow,RadialFlowNone>},
     {"Linear",&createInstance<RadialFlow,LinearRadialFlow>},
@@ -207,6 +242,7 @@ unique_map< RadialFlow,
 // Map for creating shared pointer instances of Inflow from string of class name
 unique_map< Inflow,
             ModelParameters,
+            std::shared_ptr<SolarAbundances>,
             double> inflow_types ={
     {"None",&createInstance<Inflow,InflowNone>},
     {"Double",&createInstance<Inflow,DoubleInfallInflow>},
@@ -221,7 +257,8 @@ unique_map< Outflow,
 };
 // Map for creating shared pointer instances of GasDump from string of class name
 unique_map< GasDump,
-            ModelParameters> gasdump_types ={
+            ModelParameters,
+            std::shared_ptr<SolarAbundances>> gasdump_types ={
     {"None",&createInstance<GasDump,GasDumpNone>},
     {"SimpleGasDump",&createInstance<GasDump,GasDumpSimple>}
 };

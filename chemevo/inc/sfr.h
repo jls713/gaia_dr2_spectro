@@ -106,6 +106,31 @@ public:
     double operator()(double R, double t);
 };
 
+class SFR_Neige2020: public StarFormationRate{
+private:
+    double t_sfr;
+    double x_io;
+    double t_m;
+    double t_to;
+    double Rd;  // Scale-length of population of stars formed.
+    double Rb;  // Radius at which exponential profile is truncated.
+    double R0;  // Solar radius.
+public:
+    SFR_Neige2020(ModelParameters M): StarFormationRate(M), t_m(6.){
+        t_sfr = extract_param(M.parameters["fundamentals"],"SFR_decay_scale",1.02);
+        x_io = extract_param(M.parameters["fundamentals"],"InsideOutScale",0.67);
+        Rd = extract_param(M.parameters["fundamentals"],"StarScaleLength",2.85);
+        Rb = extract_param(M.parameters["fundamentals"],"TruncationRadius",1000.);
+        t_to = extract_param(M.parameters["fundamentals"],"SFR_ShortTimescale",1.);
+	R0 = M.parameters["fundamentals"]["SolarRadius"];
+        presentSFR=1.;
+        presentSFR=(double)M.parameters["fundamentals"]["PresentSFR"]/(
+                (*this)(M.parameters["fundamentals"]["SolarRadius"],
+                        M.parameters["fundamentals"]["GalaxyAge"]));
+    }
+    double operator()(double R, double t);
+};
+
 //=============================================================================
 // Simple structure for integrating the SFR wrt time.
 struct gas_con_st{

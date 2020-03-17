@@ -1,0 +1,59 @@
+{
+"fundamentals":{
+	"MinimumMass": 0.5,
+	"MaximumMass": 50.0,
+	"GalaxyAge": 13.7,
+	"SolarRadius": 8.3,
+	"IMF": "KroupaToutGilmore",
+	"SFR": "ExpDecay",
+	"lifetimes": "Portinari1998",
+	"PresentSFR":2.4,
+	"SFR_decay_scale":8.0,
+	"StarScaleLength":3.5,
+        "InitialMetallicity":0.001,
+        "Kennicutt-Schmidt_Coeff":1.4,
+        "PresentGasDensitySun":13.0,
+        "Kennicutt-Schmidt_A":0.067,
+        "warm_cold_ratio":0.0,
+	"warm_cooling_time":1.5,
+        "solar":"Asplund",
+        "max_iterations":3	
+},
+"grids":{
+	"RadialGridPoints":25,
+	"MinimumRadius":0.5,
+	"MaximumRadius":25.0,
+	"AgeGridPoints":100,
+        "LogAgeGrid":true
+},
+"yields":{
+	"typeIa":"Maeda",
+	"typeII":"Kobayashi",
+	"AGB":"None",
+	"SuperAGB":"None"
+},
+"typeIa":{
+	"Form": "Matteucci2006",
+	"MinimumIaBinaryMass": 0.8,
+	"MaximumIaBinaryMass": 8.0,
+	"BinaryFraction": 0.0035
+},
+"typeII":{
+	"Min_typeII_SN_mass": 8.0
+},
+"flows":{
+	"inflow":{"Form":"Pezzulli","inflow_metallicity":0.001,"inflow_alpha":0.0},
+	"outflow":{"Feject_in":0.15,"Feject_out":0.05,
+		   "Form":"EntrainedWind","eta_wind":2.5,
+		   "TransitionRadius":3.5},
+	"radialflow":{"Form":"Pezzulli",
+		      "PezzulliAlpha":0.7,
+		      "PezzulliAlphaGrad":-0.025},
+	"gasdump":{"Form":"None",
+		"time":4.3,"alpha":0.0,"metallicity":-1.2,
+		"surfacedensity":0.0,"central_radius":12.0, "radial_width":1.0}
+},
+"migration":{"Form":"None","sigmaR":3.3},
+"elements":["Mg","Fe"],
+"data_folder":"/data/jls/chem_evo/"
+}
