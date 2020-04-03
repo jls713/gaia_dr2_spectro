@@ -7,6 +7,7 @@
 #include "params.h"
 #include "GSLInterface/GSLInterface.h"
 #include "utils.h"
+#include "in_out.h"
 //=============================================================================
 /**
  * @brief Star Formation rate base class
@@ -103,6 +104,59 @@ public:
                 (*this)(M.parameters["fundamentals"]["SolarRadius"],
                         M.parameters["fundamentals"]["GalaxyAge"]));
         }
+    double operator()(double R, double t);
+};
+
+class SFR_DoubleInfall:public StarFormationRate{
+private:
+    double t_d; // Long time-scale for decline in SFR
+    double Rd;  // Scale-length of population of stars formed.
+    double Rb;  // Radius at which exponential profile is truncated.
+    double KSA; // Kennicutt-Schmidt A
+    double KSN; // Kennicutt-Schmidt N
+    double coeff; 
+    double t_d_2; 
+    std::unique_ptr<GasDump> gasdumpflow;
+    double original_SFR_scaling;
+public:
+    SFR_DoubleInfall(double t_d=8.,double Rd=4.,double Rmin=0.3, double Rmax=20., 
+             double Tmax=12., double Rb=1000.)
+       :StarFormationRate(Rmin,Rmax,Tmax),t_d(t_d),Rd(Rd){}
+    SFR_DoubleInfall(ModelParameters M,double t_dx=8.,double Rdx=4.,double Rbx=1000.)
+        :StarFormationRate(M), t_d(t_dx), Rd(Rdx), Rb(Rbx)
+    {
+        Rd=extract_param(M.parameters["fundamentals"],
+                         "StarScaleLength", Rdx);
+        Rb=extract_param(M.parameters["fundamentals"],
+                         "TruncationRadius", Rbx);
+        t_d=extract_param(M.parameters["fundamentals"],
+                         "SFR_decay_scale", t_dx);
+        KSA=extract_param(M.parameters["fundamentals"],
+                         "Kennicutt-Schmidt_A", 0.067);
+        KSN=extract_param(M.parameters["fundamentals"],
+                         "Kennicutt-Schmidt_Coeff", 1.4);
+        t_d_2=extract_param(M.parameters["flows"]["gasdump"],
+                         "star_formation_boost_timescale", 1.);
+    
+    std::shared_ptr<SolarAbundances> S = solar_types["Asplund"](M);
+    auto F = M.parameters["flows"];
+    gasdumpflow = gasdump_types[M.parameters["flows"]["gasdump"]["Form"]](M,S);
+    double gS = (*gasdumpflow)(M.parameters["fundamentals"]["SolarRadius"],
+                               gasdumpflow->dump_time(),1.);
+    coeff = 0.;
+    presentSFR = 1.;
+    original_SFR_scaling=1.;
+    original_SFR_scaling=(double)M.parameters["fundamentals"]["PresentSFR"]/(
+                (*this)(M.parameters["fundamentals"]["SolarRadius"],
+                        M.parameters["fundamentals"]["GalaxyAge"]));
+ 
+    coeff=extract_param(M.parameters["flows"]["gasdump"],
+                        "star_formation_boost_coeff", 1.);
+    
+    presentSFR=(double)M.parameters["fundamentals"]["PresentSFR"]/(
+                (*this)(M.parameters["fundamentals"]["SolarRadius"],
+                        M.parameters["fundamentals"]["GalaxyAge"]));
+    }
     double operator()(double R, double t);
 };
 

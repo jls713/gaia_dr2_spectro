@@ -8,6 +8,8 @@
 //=============================================================================
 /**
  * @brief Base class for radial migration
+ *
+ * dLz f(Lz) = dR R \Sigma(R) so there is a factor of (Rp/R) in the kernel
  */
 class RadialMigration{
 public:
@@ -27,18 +29,20 @@ public:
 	 * @param gm grid (gas mass)
 	 * @param nR radial grid point to compute convolution
 	 * @param nt time grid point for result
+	 * @param dt time interval over which to compute -- defaults to one time step
 	 * @return convolution result
 	 */
-	double convolve(Grid* gm, unsigned nR, unsigned nt);
+	double convolve(Grid* gm, unsigned nR, unsigned nt, double dt=-1);
 	/**
 	 * @brief convolve grid at time nt-1 to find value at nR grid point at time nt
 	 * @param gm grid (gas mass)
 	 * @param mf mass fraction for abundance
 	 * @param nR radial grid point to compute convolution
 	 * @param nt time grid point for result
+	 * @param dt time interval over which to compute -- defaults to one time step
 	 * @return convolution result
 	 */
-	double convolve_massfrac(Grid* gm, Grid*mf, unsigned nR, unsigned nt);
+	double convolve_massfrac(Grid* gm, Grid*mf, unsigned nR, unsigned nt, double dt=-1);
 };
 struct convolve_struct{
 	RadialMigration *rm;

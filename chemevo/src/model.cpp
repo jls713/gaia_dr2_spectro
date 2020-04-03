@@ -60,21 +60,26 @@ void Model::setup(void){
 	}
 
 	// Set up warm phase
+	// warm_cold_ratio = f_g in the overleaf
 	warm_cold_ratio = extract_param(params.parameters["fundamentals"],
 	                                "warm_cold_ratio",0.);
+        // warm_cooling_time
 	warm_cooling_time = extract_param(params.parameters["fundamentals"],
 	                                "warm_cooling_time",0.);
+	// outflow_warm_fraction = f_o in the overleaf
+	outflow_warm_fraction = extract_param(params.parameters["flows"]["outflow"],
+	                                      "warm_fraction_retained",0.);
 	if(warm_cold_ratio>1.)
 		throw std::invalid_argument("Invalid warm/cold ratio (>1)\n");
-	if(warm_cold_ratio>0.){
+	if(warm_cold_ratio>0. or outflow_warm_fraction>0.){
 		use_warm_phase=true;
 		warm_gas_mass = make_unique<Grid>(params);
 		for(auto mf: mass_fraction)
 			mass_fraction_warm.push_back(Grid(params));
 	}
 	else use_warm_phase=false;
-
-	//=========================================================================
+	
+        //=========================================================================
 	// 4. Initialise flows
 
 	outflow = outflow_types[params.parameters["flows"]["outflow"]["Form"]](params);
@@ -141,7 +146,8 @@ void Model::fill_initial_grids(void){
 		VecDoub warm_gas_radial_dist=gas_mass->grid_radial();
 		for(auto i=0u;i<warm_gas_radial_dist.size();++i){
 			warm_gas_radial_dist[i]=fracWarm*gas_radial_dist[i];
-			star_radial_dist[i]-=warm_gas_radial_dist[i]/warm_cooling_time;
+			if(warm_cooling_time>0.)
+                            star_radial_dist[i]-=warm_gas_radial_dist[i]/warm_cooling_time;
 			gas_radial_dist[i]=pow(star_radial_dist[i]/A, 1./K);
 		}
 		warm_gas_mass->set_fixed_t(warm_gas_radial_dist,0);
@@ -201,13 +207,13 @@ int Model::check_parameters(void){
 		params.parameters["migration"]["Form"]="None";
 	}
 	F = params.parameters["flows"];
-	if (!check_param_given(F, "gasdump", false)){
+	if (check_param_given(F, "gasdump", false)){
 		gasdump=false;
 		params.parameters["flows"]["gasdump"]["Form"]="None";
 	}
 	else{
 		gasdump=true;
-		err+=check_param_given_matches_list_form(F, gasdump_types,
+	        err+=check_param_given_matches_list_form(F, gasdump_types,
 		                                         "gasdump");
 	}
 	F = params.parameters["elements"];
@@ -245,9 +251,7 @@ int Model::check_parameters(void){
 //=============================================================================
 // Run models
 int Model::step(unsigned nt, double dt){
-
 	int err = 0;
-
 	// Key Loop
 	auto t = gas_mass->grid_time()[nt];
 	auto NR = gas_mass->grid_radial().size();
@@ -258,6 +262,9 @@ int Model::step(unsigned nt, double dt){
 	std::vector<int> not_done(gm_it.size(),true);
 
 	for(int N=0;N<iteratemax;++N){
+        
+        VecDoub migration_r(NR,0.);
+	double migration_timestep=0.2;
 
 	#pragma omp parallel for schedule(dynamic)
 	for(auto nR=0u;nR<NR;++nR){
@@ -268,16 +275,20 @@ int Model::step(unsigned nt, double dt){
 		// age interpolation works (i.e. doesn't use zero)
 		metallicity->set(Z(R,t-dt),nR,nt);
 		err+=check_metallicity(R, t, dt, nR, NR, nt);
-        if(err) continue;
+                if(err) continue;
 		auto starformrate = SFR(R,t);
 		auto gas_return = GasReturnRate(R,t)*(1-warm_cold_ratio);
 		auto outflowrate = OutflowRate(R,t,starformrate,gas_return);
-		auto warmgasrate = 0.;
-		if(warm_cold_ratio>0.)
-			warmgasrate=(*warm_gas_mass)(nR,nt-1)/warm_cooling_time;
-		reducedSFR->set(starformrate-gas_return
-		                +outflowrate-warmgasrate,
-		                nR,nt);
+		auto gasdumprate = 0.;//GasDumpRate(R,t,dt);
+	 	auto warmgasrate = 0.;
+	        if(migration and nt>1)
+                    migration_r[nR]=(rad_mig->convolve(gas_mass.get(),nR,nt,migration_timestep)-(*gas_mass)(nR,nt-1))/migration_timestep;
+                if(use_warm_phase and warm_cooling_time>0.)
+		    warmgasrate=(*warm_gas_mass)(nR,nt-1)/warm_cooling_time;
+		auto rSFR = starformrate-gas_return
+		            +outflowrate-warmgasrate-gasdumprate;
+                rSFR+=-migration_r[nR];
+                reducedSFR->set(rSFR,nR,nt);
 	}
 	if(err){return err;}
 	#pragma omp parallel for schedule(dynamic)
@@ -292,8 +303,8 @@ int Model::step(unsigned nt, double dt){
 		auto warm_gm=0., warm_gm_prev =0.;
 
 		R = gas_mass->grid_radial()[nR];
-
-		// 1. Cold Gas
+		
+                // 1. Cold Gas
 		gm_prev = (*gas_mass)(nR,nt-1);
 		starformrate = SFR(R,tp);
 		gas_return = GasReturnRate(R,tp);
@@ -311,23 +322,23 @@ int Model::step(unsigned nt, double dt){
 		gm = gm_prev+dmdt*dt;
 
 		if(gm<0.){
-			starformrate=0.;rad_flow_dm=0.;
-			dmdt=gas_return+inflowrate-outflowrate;gm=gm_prev+dmdt*dt;
+			starformrate=0.;rad_flow_dm=0.;outflowrate=0.;
+			dmdt=gas_return+inflowrate-outflowrate;
+                        gm=gm_prev+dmdt*dt;
 		}
 
 		// 2. Warm Gas
 		if(use_warm_phase){
 			warm_gm_prev = (*warm_gas_mass)(nR,nt-1);
-			dmdt = gas_return*warm_cold_ratio-warm_gm_prev/warm_cooling_time;
+			dmdt = gas_return*warm_cold_ratio + outflowrate*outflow_warm_fraction;
 			warm_gm = warm_gm_prev + dmdt*dt;
-			gm += warm_gm_prev*dt/warm_cooling_time;
+                        if(warm_cooling_time>0.){
+                            warm_gm += -warm_gm_prev*dt/warm_cooling_time;
+			    gm += warm_gm_prev*dt/warm_cooling_time;
+                        }
 		}
-
+                gm += migration_r[nR]*dt;
 		gas_mass->set(gm,nR,nt);
-		if(migration and nt>1){
-			// gm += rad_mig->convolve(gas_mass.get(),nR,nt)-gm_prev;
-			gas_mass->set(gm,nR,nt);
-		}
 
 		// 3. Stars
 		sm_prev = (*stellar_mass)(nR,nt-1);
@@ -349,11 +360,11 @@ int Model::step(unsigned nt, double dt){
 			dmdt = -starformrate*Xi;			  // star formation
 			enrichrate=EnrichmentRate(e.second,R,tp);
 			dmdt += enrichrate*(1-warm_cold_ratio); // re-enrich
-			dmdt -= OutflowRate(R,tp,starformrate*Xi,enrichrate);
+			if(outflowrate>0.) dmdt -= OutflowRate(R,tp,starformrate*Xi,enrichrate);
 			dmdt += inflowrate*inflow->Xi_inflow(e.second); // inflow
-			dmdt += EnrichRadialFlowRateFromGrid(e.second, R, tp, dt,
-			                                     gm_prev*Xi,
-			                                     nR, nt, NR, &err);
+			if(rad_flow_dm!=0.) dmdt += EnrichRadialFlowRateFromGrid(e.second, R, tp, dt,
+			                                                        gm_prev*Xi,
+			                                                        nR, nt, NR, &err);
 			dmdt += gas_dump_dm*gasdumpflow->Xi_inflow(e.second);
 			double mass_now = Xi*gm_prev+dmdt*dt;
 			double warm_mass_now = 0., Xiwarm=0.;
@@ -363,18 +374,23 @@ int Model::step(unsigned nt, double dt){
 				warm_mass_now = Xiwarm*warm_gm_prev;
 				warm_mass_now += enrichrate*warm_cold_ratio*dt;
 				// cooling
-                mass_now += Xiwarm*warm_gm_prev*dt/warm_cooling_time;
-				warm_mass_now -= Xiwarm*warm_gm_prev*dt/warm_cooling_time;
-                // inflow
+                                if(warm_cooling_time>0.){
+                                    mass_now += Xiwarm*warm_gm_prev*dt/warm_cooling_time;
+				    warm_mass_now -= Xiwarm*warm_gm_prev*dt/warm_cooling_time;
+                                }
+                                // inflow
 				warm_mass_now += dt*inflowrate*(inflow->Xi_inflow(e.second)-Xiwarm);
-                mass_now += dt*inflowrate*(Xiwarm-inflow->Xi_inflow(e.second));
-				mass_fraction_warm[e.first].set(warm_mass_now/warm_gm,nR,nt);
+                                mass_now += dt*inflowrate*(Xiwarm-inflow->Xi_inflow(e.second));
+				// collecting outflow
+				warm_mass_now += dt*outflow_warm_fraction*OutflowRate(R,tp,starformrate*Xi,enrichrate);
+
+                  		mass_fraction_warm[e.first].set(warm_mass_now/warm_gm,nR,nt);
 			}
 
 			mass_fraction[e.first].set(mass_now/gm,nR,nt);
 
 			if(migration and nt>1){
-				// mass_now+=rad_mig->convolve_massfrac(gas_mass.get(),&mass_fraction[e.first],nR,nt)-Xi*gm_prev;
+                               	mass_now+=(rad_mig->convolve_massfrac(gas_mass.get(),&mass_fraction[e.first],nR,nt,migration_timestep)-Xi*gm_prev)/migration_timestep*dt;
 				mass_fraction[e.first].set(mass_now/gm,nR,nt);
 			}
 		}
@@ -701,7 +717,8 @@ double Model::SwitchEnrichmentRate(Element E, double R, double t, double tmin, d
 		VecDoub xmax = {tmax,Rmax};
 		EnrichRate_st_2D P(this,R,t,E,xmin,xmax,which,mthresh);
 		double err;
-		return integrate(&_abundance_rate_2D,&P,1e-3,0,"Divonne",&err,
+		double target_err=1e-3;
+                return integrate(&_abundance_rate_2D,&P,target_err,0,"Divonne",&err,
 						 "EnrichmentRate "+which);
 	}
 }

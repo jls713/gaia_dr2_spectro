@@ -3,7 +3,7 @@
 //=============================================================================
 #include "params.h"
 #include "solar.h"
-#include "sfr.h"
+//#include "sfr.h"
 #include "grid.h"
 //=============================================================================
 /**
@@ -99,11 +99,11 @@ public:
 };
 /**
  * @brief Entrained wind
- * @details simple outflow model for cold gas: outflow = eta_wind SFR
+ * @details simple outflow model for cold gas: outflow = eta_wind SFR * exp(-(R-Rsc)/Rsc)
  */
 class EntrainedWind: public Outflow{
 private:
-	double eta_wind;
+	double eta_wind, scale_length;
 public:
 	EntrainedWind(ModelParameters M);
 	double operator()(double R, double t, double SFR, double GasReturn);
@@ -251,6 +251,7 @@ public:
 	// fudge so we can use inflow class
 	double operator()(double R, double t, Grid* rSFR=nullptr){return 0.;}
 	virtual double operator()(double R, double t, double dt)=0;
+	virtual double dump_time(void)=0;
 	// virtual double elements(Element E, double R, double t, double dt) = 0;
 };
 class GasDumpNone: public GasDump{
@@ -258,6 +259,7 @@ public:
 	GasDumpNone(ModelParameters M, std::shared_ptr<SolarAbundances> solar)
 	: GasDump(M,solar){}
 	double operator()(double R, double t, double dt){ return 0.;}
+	double dump_time(void){return 0.;}
 	// double elements(Element E, double R, double t, double dt){ return 0.;}
 };
 class GasDumpSimple: public GasDump{
@@ -266,6 +268,7 @@ private:
 	double metallicity, alpha;
 public:
 	GasDumpSimple(ModelParameters M, std::shared_ptr<SolarAbundances> solar);
+	double dump_time(void){return time;}
 	double operator()(double R, double t, double dt);
 	// double elements(Element E, double R, double t, double dt);
 };

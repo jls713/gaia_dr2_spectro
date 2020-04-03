@@ -21,8 +21,8 @@ int main(int argc, char const *argv[])
 	    M.write(outputfile);
 	}
 	catch(std::exception const &e){
-		LOG(INFO)<<e.what()<<std::endl;
-		std::cerr<<e.what()<<std::endl;
+	    LOG(INFO)<<e.what()<<std::endl;
+	    std::cerr<<e.what()<<std::endl;
 	}
 }
 //=============================================================================

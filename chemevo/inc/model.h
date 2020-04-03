@@ -51,9 +51,9 @@ private:
 	std::map<Element,int> elements_r;
 	//=========================================================================
 	bool agb_yields, typeII_yields, typeIa_yields, migration;
-    bool single_zone, gasdump=false, use_warm_phase, logspace;
-    double warm_cold_ratio, warm_cooling_time;
-    //=========================================================================
+        bool single_zone, gasdump=false, use_warm_phase, logspace;
+        double warm_cold_ratio, warm_cooling_time, outflow_warm_fraction;
+        //=========================================================================
 	unsigned iteratemax; // maximum number of iterations to perform per step
 	double tol;          // target relative accuracy between iterations
 protected:

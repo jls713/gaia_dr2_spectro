@@ -4,27 +4,29 @@ double _convolve(double Rp, void *P){
 	convolve_struct *p = (convolve_struct*)P;
 	// we use the log extrapolation in grid (second true, first is
 	// log interpolation).
-	// added the R'/R factor so Sigma(R)2piR = int dR' 2piR' Sigma(R')
-	return (Rp/p->R)*(*p->gm)(Rp,p->t,true,true)*(*p->rm)(p->R,Rp,p->dt);
+	return (*p->gm)(Rp,p->t,true,true)*(*p->rm)(p->R,Rp,p->dt);
 }
-double RadialMigration::convolve(Grid*gas_mass, unsigned nR, unsigned nt){
-	integrator GL(200000);
+const int iGL=2000;
+const double IE = 1e-3;
+double RadialMigration::convolve(Grid*gas_mass, unsigned nR, unsigned nt, double dt){
+	integrator GL(iGL);
 	double R = gas_mass->grid_radial()[nR];
 	double t = gas_mass->grid_time()[nt-1];
-	double dt= gas_mass->grid_time()[nt]-t;
+	if(dt<0.)
+            dt= gas_mass->grid_time()[nt]-t;
 	convolve_struct P(this,gas_mass,t,R,dt);
-	double IE=1e-4;
+	//double IE=1e-4;
 
 	double Ru = gas_mass->grid_radial().back();
 	double Rd = gas_mass->grid_radial().front();
-	Rd=0.005;Ru+=3.;
-
+	Rd=0.005;Ru+=4.;
+        //return GL.integrate(&_convolve,Rd,R,1e-3,&P)+GL.integrate(&_convolve,R,Ru,1e-3,&P);
 	double interval=1., Rd1=R-interval,Ru1=R+interval;
 	if(Ru1>Ru) Ru1=Ru;
 	if(Rd1<Rd) Rd1=Rd;
 	double integral = GL.integrate(&_convolve,Rd1,Ru1,IE,&P);
 	double extra_integral=integral;
-	while(fabs(extra_integral)>IE*fabs(integral)){
+	while(fabs(extra_integral)>IE*fabs(integral) and not (Rd1==Rd and Ru1==Ru)){
 		interval*=2.;
 		double Rd2=R-interval,Ru2=R+interval;
 		if(Ru2>Ru) Ru2=Ru;
@@ -43,23 +45,25 @@ double _convolve_mass_frac(double Rp, void *P){
 	// log interpolation).
 	return (*p->gm)(Rp,p->t,true,true)*(*p->mf)(Rp,p->t,false,false)*(*p->rm)(p->R,Rp,p->dt);
 }
-double RadialMigration::convolve_massfrac(Grid*gas_mass, Grid*mass_fraction, unsigned nR, unsigned nt){
-	integrator GL(200000);
+double RadialMigration::convolve_massfrac(Grid*gas_mass, Grid*mass_fraction, unsigned nR, unsigned nt,
+                                          double dt){
+	integrator GL(iGL);
 	double R = gas_mass->grid_radial()[nR];
 	double t = gas_mass->grid_time()[nt-1];
-	double dt= gas_mass->grid_time()[nt]-t;
+	if(dt<0.)
+            dt= gas_mass->grid_time()[nt]-t;
 	convolve_mf_struct P(this,gas_mass,mass_fraction,t,R,dt);
-	double IE=1e-4;
+	//double IE=1e-4;
 	double Ru = gas_mass->grid_radial().back();
 	double Rd = gas_mass->grid_radial().front();
-	Rd=0.005;Ru+=3.;
+	Rd=0.005;Ru+=4.;
 	//return GL.integrate(&_convolve_mass_frac,Rd,R,1e-3,&P)+GL.integrate(&_convolve_mass_frac,R,Ru,1e-3,&P);
 	double interval=1., Rd1=R-interval,Ru1=R+interval;
 	if(Ru1>Ru) Ru1=Ru;
 	if(Rd1<Rd) Rd1=Rd;
 	double integral = GL.integrate(&_convolve_mass_frac,Rd1,Ru1,IE,&P);
 	double extra_integral=integral;
-	while(fabs(extra_integral)>IE*fabs(integral)){
+	while(fabs(extra_integral)>IE*fabs(integral) and not (Rd1==Rd and Ru1==Ru)){
 		interval*=2.;
 		double Rd2=R-interval,Ru2=R+interval;
 		if(Ru2>Ru) Ru2=Ru;
@@ -82,12 +86,12 @@ double GaussianRadialMigration::operator()(double R, double Rp, double t){
 	auto sigmaR = sigmaR0*sqrt(t);
 	sigmaR*=sigmaR;
 	double Norm = 2./(1.+erf(Rp/sqrt(2.*sigmaR)));
-	return exp(-pow(R-Rp,2.)/2./sigmaR)/sqrt(2.*PI*sigmaR)*Norm;
+	return (Rp/R)*exp(-pow(R-Rp,2.)/2./sigmaR)/sqrt(2.*PI*sigmaR)*Norm;
 }
 //=============================================================================
 GaussianRadialMigration_Drift::GaussianRadialMigration_Drift(ModelParameters M){
-    double galaxy_age = M.parameters["fundamentals"]["GalaxyAge"];
-	sigmaR0 = sigmaR0 = extract_param(M.parameters["migration"],"sigmaR",3.)/sqrt(galaxy_age);
+        double galaxy_age = M.parameters["fundamentals"]["GalaxyAge"];
+	sigmaR0 = extract_param(M.parameters["migration"],"sigmaR",3.)/sqrt(galaxy_age);
 	Rd = M.parameters["fundamentals"]["StarScaleLength"];
 	drift_term = -sigmaR0*sigmaR0*.5/Rd;
 }
@@ -95,8 +99,8 @@ double GaussianRadialMigration_Drift::operator()(double R, double Rp, double t){
 	auto sigmaR = sigmaR0*sqrt(t);
 	auto dv = drift_term*t;
 	sigmaR*=sigmaR;
-	double Norm = 2./(1.+erf((R+dv)/sqrt(2.*sigmaR)));
-	return exp(-pow(R-Rp-dv,2.)/2./sigmaR)/sqrt(2.*PI*sigmaR)*Norm;
+	double Norm = 2./(1.+erf((Rp+dv)/sqrt(2.*sigmaR)));
+	return (Rp/R)*exp(-pow(R-Rp-dv,2.)/2./sigmaR)/sqrt(2.*PI*sigmaR)*Norm;
 }
 //=============================================================================
 // Map for creating shared pointer instances of RadialMigration

@@ -63,9 +63,13 @@ double SimpleGalacticFountain::operator()(double R, double t, double SFR, double
 }
 EntrainedWind::EntrainedWind(ModelParameters M){
     eta_wind = extract_param(M.parameters["flows"]["outflow"], "eta_wind", 0.);
+    scale_length = extract_param(M.parameters["flows"]["outflow"], "outflow_scale_length", 0.);
 }
 double EntrainedWind::operator()(double R, double t, double SFR, double GasReturn){
-    return eta_wind*SFR;
+    double factor = 1.;
+    if(scale_length!=0.)
+        factor *= exp(-(R-scale_length)/scale_length);
+    return eta_wind*SFR*factor;
 }
 //=============================================================================
 double RadialFlow::beta_g(double R, double Rdown, double Rup, double t, double dt, Grid *rSFR, int*err){

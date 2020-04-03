@@ -25,7 +25,21 @@ const double test_err = 1e-7;
 
 namespace {
 //=============================================================================
-
+TEST(GasDump,GasDump){
+    ModelParameters M("for_kai/kai_test_double_infall.json");
+    std::shared_ptr<SolarAbundances> S = solar_types["Asplund"](M);
+    std::shared_ptr<StarFormationRate> SFR = sfr_types[M.parameters["fundamentals"]["SFR"]](M);
+    GasDumpSimple gds(M,S);
+    for(auto r: create_range(0.1,13.,50))
+        std::cout<<r<< " "<< (*SFR)(8.3,r)<<std::endl;
+}
+TEST(StarFormationRate,DoubleInfall){
+    ModelParameters M("params/example_params.json");
+    SFR_DoubleInfall di(M);
+    std::cout<<di(0.2,0.)<<std::endl;
+    std::cout<<di(8.2,10.)<<std::endl;
+    std::cout<<di(8.2,12.)<<std::endl;
+}
 TEST(StarFormationRate,SB15){
     SFR_SB15 sfr_sb15;
     double rt = sfr_sb15.gas_consumed_per_unit_radius(8.);
@@ -409,9 +423,33 @@ TEST(SolarAbundance,SolarAbundance){
     AndersSolarAbundances S2(P);
     EXPECT_NEAR(S2.Z(),0.0189,1e-4);
 }
+
+
+//=============================================================================
+TEST(RadialMigration, BasicTest){
+    ModelParameters M("params/example_params.json");
+    M.parameters["migration"]["Form"]="GaussianDrift";
+    M.parameters["migration"]["sigmaR"]=4.0;
+    M.parameters["fundamentals"]["StarScaleLength"]=1.;
+    M.parameters["fundamentals"]["GalaxyAge"]=1.;
+    Grid gas_mass(50,3,0.1,20.,2.);
+    Grid mass_fraction(50,3,0.1,20.,2.);
+    for(auto i=0;i<50;++i){
+        gas_mass.set(exp(-gas_mass.grid_radial()[i]),i,0);
+        mass_fraction.set(0.01,i,0);
+    }
+    unsigned nRR = 10, nt=1;
+    std::shared_ptr<RadialMigration> RM = rm_types[M.parameters["migration"]["Form"]](M);
+    for(unsigned nRR=0;nRR<50;++nRR)
+        std::cout<<gas_mass.grid_time()[nt]<<" "<<gas_mass.grid_radial()[nRR]<<" "
+        <<RM->convolve(&gas_mass,nRR,nt)-gas_mass(nRR,nt-1)<<" "<<RM->convolve_massfrac(&gas_mass,&mass_fraction,nRR,nt)<<std::endl;
+}
 //=============================================================================
 TEST(RadialMigration, Rates){
     ModelParameters M("params/example_params.json");
+    M.parameters["yields"]["typeII"]="ChieffiLimongi2004";
+    M.parameters["yields"]["AGB"]="Karakas";
+    M.parameters["yields"]["typeIa"]="Maeda";
     M.parameters["migration"]["Form"]="None";
     Model model(M);
     auto s1 = model.DeathRate(8.3,12.);
@@ -444,13 +482,14 @@ TEST(RadialMigration, Rates){
     M.parameters["migration"]["Form"]="GaussianDrift";
     M.parameters["migration"]["sigmaR"]=5.0;
     Model model4(M);
-    s2 = model4.DeathRate(8.3,12.);
-    f2 = model4.EnrichmentRate("Fe",8.3,12.);
-    f2 = model4.EnrichmentRate("H",8.3,12.);
-    f2 = model4.GasReturnRate(0.3,.3);
+    double R = 25.1;
+    s2 = model4.DeathRate(R,12.);
+    f2 = model4.EnrichmentRate("Fe",R,12.);
+    f2 = model4.EnrichmentRate("H",R,12.);
+    f2 = model4.GasReturnRate(R,.3);
     std::cout<<f2<<std::endl;
-    a2 = model4.GasReturnRate(8.3,12.);
-    sn2 = model4.SNIaRate(8.3,12.);
+    a2 = model4.GasReturnRate(R,12.);
+    sn2 = model4.SNIaRate(R,12.);
 }
 }
 //=============================================================================

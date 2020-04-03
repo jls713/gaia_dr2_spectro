@@ -30,7 +30,7 @@
 	"Kennicutt-Schmidt_A":0.067,
 
 	// Warm Gas phase
-	"warm_cold_ratio": 0.0,   // The fraction of gas that goes into a warm phase vs. cold (if 0, ignore Warm phase completely)
+	"warm_cold_ratio": 0.0,   // The fraction of stellar products that goes into a warm phase vs. cold (if 0, ignore Warm phase completely)
 	"warm_cooling_time": 1.0, // Gas cools out of warm phase as exp(-t/warm_cooling_time)
  	//=========================================================================
 	// IMF *
@@ -142,7 +142,9 @@
 			"Feject_out":0.05,
 			"TransitionRadius":3.5,
 		"Form":"EntrainedWind", // Cold ISM is outflowing (as per Andrews et al. 2007 with an Mdot = eta_wind SFR)
-			"eta_wind":1.0,
+			"eta_wind":1.0, // eta = Outflow / SFR -- mass-loading factor
+			"outflow_scale_length":0.0, // scale-length of mass-loading factor eta*exp(-(R-scale_length)/scale_length)
+	        "warm_fraction_retained": 0.0,   // The fraction of outflowing cold gas that enters the warm phase
 	},
 	//=========================================================================
 	"radialflow":{// * -- assumed None if RadialGridPoints=1
@@ -161,7 +163,9 @@
 			"central_radius":15.0,
 			"radial_width":1.0,
 			"alpha":0.0,
-			"metallicity":-1.2
+			"metallicity":-1.2,
+                        "star_formation_boost_timescale":1.0, // Timescale over which SFR enhanced after gas dump
+                        "star_formation_boost_coeff":1.0      // Boost 
 	}
 	//=========================================================================
 },

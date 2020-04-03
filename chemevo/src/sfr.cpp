@@ -32,26 +32,32 @@ double StarFormationRate::gas_consumed(void){
 }
 //=============================================================================
 // SFR implementations
+double truncfunc(double R, double Rd, double Rtrunc){
+    return pow(1.+exp(4.*(R-Rtrunc)),.25*(1./Rd-4./Rd));
+}
 double SFR_SB15::operator()(double R, double t){
-    double truncation = pow(1.+exp(4.*(R-Rb)),.25*(1./Rd-4./Rd));
-    return presentSFR*exp(-t/t_d-t_s/(t+1.e-1))*exp(-R/Rd)*truncation;
+    return presentSFR*exp(-t/t_d-t_s/(t+1.e-1))*exp(-R/Rd)*truncfunc(R, Rd, Rb);
 }
 double SFR_ExpDecay::operator()(double R, double t){
-    double truncation = pow(1.+exp(4.*(R-Rb)),.25*(1./Rd-4./Rd));
-    return presentSFR*exp(-t/t_d)*exp(-R/Rd)*truncation;
+    return presentSFR*exp(-t/t_d)*exp(-R/Rd)*truncfunc(R, Rd, Rb);
+}
+double SFR_DoubleInfall::operator()(double R, double t){
+    double sfr = original_SFR_scaling*exp(-t/t_d)*exp(-R/Rd)*truncfunc(R, Rd, Rb);
+    if(t>=gasdumpflow->dump_time()) sfr+=coeff*KSA*pow((*gasdumpflow)(R,gasdumpflow->dump_time(),1.),KSN)*exp(-(t-gasdumpflow->dump_time())/t_d_2);
+    return presentSFR*sfr;
 }
 double SFR_Neige2020::operator()(double R, double t){
-    double truncation = pow(1.+exp(4.*(R-Rb)),.25*(1./Rd-4./Rd));
     double norm = t_sfr/(1-x_io*R/R0)*(exp(-x_io*R/R0*t_m/t_sfr)-exp(-t_m/t_sfr));
     t = GalaxyAge - t + 1e-2;
     double timebit = exp(((1-x_io*R/R0)*t-t_m)/t_sfr)/norm*exp(t_to/GalaxyAge*(t/(t-GalaxyAge)));
-    double radiusbit = exp(-R/Rd)*truncation;
+    double radiusbit = exp(-R/Rd)*truncfunc(R, Rd, Rb);
     return presentSFR*timebit*radiusbit;
 }
 //=============================================================================
 // Map for creating shared pointer instances of SFR from string of class name
 shared_map<StarFormationRate,ModelParameters> sfr_types ={
     {"SB15",&createSharedInstance<StarFormationRate,SFR_SB15>},
+    {"DoubleInfall",&createSharedInstance<StarFormationRate,SFR_DoubleInfall>},
     {"Neige2020",&createSharedInstance<StarFormationRate,SFR_Neige2020>},
     {"ExpDecay",&createSharedInstance<StarFormationRate,SFR_ExpDecay>}};
 //=============================================================================
