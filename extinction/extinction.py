@@ -1,6 +1,8 @@
 # compute extinction coefficients for passbands
-
-from specutils.extinction import extinction_f99, ExtinctionF99, extinction_od94
+try:
+    from specutils.extinction import extinction_f99, ExtinctionF99, extinction_od94
+except:
+    pass
 from astropy import units as u
 from astropy.io import fits
 import fitsio
@@ -46,6 +48,7 @@ def load_ck_model(teff=5000, logg=4.5, vega=False, schlafly=False):
         data = fits.open('/data/jls/stellar_models/ckm05_9500.fits')[1].data
         return data['WAVELENGTH'], data['g40']
     if schlafly:
+        print('Not currently used but if used, double-check units of flux -- is it per lambda or per nu?')
         data = np.genfromtxt('/data/jls/stellar_models/munari_schlafly.dat')
         return data.T[0], data.T[1]
     data = fits.open('/data/jls/stellar_models/ckp00_' +
@@ -190,13 +193,15 @@ def compute_extinction_coeffs_schlafly(m, RV=3.3,
 R_V, sig_R_V = 3.1, 0.2
 N, sig_N = 0.78, 0.06
 factor = R_V * 0.88062
-EBV_Sch = extinction_od94(440.4 * u.nm, a_v=1., r_v=3.1) - \
+try:
+    EBV_Sch = extinction_od94(440.4 * u.nm, a_v=1., r_v=3.1) - \
     extinction_od94(542.8 * u.nm, a_v=1., r_v=3.1)
-Normratio = extinction_od94(1000. * u.nm, 1., r_v=3.1) / \
+    Normratio = extinction_od94(1000. * u.nm, 1., r_v=3.1) / \
     extinction_f99(1000. * u.nm, 1., r_v=3.1) * N
-print 'A_1micron/E(B-V)_SFD=', \
-    extinction_od94(1000. * u.nm, a_v=1., r_v=3.1) / EBV_Sch
-
+    print('A_1micron/E(B-V)_SFD=', \
+    extinction_od94(1000. * u.nm, a_v=1., r_v=3.1) / EBV_Sch)
+except:
+    pass
 
 def convolve_spectrum_band(m, f, schlafly_factor, Extf99,
                            av=False, form='F99', afactor=1.):
@@ -361,7 +366,7 @@ def compute_Gaia_extinction_grid(BSversion=2017):
         for nj, j in enumerate(rvrange):
             ResultsG[n][nj] = extinction_coeff_fn(load_ck_model(
                 teff=teff, logg=4.5), RV=j, filters_to_use=['G'])['G']
-        print teff
+        print(teff)
     with open(ext_file, 'w') as output:
         output.write(' '.join([str(np.log10(t))
                                for t in TEff[np.argsort(TEff)][:-1]]) + '\n')
@@ -510,7 +515,7 @@ def polynomial_fit_G_extinction(fltr_set='2MASS', version=2017, RV=3.1,
         y = tmass_next.T[5]
 
         fltr = True#(tmass_next.T[6]<4.5)
-        print 'WITH LOGG CUTS'
+        print('WITH LOGG CUTS')
         x, y = x[fltr], y[fltr]
     elif fltr_set is 'Teff':
         x = logTeffgrid - 4.
@@ -565,8 +570,8 @@ def polynomial_fit_G_extinction(fltr_set='2MASS', version=2017, RV=3.1,
              np.poly1d(poly1d)(poly_f(logTeffgrid)[::-1]), '.-', ms=4,
              color='k', label='Polynomial fit, $R_V=%0.1f$' % RV)
     plt.legend(loc='lower center', bbox_to_anchor=(0.5, 0.9))
-    print fltr_set, ','.join('%0.4f' % f for f in coeff)
-    print fltr_set, ','.join('%0.4f' % f for f in poly1d[::-1])
+    print(fltr_set, ','.join('%0.4f' % f for f in coeff))
+    print(fltr_set, ','.join('%0.4f' % f for f in poly1d[::-1]))
 
     with open(fltr_set + '_' + str(version) + '.poly', 'w') as fll:
         fll.write(fltr_set + '\n')

@@ -207,6 +207,11 @@ GasDumpSimple::GasDumpSimple(ModelParameters M,
 	surfacedensity=dd[0];time=dd[1];central_radius=dd[2];
 	radial_width=dd[3];metallicity=dd[4];alpha=dd[5];
 
+        for(auto e: elements) 
+	    mass_fraction[e.second]=solar->scaled_solar_mass_frac(e.first,
+                                                                  pow(10,metallicity)*solar->Z(),
+                                                                  alpha);
+
 	// Put the time near a gridpoint
 	double mint=100000., tt;
 	auto gas_mass = make_unique<Grid>(M);
@@ -219,10 +224,11 @@ GasDumpSimple::GasDumpSimple(ModelParameters M,
 	time=tt;
 }
 double GasDumpSimple::operator()(double R, double t, double dt){
-	if (abs(t-time)<1e-8)
-	    return surfacedensity/dt*exp(-.5*pow((R-central_radius)/radial_width,2.));
-	else
-		return 0.;
+        double time_scale=0.4;
+	//if (abs(t-time)<1e-8)
+	    return exp(-.5*pow((t-time)/time_scale,2.))/sqrt(2.*3.141*time_scale*time_scale)*surfacedensity*exp(-.5*pow((R-central_radius)/radial_width,2.));
+	//else
+	//	return 0.;
 }
 
 // double GasDumpSimple::elements(Element E, double R, double t, double dt){

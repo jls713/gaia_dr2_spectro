@@ -119,6 +119,7 @@ void Model::fill_initial_grids(void){
 	                    params.parameters["fundamentals"],"InitialAlpha",0.);
 
 	Zinit *= solar->Z();
+	metallicity->set_fixed_r_t_const(solar->Z());
 	metallicity->set_fixed_t_const(Zinit,0);
 
 	for(auto i=0u;i<mass_fraction.size();++i){
@@ -279,7 +280,7 @@ int Model::step(unsigned nt, double dt){
 		auto starformrate = SFR(R,t);
 		auto gas_return = GasReturnRate(R,t)*(1-warm_cold_ratio);
 		auto outflowrate = OutflowRate(R,t,starformrate,gas_return);
-		auto gasdumprate = 0.;//GasDumpRate(R,t,dt);
+		auto gasdumprate = GasDumpRate(R,t,1.);
 	 	auto warmgasrate = 0.;
 	        if(migration and nt>1)
                     migration_r[nR]=(rad_mig->convolve(gas_mass.get(),nR,nt,migration_timestep)-(*gas_mass)(nR,nt-1))/migration_timestep;

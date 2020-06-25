@@ -95,6 +95,7 @@ public:
 	}
 	//=========================================================================
 	// Setters
+	void set_fixed_r_t_const(double c);
 	void set_fixed_t_const(double c,unsigned t);
 	void set_fixed_t(VecDoub rad,unsigned t);
 	void set_fixed_r(VecDoub tim,unsigned r);

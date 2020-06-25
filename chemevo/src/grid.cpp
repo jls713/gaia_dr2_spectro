@@ -110,6 +110,11 @@ double Grid::R_gradient(double r, double t){
 //=============================================================================
 // Setters
 //=============================================================================
+void Grid::set_fixed_r_t_const(double c){
+	for(unsigned i=0;i<radial_grid.size();++i)
+	for(unsigned j=0;j<time_grid.size();++j)
+		grid[i][j]=c;
+}
 void Grid::set_fixed_t_const(double c,unsigned t){
 	assert(t<time_grid.size());
 	for(unsigned i=0;i<radial_grid.size();++i)

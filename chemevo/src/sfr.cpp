@@ -43,7 +43,8 @@ double SFR_ExpDecay::operator()(double R, double t){
 }
 double SFR_DoubleInfall::operator()(double R, double t){
     double sfr = original_SFR_scaling*exp(-t/t_d)*exp(-R/Rd)*truncfunc(R, Rd, Rb);
-    if(t>=gasdumpflow->dump_time()) sfr+=coeff*KSA*pow((*gasdumpflow)(R,gasdumpflow->dump_time(),1.),KSN)*exp(-(t-gasdumpflow->dump_time())/t_d_2);
+    //if(t>=gasdumpflow->dump_time()) sfr+=coeff*KSA*pow((*gasdumpflow)(R,gasdumpflow->dump_time(),1.),KSN)*exp(-(t-gasdumpflow->dump_time())/t_d_2);
+    sfr+=coeff*KSA*pow((*gasdumpflow)(R,t,1.),KSN)*exp(-(t-gasdumpflow->dump_time())/t_d_2);
     return presentSFR*sfr;
 }
 double SFR_Neige2020::operator()(double R, double t){
